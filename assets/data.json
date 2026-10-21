@@ -1,0 +1,120 @@
+{
+  "sections": {
+    "bus": [
+      {
+        "id": "bus1",
+        "title": "Aruppukottai → Madurai",
+        "titleTa": "அருப்புக்கோட்டை → மதுரை",
+        "subtitle": "Every 15 min · 5:00 AM – 10:30 PM",
+        "details": "Sample demo timing. Edit with the real timetable.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "bus2",
+        "title": "Aruppukottai → Virudhunagar",
+        "titleTa": "அருப்புக்கோட்டை → விருதுநகர்",
+        "subtitle": "Every 10 min · 5:30 AM – 10:00 PM",
+        "details": "Sample demo timing. Edit with the real timetable.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "bus3",
+        "title": "Aruppukottai → Sivakasi",
+        "titleTa": "அருப்புக்கோட்டை → சிவகாசி",
+        "subtitle": "Every 20 min · 6:00 AM – 9:30 PM",
+        "details": "Sample demo timing. Edit with the real timetable.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "bus4",
+        "title": "Aruppukottai → Tirunelveli",
+        "titleTa": "அருப்புக்கோட்டை → திருநெல்வேலி",
+        "subtitle": "Every 30 min · 4:30 AM – 11:00 PM",
+        "details": "Sample demo timing. Edit with the real timetable.",
+        "phone": "",
+        "image": ""
+      }
+    ],
+    "temples": [
+      {
+        "id": "tem1",
+        "title": "Sample Temple 1",
+        "titleTa": "மாதிரி கோவில் 1",
+        "subtitle": "Open 5:30 AM – 12:00 PM, 4:00 PM – 8:30 PM",
+        "details": "Demo entry. Add the temple history, festival dates and pooja timings here, and attach a photo.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "tem2",
+        "title": "Sample Temple 2",
+        "titleTa": "மாதிரி கோவில் 2",
+        "subtitle": "Open 6:00 AM – 11:30 AM, 4:30 PM – 8:00 PM",
+        "details": "Demo entry. Edit or delete it.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "tem3",
+        "title": "Sample Temple 3",
+        "titleTa": "மாதிரி கோவில் 3",
+        "subtitle": "Open 6:00 AM – 1:00 PM, 4:00 PM – 9:00 PM",
+        "details": "Demo entry. Edit or delete it.",
+        "phone": "",
+        "image": ""
+      }
+    ],
+    "shops": [
+      {
+        "id": "shp1",
+        "title": "Sample Textile Shop",
+        "titleTa": "மாதிரி ஜவுளிக்கடை",
+        "subtitle": "Main Road · 9:30 AM – 9:00 PM",
+        "details": "Demo entry. Add the address, offers and owner contact here.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "shp2",
+        "title": "Sample Mobile Shop",
+        "titleTa": "மாதிரி மொபைல் கடை",
+        "subtitle": "Bus Stand Road · 10:00 AM – 9:00 PM",
+        "details": "Demo entry. Edit or delete it.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "shp3",
+        "title": "Sample Grocery Store",
+        "titleTa": "மாதிரி மளிகைக்கடை",
+        "subtitle": "Market Street · 7:00 AM – 9:30 PM",
+        "details": "Demo entry. Edit or delete it.",
+        "phone": "",
+        "image": ""
+      }
+    ],
+    "news": [
+      {
+        "id": "nws1",
+        "title": "Welcome to I Love APK",
+        "titleTa": "I Love APK-க்கு வரவேற்கிறோம்",
+        "subtitle": "Today",
+        "details": "This is a demo news item. Tap + to add your own local news, with a photo.",
+        "phone": "",
+        "image": ""
+      },
+      {
+        "id": "nws2",
+        "title": "Sample: Water supply notice",
+        "titleTa": "மாதிரி: குடிநீர் அறிவிப்பு",
+        "subtitle": "Demo",
+        "details": "Replace this with real announcements.",
+        "phone": "",
+        "image": ""
+      }
+    ]
+  }
+}
