@@ -44,6 +44,7 @@ class _AppGateState extends State<AppGate> {
     // Quietly confirm a saved login (if any) and refresh the bus timetable in the background.
     auth.validate();
     repo.registerDevice();
+    repo.loadConfig();
     repo.autoSync();
   }
 
