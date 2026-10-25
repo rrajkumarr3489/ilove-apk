@@ -109,7 +109,7 @@ class BusRepo extends ChangeNotifier {
     final st = m['settings'];
     settings.clear();
     if (st is Map) {
-      st.forEach((k, v) => settings[k.toString()] = v.toString());
+      st.forEach((k, v) => settings[_settingKey(k.toString())] = v.toString());
     }
     serverTime = m['serverTime'] as String?;
     final ls = m['lastSync'] as String?;
@@ -192,6 +192,10 @@ class BusRepo extends ChangeNotifier {
     return ok;
   }
 
+  /// The server sends setting names with a small first letter ("media.BaseUrl");
+  /// the app always uses a capital first letter ("Media.BaseUrl").
+  static String _settingKey(String k) => k.isEmpty ? k : k[0].toUpperCase() + k.substring(1);
+
   /// Settings from the server (banner pictures etc). Called every time the app opens,
   /// so a change made on the server shows up without waiting for a timetable download.
   Future<void> loadConfig() => _loadConfigQuietly();
@@ -202,7 +206,7 @@ class BusRepo extends ChangeNotifier {
       final s = j['settings'];
       if (s is Map) {
         settings.clear();
-        s.forEach((k, v) => settings[k.toString()] = v == null ? '' : v.toString());
+        s.forEach((k, v) => settings[_settingKey(k.toString())] = v == null ? '' : v.toString());
         await _save();
         notifyListeners();
       }
