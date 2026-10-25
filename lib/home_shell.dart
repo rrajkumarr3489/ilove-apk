@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'art.dart';
 import 'auth/auth_service.dart';
 import 'bus/bus_home_screen.dart';
 import 'bus/bus_repo.dart';
@@ -173,40 +174,20 @@ class _HeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 140,
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF9A3C), kBrand],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Row(
+    return TempleBanner(
+      height: 170,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('அருப்புக்கோட்டை',
-                    style: ts(26, weight: FontWeight.w900, color: Colors.white)),
-                const SizedBox(height: 2),
-                Text('ARUPPUKOTTAI',
-                    style: TextStyle(
-                        fontSize: 14,
-                        letterSpacing: 3,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white.withAlpha(220))),
-                const SizedBox(height: 8),
-                Text(app.tr('Everything about our town, in one app', 'நம் ஊரின் எல்லா தகவல்களும் ஒரே ஆப்பில்'),
-                    style: ts(13, color: Colors.white.withAlpha(230))),
-              ],
-            ),
-          ),
-          Icon(Icons.temple_hindu, size: 70, color: Colors.white.withAlpha(200)),
+          Text('அருப்புக்கோட்டை', style: ts(28, weight: FontWeight.w900, color: Colors.white)),
+          const SizedBox(height: 2),
+          Text('ARUPPUKOTTAI',
+              style: TextStyle(
+                  fontSize: 13, letterSpacing: 3.5, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(225))),
+          const SizedBox(height: 10),
+          Text(app.tr('Our town, our people, our app', 'நம் ஊர் • நம் மக்கள் • நம் ஆப்'),
+              style: ts(13, color: Colors.white.withAlpha(235), height: 1.3)),
         ],
       ),
     );
@@ -373,32 +354,64 @@ class _TileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = app.lang == 'ta' ? tile.titleTa : tile.title;
     final secondary = app.lang == 'ta' ? tile.title : tile.titleTa;
-    return SoftCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: tile.color.withAlpha(30),
-                  borderRadius: BorderRadius.circular(14),
+    return Opacity(
+      opacity: tile.live ? 1 : 0.92,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: kLine),
+          boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -14,
+                  bottom: -14,
+                  child: Icon(tile.icon, size: 84, color: tile.color.withAlpha(18)),
                 ),
-                child: Icon(tile.icon, color: tile.color, size: 26),
-              ),
-              const Spacer(),
-              if (tile.live) Pill(app.tr('Open', 'திற'), color: kGreen, filled: true),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [tile.color.withAlpha(230), tile.color],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [BoxShadow(color: tile.color.withAlpha(70), blurRadius: 8, offset: const Offset(0, 4))],
+                            ),
+                            child: Icon(tile.icon, color: Colors.white, size: 26),
+                          ),
+                          const Spacer(),
+                          if (tile.live) Pill(app.tr('Open', 'திற'), color: kGreen, filled: true),
+                        ],
+                      ),
+                      const Spacer(),
+                      Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(15, weight: FontWeight.w800)),
+                      const SizedBox(height: 2),
+                      Text(secondary, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, color: kMuted)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
-          Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(15, weight: FontWeight.w800)),
-          const SizedBox(height: 2),
-          Text(secondary, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, color: kMuted)),
-        ],
+        ),
       ),
     );
   }
