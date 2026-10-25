@@ -21,8 +21,27 @@ jobs:
           channel: stable
           cache: true
 
+      # Generates the android/ folder (not stored in this repo).
       - name: Create Android project files
         run: flutter create . --platforms=android --project-name ilove_apk --org in.aruppukottai
+
+      # The generated manifest has no INTERNET permission in release builds; maps/links need it.
+      - name: Allow internet and link opening
+        run: |
+          python3 - <<'PY'
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          if 'android.permission.INTERNET' not in s:
+              i = s.index('<manifest')
+              j = s.index('>', i)
+              add = ('\n    <uses-permission android:name="android.permission.INTERNET"/>'
+                     '\n    <queries>'
+                     '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>'
+                     '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="geo"/></intent>'
+                     '\n    </queries>')
+              s = s[:j+1] + add + s[j+1:]
+              open(p, 'w', encoding='utf-8').write(s)
+          PY
 
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="I Love APK"/' android/app/src/main/AndroidManifest.xml
@@ -30,9 +49,13 @@ jobs:
       - run: rm -rf test
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - run: flutter build apk --release
+      - name: Build small APKs (one per phone type)
+        run: flutter build apk --release --split-per-abi
 
       - uses: actions/upload-artifact@v4
         with:
           name: ilove-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
