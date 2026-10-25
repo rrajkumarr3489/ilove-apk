@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../art.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'bus_models.dart';
@@ -410,6 +411,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
             children: [
               Container(
                 padding: EdgeInsets.fromLTRB(8, top + 4, 16, 22),
+                foregroundDecoration: const SkylineDecoration(),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [kNavy, kBlue],
