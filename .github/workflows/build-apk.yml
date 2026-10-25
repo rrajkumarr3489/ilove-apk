@@ -25,23 +25,25 @@ jobs:
       - name: Create Android project files
         run: flutter create . --platforms=android --project-name ilove_apk --org in.aruppukottai
 
-      # The generated manifest has no INTERNET permission in release builds; maps/links need it.
+      # The generated manifest has no INTERNET permission in release builds; without it the app says "No internet connection".
       - name: Allow internet and link opening
         run: |
           python3 - <<'PY'
+          import re
           p = 'android/app/src/main/AndroidManifest.xml'
           s = open(p, encoding='utf-8').read()
-          if 'android.permission.INTERNET' not in s:
-              i = s.index('<manifest')
-              j = s.index('>', i)
+          if '<uses-permission android:name="android.permission.INTERNET"' not in s:
+              m = re.search(r'<manifest[^>]*>', s)
               add = ('\n    <uses-permission android:name="android.permission.INTERNET"/>'
                      '\n    <queries>'
                      '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>'
                      '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="geo"/></intent>'
                      '\n    </queries>')
-              s = s[:j+1] + add + s[j+1:]
+              s = s[:m.end()] + add + s[m.end():]
               open(p, 'w', encoding='utf-8').write(s)
           PY
+          cat android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
 
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="I Love APK"/' android/app/src/main/AndroidManifest.xml
