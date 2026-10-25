@@ -180,7 +180,11 @@ class _HeroBanner extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('அருப்புக்கோட்டை', style: ts(28, weight: FontWeight.w900, color: Colors.white)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text('அருப்புக்கோட்டை', maxLines: 1, style: ts(26, weight: FontWeight.w900, color: Colors.white)),
+          ),
           const SizedBox(height: 2),
           Text('ARUPPUKOTTAI',
               style: TextStyle(
