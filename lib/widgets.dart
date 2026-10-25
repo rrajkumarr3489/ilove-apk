@@ -131,6 +131,12 @@ class LangToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listens to the language itself, so the highlighted choice always follows it
+    // (a const LangToggle placed in a screen is not rebuilt by that screen).
+    return ListenableBuilder(listenable: app, builder: (context, _) => _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     Widget chip(String code, String label) {
       final sel = app.lang == code;
       return GestureDetector(
