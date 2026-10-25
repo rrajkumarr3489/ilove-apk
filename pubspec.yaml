@@ -1,7 +1,7 @@
 name: ilove_apk
-description: I Love Aruppukottai - local town app (offline demo, server sync later)
+description: I Love Aruppukottai - local town app (bus timings online with offline copy)
 publish_to: "none"
-version: 0.1.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -9,13 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.0
+  shared_preferences: ^2.2.0
   path_provider: ^2.1.0
-  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  url_launcher: ^6.2.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/data.json

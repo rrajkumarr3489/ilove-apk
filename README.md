@@ -1,26 +1,20 @@
-# I Love APK (I Love Aruppukottai)
+# I Love Aruppukottai - Flutter app
 
-Offline demo app. No Play Store, no server.
+Only **Bus Timings** is live. The other tiles open an "Under construction" page.
 
-## Where data lives (on the phone)
-- `data.json`  - all text data (bus, temples, shops, news). Notepad-style JSON.
-- `images/`    - photos you add from the app.
-Both are in the app's private folder; the exact paths are shown in the app under Settings.
-Edits made in the app are saved straight into `data.json`.
+## Who can do what
+- **Guest** (no registration): can open the app and view all bus timings, search, bus-stand board, notices, favorites.
+- **Registered user**: everything above + add a new bus / add a timing. Every entry is saved with the user's id and is checked by an admin before it appears.
+- Login is kept on the phone. Next time the app opens on the home page.
 
-## Edit the starting demo data
-Change `assets/data.json` before building. Sections: `bus`, `temples`, `shops`, `news`.
-To make another tile live (train, food...), add a section with the same key in
-`assets/data.json` and set `live: true` for that tile in `lib/models.dart`.
+## First run
+1. Run DB scripts 01 -> 11 and publish the API (see ilove_bus/README.md).
+2. Open the app -> Settings -> **Server address** -> `https://your-api-subdomain` (the `/api/v1` is added automatically).
 
-## Get the APK (no installs needed on your PC)
-1. Create a free GitHub account and a new repository.
-2. Upload everything in this folder (including the hidden `.github` folder) to it.
-3. Go to the repo -> Actions -> "Build APK" -> Run workflow.
-4. After ~5 minutes open the finished run -> Artifacts -> `ilove-apk` -> download, unzip.
-5. Copy `app-release.apk` to your phone and install (allow "install unknown apps").
+## Keeping the APK small
+- No photos are inside the app. Banners are loaded from your server: upload pictures to the server's media folder and set Settings `Media.BaseUrl` (folder URL) and `Home.Banners` (comma-separated file names).
+- Build is split per phone type. Install `app-arm64-v8a-release.apk` on almost every modern phone.
+- Maps use OpenStreetMap tiles (free, no key). "Google Maps" buttons open the Google Maps app for the place.
 
-## Later: server sync
-All data access goes through `lib/data_store.dart`. When your server is ready,
-add a `RemoteStore implements DataStore` that downloads the JSON from the server
-(and caches it locally), then change the last line of that file. Screens stay as they are.
+## Build the APK
+Push this folder to GitHub -> Actions -> *Build APK* -> download the artifact `ilove-apk`.
