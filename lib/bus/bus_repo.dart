@@ -192,6 +192,10 @@ class BusRepo extends ChangeNotifier {
     return ok;
   }
 
+  /// Settings from the server (banner pictures etc). Called every time the app opens,
+  /// so a change made on the server shows up without waiting for a timetable download.
+  Future<void> loadConfig() => _loadConfigQuietly();
+
   Future<void> _loadConfigQuietly() async {
     try {
       final j = await BusApi.get('/config') as Map<String, dynamic>;
