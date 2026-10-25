@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../art.dart';
 import '../bus/bus_api.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -150,6 +151,7 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           Container(
             padding: EdgeInsets.fromLTRB(20, top + 12, 20, 28),
+            foregroundDecoration: const SkylineDecoration(),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [kNavy, kBlue],
