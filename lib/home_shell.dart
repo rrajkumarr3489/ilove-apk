@@ -19,7 +19,9 @@ import 'theme.dart';
 import 'tiles.dart';
 import 'widgets.dart';
 
-/// Bottom tabs: Home, Favorites, Updates, Settings.
+const Color kCream = Color(0xFFFFF6EC);
+
+/// Bottom tabs: Home, Favorites, All services, Me.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -30,23 +32,46 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
 
+  void _openUpdates() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const Expanded(child: UpdatesTab()),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([app, repo, auth]),
       builder: (context, _) {
-        final noticeCount = repo.activeNotices(DateTime.now()).length;
         return Scaffold(
-          drawer: _AppDrawer(onTab: (i) => setState(() => _tab = i)),
+          drawer: _AppDrawer(onTab: (i) => setState(() => _tab = i), onUpdates: _openUpdates),
           body: SafeArea(
             top: _tab != 0,
             bottom: false,
             child: IndexedStack(
               index: _tab,
               children: [
-                HomeTab(onOpenUpdates: () => setState(() => _tab = 2), onOpenSettings: () => setState(() => _tab = 3)),
+                HomeTab(onOpenUpdates: _openUpdates, onAllServices: () => setState(() => _tab = 2)),
                 const FavoritesTab(),
-                const UpdatesTab(),
+                const AllServicesTab(),
                 const SettingsTab(),
               ],
             ),
@@ -63,23 +88,19 @@ class _HomeShellState extends State<HomeShell> {
                 label: app.tr('Home', 'முகப்பு'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.favorite_border),
-                selectedIcon: const Icon(Icons.favorite, color: Colors.white),
+                icon: const Icon(Icons.star_border),
+                selectedIcon: const Icon(Icons.star, color: Colors.white),
                 label: app.tr('Favorites', 'பிடித்தவை'),
               ),
               NavigationDestination(
-                icon: Badge(
-                  isLabelVisible: noticeCount > 0,
-                  label: Text('$noticeCount'),
-                  child: const Icon(Icons.notifications_none),
-                ),
-                selectedIcon: const Icon(Icons.notifications, color: Colors.white),
-                label: app.tr('Updates', 'தகவல்கள்'),
+                icon: const Icon(Icons.grid_view),
+                selectedIcon: const Icon(Icons.grid_view_rounded, color: Colors.white),
+                label: app.tr('All services', 'அனைத்து சேவைகள்'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings, color: Colors.white),
-                label: app.tr('Settings', 'அமைப்புகள்'),
+                icon: const Icon(Icons.person_outline),
+                selectedIcon: const Icon(Icons.person, color: Colors.white),
+                label: app.tr('Me', 'எனது'),
               ),
             ],
           ),
@@ -97,11 +118,30 @@ void openTile(BuildContext context, TileInfo t) {
   }
 }
 
+/// The wavy lower edge of the orange header.
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..lineTo(0, h - 26)
+      ..cubicTo(w * 0.28, h - 30, w * 0.34, h, w * 0.58, h)
+      ..lineTo(w, h)
+      ..lineTo(w, 0)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
 class HomeTab extends StatelessWidget {
   final VoidCallback onOpenUpdates;
-  final VoidCallback onOpenSettings;
+  final VoidCallback onAllServices;
 
-  const HomeTab({super.key, required this.onOpenUpdates, required this.onOpenSettings});
+  const HomeTab({super.key, required this.onOpenUpdates, required this.onAllServices});
 
   /// Banner list from the server. Each entry: "File1.jpg" or "File1.jpg|English caption|தமிழ் caption".
   List<_BannerItem> _banners() {
@@ -118,48 +158,41 @@ class HomeTab extends StatelessWidget {
     return out;
   }
 
-  void _open(BuildContext context, TileInfo t) => openTile(context, t);
-
-  Widget _header(BuildContext context, int noticeCount) {
+  Widget _header(BuildContext context, double height, int noticeCount) {
     final top = MediaQuery.of(context).padding.top;
-    final tagline = app.tr(repo.settings['App.TaglineEn'] ?? '', repo.settings['App.TaglineTa'] ?? '');
-    final name = auth.name;
-    return Container(
-      padding: EdgeInsets.fromLTRB(8, top + 6, 8, 18),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-          ),
-          Expanded(
-            child: Column(
+    return ClipPath(
+      clipper: _WaveClipper(),
+      child: Container(
+        height: height,
+        padding: EdgeInsets.only(top: top + 2, left: 6, right: 6),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        ),
+        child: Column(
+          children: [
+            Row(
               children: [
-                const BrandMark(size: 24, onDark: true),
-                Text(
-                  name.isNotEmpty
-                      ? app.tr('Hello, $name', 'வணக்கம், $name')
-                      : (tagline.isEmpty ? app.tr('Our Aruppukottai', 'நம் அருப்புக்கோட்டை') : tagline),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ts(14, weight: FontWeight.w700, color: Colors.white),
+                IconButton(
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  icon: const Icon(Icons.menu, color: Colors.white, size: 30),
+                ),
+                const Expanded(child: Center(child: BrandMark(size: 30, onDark: true))),
+                IconButton(
+                  onPressed: onOpenUpdates,
+                  icon: Badge(
+                    isLabelVisible: noticeCount > 0,
+                    label: Text('$noticeCount'),
+                    child: const Icon(Icons.notifications, color: Colors.white, size: 30),
+                  ),
                 ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: onOpenUpdates,
-            icon: Badge(
-              isLabelVisible: noticeCount > 0,
-              label: Text('$noticeCount'),
-              child: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+            Text(
+              app.tr('Our Aruppukottai', 'நம் அருப்புக்கோட்டை'),
+              style: ts(15, weight: FontWeight.w700, color: Colors.white),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -168,44 +201,58 @@ class HomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final banners = _banners();
     final noticeCount = repo.activeNotices(DateTime.now()).length;
-    final tiles = currentTiles();
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 28),
-      children: [
-        _header(context, noticeCount),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-          child: Stack(
+    final all = currentTiles();
+    // Home shows the main six services (same order as the design); the rest are under "All services".
+    const mainKeys = ['bus', 'news', 'food', 'shops', 'parcel', 'services'];
+    final main = <TileInfo>[];
+    for (final k in mainKeys) {
+      for (final t in all) {
+        if (t.key == k) main.add(t);
+      }
+    }
+    final tiles = main.isEmpty ? all.take(6).toList() : main;
+    final headerH = MediaQuery.of(context).padding.top + 112;
+    const bannerH = 250.0;
+    return Container(
+      color: kCream,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          Stack(
             clipBehavior: Clip.none,
             children: [
-              banners.isEmpty
-                  ? const _HeroBanner()
-                  : BannerCarousel(key: ValueKey(banners.map((e) => e.url).join(',')), items: banners),
+              Padding(
+                padding: EdgeInsets.only(top: headerH - 34),
+                child: banners.isEmpty
+                    ? const _HeroBanner(height: bannerH)
+                    : BannerCarousel(key: ValueKey(banners.map((e) => e.url).join(',')), items: banners, height: bannerH),
+              ),
+              Positioned(top: 0, left: 0, right: 0, child: _header(context, headerH, noticeCount)),
               Positioned(
-                left: 12,
-                right: 12,
-                bottom: -26,
+                left: 14,
+                right: 14,
+                bottom: -28,
                 child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()))),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 40),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.8,
-            children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => _open(context, t))],
+          const SizedBox(height: 44),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.9,
+              children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
+            ),
           ),
-        ),
-        const Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 0), child: _NextBusCard()),
-        const _NewsSection(),
-      ],
+          const Padding(padding: EdgeInsets.fromLTRB(14, 0, 14, 0), child: _NextBusCard()),
+          _NewsSection(onMore: onAllServices),
+        ],
+      ),
     );
   }
 }
@@ -217,38 +264,43 @@ class _BannerItem {
   const _BannerItem(this.url, this.caption);
 }
 
-/// Used when no banner pictures are set on the server: a clean illustration, no image files needed.
+/// Used when no banner pictures are set on the server.
 class _HeroBanner extends StatelessWidget {
-  const _HeroBanner();
+  final double height;
+
+  const _HeroBanner({this.height = 200});
 
   @override
   Widget build(BuildContext context) {
     return TempleBanner(
-      height: 190,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text('அருப்புக்கோட்டை', maxLines: 1, style: ts(26, weight: FontWeight.w900, color: Colors.white)),
+      height: height,
+      radius: 0,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('அருப்புக்கோட்டை', maxLines: 1, style: ts(26, weight: FontWeight.w900, color: Colors.white)),
+              Text('ARUPPUKOTTAI',
+                  style: TextStyle(
+                      fontSize: 13, letterSpacing: 3.5, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(225))),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text('ARUPPUKOTTAI',
-              style: TextStyle(
-                  fontSize: 13, letterSpacing: 3.5, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(225))),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Banner pictures come from the server (small download, remembered on the phone), so the APK itself stays small.
+/// Full-width banner pictures from the server media folder (downloaded once, then remembered on the phone).
 class BannerCarousel extends StatefulWidget {
   final List<_BannerItem> items;
+  final double height;
 
-  const BannerCarousel({super.key, required this.items});
+  const BannerCarousel({super.key, required this.items, this.height = 250});
 
   @override
   State<BannerCarousel> createState() => _BannerCarouselState();
@@ -266,7 +318,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
       _timer = Timer.periodic(const Duration(seconds: 5), (_) {
         if (!_pc.hasClients) return;
         final next = (_i + 1) % widget.items.length;
-        _pc.animateToPage(next, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+        _pc.animateToPage(next, duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
       });
     }
   }
@@ -281,85 +333,55 @@ class _BannerCarouselState extends State<BannerCarousel> {
   @override
   Widget build(BuildContext context) {
     final cap = widget.items[_i].caption;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 14, offset: Offset(0, 6))],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: SizedBox(
-          height: 200,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              PageView.builder(
-                controller: _pc,
-                itemCount: widget.items.length,
-                onPageChanged: (v) => setState(() => _i = v),
-                itemBuilder: (context, index) => CachedNetworkImage(
-                  imageUrl: widget.items[index].url,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  placeholder: (c, u) => Container(color: kLine),
-                  errorWidget: (c, u, e) => const _HeroBanner(),
-                ),
-              ),
-              if (cap.isNotEmpty)
-                const IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.center,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x00000000), Color(0xB3000000)],
-                      ),
-                    ),
-                  ),
-                ),
-              Positioned(
-                left: 16,
-                right: 16,
-                top: 12,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (widget.items.length > 1)
-                      for (var k = 0; k < widget.items.length; k++)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: k == _i ? 18 : 7,
-                          height: 7,
-                          margin: const EdgeInsets.only(left: 4),
-                          decoration: BoxDecoration(
-                            color: k == _i ? Colors.white : Colors.white54,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                  ],
-                ),
-              ),
-              if (cap.isNotEmpty)
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 34,
-                  child: Text(
-                    cap,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: ts(16, weight: FontWeight.w800, color: Colors.white, height: 1.25),
-                  ),
-                ),
-            ],
+    return SizedBox(
+      height: widget.height,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          PageView.builder(
+            controller: _pc,
+            itemCount: widget.items.length,
+            onPageChanged: (v) => setState(() => _i = v),
+            itemBuilder: (context, index) => CachedNetworkImage(
+              imageUrl: widget.items[index].url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              placeholder: (c, u) => Container(color: kLine),
+              errorWidget: (c, u, e) => _HeroBanner(height: widget.height),
+            ),
           ),
-        ),
+          // soft fade into the page colour, like the design
+          const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.center,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x00FFF6EC), kCream],
+                ),
+              ),
+            ),
+          ),
+          if (cap.isNotEmpty)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 40,
+              child: Text(
+                cap,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: ts(16, weight: FontWeight.w800, color: kNavy, height: 1.25),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-/// The white search bar that sits across the bottom edge of the banner.
+/// The white search bar across the bottom edge of the banner.
 class _SearchBar extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -367,30 +389,34 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 5,
-      shadowColor: const Color(0x44000000),
-      borderRadius: BorderRadius.circular(30),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(Icons.search, color: kNavy, size: 26),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  app.tr('Search buses: From - To', 'பேருந்து தேடுங்கள்: எங்கிருந்து - எங்கு'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ts(15.5, color: kMuted, weight: FontWeight.w600),
+        boxShadow: const [BoxShadow(color: Color(0x40FF8A1F), blurRadius: 18, offset: Offset(0, 6))],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: kNavy, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    app.tr('What are you looking for?', 'எதை தேடுகிறீர்கள்?'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ts(16, color: kInk, weight: FontWeight.w600),
+                  ),
                 ),
-              ),
-              const Icon(Icons.directions_bus, color: kBrand, size: 22),
-            ],
+                const Icon(Icons.mic, color: kNavy, size: 26),
+              ],
+            ),
           ),
         ),
       ),
@@ -400,22 +426,29 @@ class _SearchBar extends StatelessWidget {
 
 /// "Today's news" - read from news.json in the media folder (hidden when there is none).
 class _NewsSection extends StatelessWidget {
-  const _NewsSection();
+  final VoidCallback onMore;
+
+  const _NewsSection({required this.onMore});
 
   @override
   Widget build(BuildContext context) {
     final items = repo.news.take(5).toList();
     if (items.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.campaign, color: kRed, size: 26),
+              const Icon(Icons.campaign, color: kRed, size: 30),
               const SizedBox(width: 8),
-              Text(app.tr("Today's news", 'இன்றைய செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
+              Expanded(child: Text(app.tr("Today's news", 'இன்றைய செய்திகள்'), style: ts(19, weight: FontWeight.w900))),
             ],
           ),
           const SizedBox(height: 10),
@@ -446,9 +479,9 @@ class _NewsCard extends StatelessWidget {
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: SizedBox(
-              width: 104,
+              width: 110,
               height: 78,
               child: img == null
                   ? Container(color: kLine, child: const Icon(Icons.image_outlined, color: kMuted))
@@ -474,7 +507,7 @@ class _NewsCard extends StatelessWidget {
               ],
             ),
           ),
-          if (item.link.isNotEmpty) const Icon(Icons.chevron_right, color: kMuted),
+          if (item.link.isNotEmpty) const Icon(Icons.chevron_right, color: kNavy),
         ],
       ),
     );
@@ -557,25 +590,23 @@ class _ServiceTile extends StatelessWidget {
 
   Widget _icon() {
     final fallback = Container(
-      width: 70,
-      height: 70,
+      width: 58,
+      height: 58,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [BoxShadow(color: tile.color.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: Icon(tile.icon, color: tile.color, size: 36),
+      child: Icon(tile.icon, color: tile.color, size: 30),
     );
     // Picture from the server media folder: tile_<key>.png (for example tile_bus.png). Without it, the icon above is shown.
     final url = repo.mediaUrl('tile_${tile.key}.png');
     if (url == null) return fallback;
     return CachedNetworkImage(
       imageUrl: url,
-      width: 70,
-      height: 70,
       fit: BoxFit.contain,
-      placeholder: (c, u) => fallback,
-      errorWidget: (c, u, e) => fallback,
+      placeholder: (c, u) => Center(child: fallback),
+      errorWidget: (c, u, e) => Center(child: fallback),
     );
   }
 
@@ -585,9 +616,13 @@ class _ServiceTile extends StatelessWidget {
     final secondary = app.lang == 'ta' ? tile.title : tile.titleTa;
     return Container(
       decoration: BoxDecoration(
-        color: Color.alphaBlend(tile.color.withAlpha(24), Colors.white),
+        gradient: LinearGradient(
+          colors: [Color.alphaBlend(tile.color.withAlpha(40), Colors.white), Color.alphaBlend(tile.color.withAlpha(14), Colors.white)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: tile.color.withAlpha(tile.live ? 110 : 40)),
+        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3))],
       ),
       child: Material(
         color: Colors.transparent,
@@ -595,44 +630,56 @@ class _ServiceTile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 18, 6, 8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 6, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Center(child: _icon())),
+                const SizedBox(height: 4),
+                Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w800, height: 1.15)),
+                const SizedBox(height: 2),
+                Row(
                   children: [
-                    _icon(),
-                    const SizedBox(height: 8),
-                    Text(primary,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: ts(13, weight: FontWeight.w800, height: 1.2)),
-                    const SizedBox(height: 2),
-                    Text(secondary,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: ts(11, color: kMuted)),
+                    Expanded(
+                      child: Text(secondary, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11, color: kInk)),
+                    ),
+                    const Icon(Icons.chevron_right, size: 18, color: kNavy),
                   ],
                 ),
-              ),
-              if (!tile.live)
-                Positioned(
-                  top: 5,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                      child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                    decoration: BoxDecoration(color: kAmber.withAlpha(60), borderRadius: BorderRadius.circular(8)),
-                    child: Text(app.tr('Soon', 'விரைவில்'), style: ts(9.5, weight: FontWeight.w800, color: const Color(0xFF8A5A00))),
-                  )),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Every service in one list (the third bottom tab).
+class AllServicesTab extends StatelessWidget {
+  const AllServicesTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = currentTiles();
+    return Container(
+      color: kCream,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 18, 14, 24),
+        children: [
+          Text(app.tr('All services', 'அனைத்து சேவைகள்'), style: ts(22, weight: FontWeight.w900)),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.9,
+            children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
+          ),
+        ],
       ),
     );
   }
@@ -672,8 +719,9 @@ class UnderConstructionScreen extends StatelessWidget {
 /// Side menu opened from the top-left button: all services, then the app pages.
 class _AppDrawer extends StatelessWidget {
   final ValueChanged<int> onTab;
+  final VoidCallback onUpdates;
 
-  const _AppDrawer({required this.onTab});
+  const _AppDrawer({required this.onTab, required this.onUpdates});
 
   @override
   Widget build(BuildContext context) {
@@ -735,8 +783,16 @@ class _AppDrawer extends StatelessWidget {
               },
             ),
           const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: Divider()),
-          _pageTile(context, Icons.favorite_border, app.tr('Favorites', 'பிடித்தவை'), 1),
-          _pageTile(context, Icons.notifications_none, app.tr('Updates', 'தகவல்கள்'), 2),
+          _pageTile(context, Icons.star_border, app.tr('Favorites', 'பிடித்தவை'), 1),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+            leading: const Icon(Icons.notifications_none, color: kNavy),
+            title: Text(app.tr('Updates', 'தகவல்கள்'), style: ts(15, weight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(context);
+              onUpdates();
+            },
+          ),
           _pageTile(context, Icons.settings_outlined, app.tr('Settings', 'அமைப்புகள்'), 3),
           const SizedBox(height: 16),
         ],
