@@ -286,7 +286,7 @@ class SavedSearch {
   }
 }
 
-/// One card in "Today's news" (from news.json in the media folder).
+/// One card in "Today's news" (from the server: Tamil and English are stored separately).
 class NewsItem {
   final String title;
   final String titleTa;
@@ -295,11 +295,22 @@ class NewsItem {
   final String link;
 
   NewsItem(Map<String, dynamic> j)
-      : title = jStr(j['title']),
+      : title = jStr(j['titleEn']),
         titleTa = jStr(j['titleTa']),
-        date = jStr(j['date']),
-        image = jStr(j['image']),
-        link = jStr(j['link']);
+        date = _niceDate(jStr(j['publishedOn'])),
+        image = jStr(j['imageFile']),
+        link = jStr(j['linkUrl']);
 
-  String name(String lang) => (lang == 'ta' && titleTa.isNotEmpty) ? titleTa : title;
+  static String _niceDate(String iso) {
+    final d = DateTime.tryParse(iso.length >= 10 ? iso.substring(0, 10) : iso);
+    if (d == null) return '';
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${d.day.toString().padLeft(2, '0')} ${m[d.month - 1]} ${d.year}';
+  }
+
+  /// The language the person picked; falls back to the other one when that title is empty.
+  String name(String lang) {
+    if (lang == 'ta') return titleTa.isNotEmpty ? titleTa : title;
+    return title.isNotEmpty ? title : titleTa;
+  }
 }

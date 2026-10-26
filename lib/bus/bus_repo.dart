@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -48,6 +47,7 @@ class BusRepo extends ChangeNotifier {
   final List<Map<String, dynamic>> _events = [];
 
   List<int> favRoutes = [];
+  List<int> favTrips = [];
   List<SavedSearch> recents = [];
   List<SavedSearch> favSearches = [];
 
@@ -72,6 +72,7 @@ class BusRepo extends ChangeNotifier {
         .map((e) => int.tryParse(e))
         .whereType<int>()
         .toList();
+    favTrips = app.getList('bus.favTrips').map((e) => int.tryParse(e)).whereType<int>().toList();
     recents = _readSearches('bus.recents');
     favSearches = _readSearches('bus.favSearches');
   }
@@ -221,17 +222,14 @@ class BusRepo extends ChangeNotifier {
     await _loadNews();
   }
 
+  /// News comes from the database through the API (GET /news); the last copy is kept on the phone.
   Future<void> _loadNews() async {
     final cached = app.getString('news.json');
     if (news.isEmpty && cached != null) news = _parseNews(cached);
-    final url = mediaUrl('news.json');
-    if (url == null) return;
     try {
-      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
-      if (res.statusCode != 200) return;
-      final text = utf8.decode(res.bodyBytes);
-      final list = _parseNews(text);
-      news = list;
+      final d = await BusApi.get('/news?top=5');
+      final text = jsonEncode(d);
+      news = _parseNews(text);
       await app.setString('news.json', text);
       notifyListeners();
     } catch (_) {
@@ -241,8 +239,7 @@ class BusRepo extends ChangeNotifier {
 
   List<NewsItem> _parseNews(String text) {
     try {
-      dynamic d = jsonDecode(text);
-      if (d is Map) d = d['items'];
+      final d = jsonDecode(text);
       if (d is! List) return <NewsItem>[];
       final out = <NewsItem>[];
       for (final e in d) {
@@ -595,6 +592,28 @@ class BusRepo extends ChangeNotifier {
   // ------------------------------------------------ favourites and history
 
   bool isFavRoute(int id) => favRoutes.contains(id);
+
+  /// A saved timing = one departure of one bus (so tapping a heart marks only that card).
+  bool isFavTrip(int tripId) => favTrips.contains(tripId);
+
+  Future<void> toggleFavTrip(int tripId) async {
+    if (favTrips.contains(tripId)) {
+      favTrips.remove(tripId);
+    } else {
+      favTrips.insert(0, tripId);
+    }
+    await app.setList('bus.favTrips', favTrips.map((e) => e.toString()).toList());
+    notifyListeners();
+  }
+
+  Trip? tripById(int tripId) {
+    for (final list in tripsByRoute.values) {
+      for (final t in list) {
+        if (t.id == tripId) return t;
+      }
+    }
+    return null;
+  }
 
   Future<void> toggleFavRoute(int id) async {
     if (favRoutes.contains(id)) {

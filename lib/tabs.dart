@@ -37,12 +37,13 @@ class FavoritesTab extends StatelessWidget {
       builder: (context, _) {
         final routes = [for (final id in repo.favRoutes) if (repo.routes[id] != null) repo.routes[id]!];
         final searches = repo.favSearches;
+        final trips = [for (final id in repo.favTrips) if (repo.tripById(id) != null && repo.routes[repo.tripById(id)!.routeId] != null) repo.tripById(id)!];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pageTitle(app.tr('Favorites', 'பிடித்தவை')),
             Expanded(
-              child: (routes.isEmpty && searches.isEmpty)
+              child: (routes.isEmpty && searches.isEmpty && trips.isEmpty)
                   ? EmptyState(
                       icon: Icons.favorite_border,
                       title: app.tr('Nothing saved yet', 'இன்னும் எதுவும் சேமிக்கவில்லை'),
@@ -77,6 +78,37 @@ class FavoritesTab extends StatelessWidget {
                                   IconButton(
                                     icon: const Icon(Icons.favorite, color: kRed),
                                     onPressed: () => repo.toggleFavSearch(s),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (trips.isNotEmpty) SectionTitle(app.tr('Saved timings', 'சேமித்த நேரங்கள்')),
+                        for (final t in trips)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: SoftCard(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                    builder: (_) => RouteDetailScreen(routeId: t.routeId, date: DateTime.now())),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.access_time_filled, color: kBrand),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(routeTitle(repo.routes[t.routeId]!), style: ts(15.5, weight: FontWeight.w700)),
+                                        Text(app.tr('Departs ', 'புறப்பாடு ') + fmtClock(t.departMin), style: ts(12.5, color: kMuted)),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.favorite, color: kRed),
+                                    onPressed: () => repo.toggleFavTrip(t.id),
                                   ),
                                 ],
                               ),

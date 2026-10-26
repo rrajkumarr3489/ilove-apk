@@ -202,7 +202,7 @@ class _ResultCard extends StatelessWidget {
     final arriveDay = b.arrivesMin ~/ 1440;
     final via = viaText(b.viaIds);
     final tag = b.trip.tag(app.lang);
-    final fav = repo.isFavRoute(r.id);
+    final fav = repo.isFavTrip(b.trip.id);
     return Opacity(
       opacity: cancelled ? 0.6 : 1,
       child: SoftCard(
@@ -265,7 +265,7 @@ class _ResultCard extends StatelessWidget {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? kRed : kMuted, size: 22),
-                  onPressed: () => repo.toggleFavRoute(r.id),
+                  onPressed: () => repo.toggleFavTrip(b.trip.id),
                 ),
               ],
             ),

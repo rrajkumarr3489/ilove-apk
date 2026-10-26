@@ -756,7 +756,7 @@ class _AppDrawer extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const BrandMark(size: 34, onDark: true),
+                const SizedBox(height: 44, child: _HeaderLogo(alignLeft: true)),
                 const SizedBox(height: 10),
                 Text(
                   name.isNotEmpty ? app.tr('Hello, $name', 'வணக்கம், $name') : app.tr('Welcome', 'வணக்கம்'),
@@ -830,14 +830,17 @@ class _AppDrawer extends StatelessWidget {
 
 /// "I ♥ APK" on one line, white, red heart (header of the home page).
 class _HeaderLogo extends StatelessWidget {
-  const _HeaderLogo();
+  final bool alignLeft;
+
+  const _HeaderLogo({this.alignLeft = false});
 
   @override
   Widget build(BuildContext context) {
     const style = TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0, letterSpacing: 1);
-    return const FittedBox(
+    return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Row(
+      alignment: alignLeft ? Alignment.centerLeft : Alignment.center,
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
