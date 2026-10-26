@@ -433,7 +433,6 @@ class _NewsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = repo.news.take(5).toList();
-    if (items.isEmpty) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
@@ -452,6 +451,22 @@ class _NewsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: SoftCard(
+                child: Row(
+                  children: [
+                    const Icon(Icons.newspaper, color: kMuted),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(app.tr('News will appear here soon', 'செய்திகள் விரைவில் இங்கே வரும்'),
+                          style: ts(14, color: kMuted, weight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           for (final n in items)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
