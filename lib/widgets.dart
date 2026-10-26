@@ -180,17 +180,23 @@ class BrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, height: 1.1),
-        children: [
-          TextSpan(text: 'I ', style: TextStyle(color: onDark ? Colors.white : kBrand)),
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Icon(Icons.favorite, color: const Color(0xFFFF5252), size: size * 0.9),
-          ),
-          TextSpan(text: ' APK', style: TextStyle(color: onDark ? Colors.white : kNavy)),
-        ],
+    // The real logo (small PNG inside the app). If it cannot be loaded, the text version is shown.
+    return Image.asset(
+      'assets/logo.png',
+      height: size * 1.9,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stack) => Text.rich(
+        TextSpan(
+          style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, height: 1.1),
+          children: [
+            TextSpan(text: 'I ', style: TextStyle(color: onDark ? Colors.white : kBrand)),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Icon(Icons.favorite, color: const Color(0xFFFF5252), size: size * 0.9),
+            ),
+            TextSpan(text: ' APK', style: TextStyle(color: onDark ? Colors.white : kNavy)),
+          ],
+        ),
       ),
     );
   }

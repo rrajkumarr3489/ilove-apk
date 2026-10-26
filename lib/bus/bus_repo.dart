@@ -22,6 +22,9 @@ class BusRepo extends ChangeNotifier {
   final Map<int, Notice> notices = {};
   final Map<String, String> settings = {};
 
+  /// Home-screen sections as sent by the server (name, colour, icon, live or not).
+  List<Map<String, dynamic>> sections = <Map<String, dynamic>>[];
+
   String? serverTime;
   DateTime? lastSync;
   String? lastError;
@@ -106,6 +109,7 @@ class BusRepo extends ChangeNotifier {
       final n = Notice(j);
       notices[n.id] = n;
     }
+    sections = _maps(m['sections']);
     final st = m['settings'];
     settings.clear();
     if (st is Map) {
@@ -141,6 +145,7 @@ class BusRepo extends ChangeNotifier {
       'trips': [for (final l in tripsByRoute.values) for (final t in l) t.raw],
       'notices': notices.values.map((e) => e.raw).toList(),
       'settings': settings,
+      'sections': sections,
     };
     try {
       await f.writeAsString(jsonEncode(map));
@@ -203,6 +208,8 @@ class BusRepo extends ChangeNotifier {
   Future<void> _loadConfigQuietly() async {
     try {
       final j = await BusApi.get('/config') as Map<String, dynamic>;
+      final sec = j['sections'];
+      if (sec is List) sections = _maps(sec);
       final s = j['settings'];
       if (s is Map) {
         settings.clear();
