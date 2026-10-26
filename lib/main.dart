@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'auth/auth_service.dart';
@@ -8,6 +9,8 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Portrait only: the app never turns sideways.
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await app.init();
   await repo.init();
   runApp(const ILoveApkApp());

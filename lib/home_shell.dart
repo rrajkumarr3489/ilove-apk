@@ -176,7 +176,7 @@ class HomeTab extends StatelessWidget {
                   onPressed: () => Scaffold.of(context).openDrawer(),
                   icon: const Icon(Icons.menu, color: Colors.white, size: 30),
                 ),
-                const Expanded(child: Center(child: BrandMark(size: 30, onDark: true))),
+                const Expanded(child: Center(child: _HeaderLogo())),
                 IconButton(
                   onPressed: onOpenUpdates,
                   icon: Badge(
@@ -232,7 +232,7 @@ class HomeTab extends StatelessWidget {
                 left: 14,
                 right: 14,
                 bottom: -28,
-                child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()))),
+                child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen()))),
               ),
             ],
           ),
@@ -809,6 +809,125 @@ class _AppDrawer extends StatelessWidget {
         Navigator.pop(context);
         onTab(tab);
       },
+    );
+  }
+}
+
+/// "I ♥ APK" on one line, white, red heart (header of the home page).
+class _HeaderLogo extends StatelessWidget {
+  const _HeaderLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0, letterSpacing: 1);
+    return const FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text('I', style: style),
+          SizedBox(width: 6),
+          Icon(Icons.favorite, color: Color(0xFFE50914), size: 50),
+          SizedBox(width: 6),
+          Text('APK', style: style),
+        ],
+      ),
+    );
+  }
+}
+
+/// Search page: type to filter the services (Tamil or English).
+class ServiceSearchScreen extends StatefulWidget {
+  const ServiceSearchScreen({super.key});
+
+  @override
+  State<ServiceSearchScreen> createState() => _ServiceSearchScreenState();
+}
+
+class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
+  final TextEditingController _c = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  bool _match(TileInfo t) {
+    final q = _q.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    final hay = '${t.title} ${t.titleTa} ${t.tagline} ${t.taglineTa} ${t.key}'.toLowerCase();
+    return hay.contains(q);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = currentTiles().where(_match).toList();
+    return Scaffold(
+      backgroundColor: kCream,
+      appBar: AppBar(
+        backgroundColor: kCream,
+        titleSpacing: 0,
+        title: TextField(
+          controller: _c,
+          autofocus: true,
+          onChanged: (v) => setState(() => _q = v),
+          style: ts(16),
+          decoration: InputDecoration(
+            hintText: app.tr('Search services', 'சேவைகளை தேடுங்கள்'),
+            border: InputBorder.none,
+            suffixIcon: _q.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      _c.clear();
+                      setState(() => _q = '');
+                    },
+                  ),
+          ),
+        ),
+      ),
+      body: list.isEmpty
+          ? Center(child: Text(app.tr('No service found', 'சேவை எதுவும் இல்லை'), style: ts(15, color: kMuted)))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
+              children: [
+                for (final t in list)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SoftCard(
+                      onTap: () => openTile(context, t),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(color: t.color.withAlpha(30), borderRadius: BorderRadius.circular(14)),
+                            child: Icon(t.icon, color: t.color, size: 26),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(app.lang == 'ta' ? t.titleTa : t.title, style: ts(15.5, weight: FontWeight.w800)),
+                                Text(app.lang == 'ta' ? t.title : t.titleTa, style: ts(12.5, color: kMuted)),
+                              ],
+                            ),
+                          ),
+                          if (!t.live)
+                            Text(app.tr('Soon', 'விரைவில்'), style: ts(11, weight: FontWeight.w800, color: const Color(0xFF8A5A00)))
+                          else
+                            const Icon(Icons.chevron_right, color: kNavy),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }
