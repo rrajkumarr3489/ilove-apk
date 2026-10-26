@@ -37,6 +37,7 @@ class _HomeShellState extends State<HomeShell> {
       builder: (context, _) {
         final noticeCount = repo.activeNotices(DateTime.now()).length;
         return Scaffold(
+          drawer: _AppDrawer(onTab: (i) => setState(() => _tab = i)),
           body: SafeArea(
             top: _tab != 0,
             bottom: false,
@@ -88,6 +89,14 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
+void openTile(BuildContext context, TileInfo t) {
+  if (t.live) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
+  } else {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => UnderConstructionScreen(tile: t)));
+  }
+}
+
 class HomeTab extends StatelessWidget {
   final VoidCallback onOpenUpdates;
   final VoidCallback onOpenSettings;
@@ -109,13 +118,7 @@ class HomeTab extends StatelessWidget {
     return out;
   }
 
-  void _open(BuildContext context, TileInfo t) {
-    if (t.live) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
-    } else {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => UnderConstructionScreen(tile: t)));
-    }
-  }
+  void _open(BuildContext context, TileInfo t) => openTile(context, t);
 
   Widget _header(BuildContext context, int noticeCount) {
     final top = MediaQuery.of(context).padding.top;
@@ -130,7 +133,7 @@ class HomeTab extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: onOpenSettings,
+            onPressed: () => Scaffold.of(context).openDrawer(),
             icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           ),
           Expanded(
@@ -187,7 +190,7 @@ class HomeTab extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 44),
+        const SizedBox(height: 40),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: GridView.count(
@@ -196,7 +199,7 @@ class HomeTab extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.82,
+            childAspectRatio: 0.8,
             children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => _open(context, t))],
           ),
         ),
@@ -554,17 +557,14 @@ class _ServiceTile extends StatelessWidget {
 
   Widget _icon() {
     final fallback = Container(
-      width: 62,
-      height: 62,
+      width: 70,
+      height: 70,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [tile.color.withAlpha(215), tile.color],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: tile.color.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: Icon(tile.icon, color: Colors.white, size: 32),
+      child: Icon(tile.icon, color: tile.color, size: 36),
     );
     // Picture from the server media folder: tile_<key>.png (for example tile_bus.png). Without it, the icon above is shown.
     final url = repo.mediaUrl('tile_${tile.key}.png');
@@ -598,7 +598,7 @@ class _ServiceTile extends StatelessWidget {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                padding: const EdgeInsets.fromLTRB(6, 18, 6, 8),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -620,13 +620,15 @@ class _ServiceTile extends StatelessWidget {
               ),
               if (!tile.live)
                 Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  top: 5,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                      child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
                     decoration: BoxDecoration(color: kAmber.withAlpha(60), borderRadius: BorderRadius.circular(8)),
                     child: Text(app.tr('Soon', 'விரைவில்'), style: ts(9.5, weight: FontWeight.w800, color: const Color(0xFF8A5A00))),
-                  ),
+                  )),
                 ),
             ],
           ),
@@ -663,6 +665,94 @@ class UnderConstructionScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Side menu opened from the top-left button: all services, then the app pages.
+class _AppDrawer extends StatelessWidget {
+  final ValueChanged<int> onTab;
+
+  const _AppDrawer({required this.onTab});
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = currentTiles();
+    final name = auth.name;
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 22, 20, 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.only(bottomRight: Radius.circular(30)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const BrandMark(size: 34, onDark: true),
+                const SizedBox(height: 10),
+                Text(
+                  name.isNotEmpty ? app.tr('Hello, $name', 'வணக்கம், $name') : app.tr('Welcome', 'வணக்கம்'),
+                  style: ts(17, weight: FontWeight.w800, color: Colors.white),
+                ),
+                const SizedBox(height: 2),
+                Text(app.tr('Our Aruppukottai', 'நம் அருப்புக்கோட்டை'),
+                    style: ts(13, color: Colors.white.withAlpha(225))),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+            child: Text(app.tr('SERVICES', 'சேவைகள்'),
+                style: TextStyle(fontSize: 12, letterSpacing: 1.6, fontWeight: FontWeight.w800, color: kMuted)),
+          ),
+          for (final t in tiles)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              leading: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(color: t.color.withAlpha(30), borderRadius: BorderRadius.circular(14)),
+                child: Icon(t.icon, color: t.color, size: 24),
+              ),
+              title: Text(app.lang == 'ta' ? t.titleTa : t.title, style: ts(15, weight: FontWeight.w700)),
+              subtitle: Text(app.lang == 'ta' ? t.title : t.titleTa, style: ts(12, color: kMuted)),
+              trailing: t.live
+                  ? const Icon(Icons.chevron_right, color: kMuted)
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: kAmber.withAlpha(60), borderRadius: BorderRadius.circular(8)),
+                      child: Text(app.tr('Soon', 'விரைவில்'),
+                          style: ts(10.5, weight: FontWeight.w800, color: const Color(0xFF8A5A00))),
+                    ),
+              onTap: () {
+                Navigator.pop(context);
+                openTile(context, t);
+              },
+            ),
+          const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: Divider()),
+          _pageTile(context, Icons.favorite_border, app.tr('Favorites', 'பிடித்தவை'), 1),
+          _pageTile(context, Icons.notifications_none, app.tr('Updates', 'தகவல்கள்'), 2),
+          _pageTile(context, Icons.settings_outlined, app.tr('Settings', 'அமைப்புகள்'), 3),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _pageTile(BuildContext context, IconData icon, String label, int tab) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      leading: Icon(icon, color: kNavy),
+      title: Text(label, style: ts(15, weight: FontWeight.w600)),
+      onTap: () {
+        Navigator.pop(context);
+        onTab(tab);
+      },
     );
   }
 }
