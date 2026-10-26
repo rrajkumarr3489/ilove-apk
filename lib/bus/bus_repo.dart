@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -21,6 +22,18 @@ class BusRepo extends ChangeNotifier {
   final Map<int, List<Trip>> tripsByRoute = {};
   final Map<int, Notice> notices = {};
   final Map<String, String> settings = {};
+
+  /// Address of a picture in the server media folder (null when the folder is not set yet).
+  String? mediaUrl(String file) {
+    var base = settings['Media.BaseUrl'] ?? '';
+    if (base.isEmpty || file.isEmpty) return null;
+    if (file.startsWith('http')) return file;
+    if (!base.endsWith('/')) base = '$base/';
+    return '$base$file';
+  }
+
+  /// "Today's news" cards on the home screen. They are read from the file news.json in the media folder.
+  List<NewsItem> news = <NewsItem>[];
 
   /// Home-screen sections as sent by the server (name, colour, icon, live or not).
   List<Map<String, dynamic>> sections = <Map<String, dynamic>>[];
@@ -203,7 +216,43 @@ class BusRepo extends ChangeNotifier {
 
   /// Settings from the server (banner pictures etc). Called every time the app opens,
   /// so a change made on the server shows up without waiting for a timetable download.
-  Future<void> loadConfig() => _loadConfigQuietly();
+  Future<void> loadConfig() async {
+    await _loadConfigQuietly();
+    await _loadNews();
+  }
+
+  Future<void> _loadNews() async {
+    final cached = app.getString('news.json');
+    if (news.isEmpty && cached != null) news = _parseNews(cached);
+    final url = mediaUrl('news.json');
+    if (url == null) return;
+    try {
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
+      if (res.statusCode != 200) return;
+      final text = utf8.decode(res.bodyBytes);
+      final list = _parseNews(text);
+      news = list;
+      await app.setString('news.json', text);
+      notifyListeners();
+    } catch (_) {
+      // News is optional; keep what we have.
+    }
+  }
+
+  List<NewsItem> _parseNews(String text) {
+    try {
+      dynamic d = jsonDecode(text);
+      if (d is Map) d = d['items'];
+      if (d is! List) return <NewsItem>[];
+      final out = <NewsItem>[];
+      for (final e in d) {
+        if (e is Map) out.add(NewsItem(Map<String, dynamic>.from(e)));
+      }
+      return out;
+    } catch (_) {
+      return <NewsItem>[];
+    }
+  }
 
   Future<void> _loadConfigQuietly() async {
     try {

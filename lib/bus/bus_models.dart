@@ -285,3 +285,21 @@ class SavedSearch {
     return SavedSearch(a, b, c == 0 ? null : c);
   }
 }
+
+/// One card in "Today's news" (from news.json in the media folder).
+class NewsItem {
+  final String title;
+  final String titleTa;
+  final String date;
+  final String image;
+  final String link;
+
+  NewsItem(Map<String, dynamic> j)
+      : title = jStr(j['title']),
+        titleTa = jStr(j['titleTa']),
+        date = jStr(j['date']),
+        image = jStr(j['image']),
+        link = jStr(j['link']);
+
+  String name(String lang) => (lang == 'ta' && titleTa.isNotEmpty) ? titleTa : title;
+}

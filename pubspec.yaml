@@ -1,7 +1,7 @@
 name: ilove_apk
 description: I Love Aruppukottai - local town app (bus timings online with offline copy)
 publish_to: "none"
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -31,3 +31,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
+    - assets/logo_white.png

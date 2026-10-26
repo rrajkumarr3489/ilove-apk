@@ -182,7 +182,7 @@ class BrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     // The real logo (small PNG inside the app). If it cannot be loaded, the text version is shown.
     return Image.asset(
-      'assets/logo.png',
+      onDark ? 'assets/logo_white.png' : 'assets/logo.png',
       height: size * 1.9,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stack) => Text.rich(
