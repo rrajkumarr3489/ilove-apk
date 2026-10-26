@@ -50,6 +50,9 @@ jobs:
 
       - run: rm -rf test
       - run: flutter pub get
+      - name: Make the app icon from assets/icon.png
+        continue-on-error: true
+        run: dart run flutter_launcher_icons
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Build small APKs (one per phone type)
         run: flutter build apk --release --split-per-abi
