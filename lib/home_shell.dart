@@ -375,14 +375,20 @@ class _BannerCarouselState extends State<BannerCarousel> {
               errorWidget: (c, u, e) => _HeroBanner(height: widget.height),
             ),
           ),
-          // soft fade into the page colour, like the design
-          const IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.center,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x00FFF6EC), kCream],
+          // short soft fade at the very bottom only (the search bar sits over it)
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 44,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x00FFF6EC), kCream],
+                  ),
                 ),
               ),
             ),
