@@ -237,6 +237,12 @@ class BusRepo extends ChangeNotifier {
     }
   }
 
+  /// Full news list for the news page.
+  Future<List<NewsItem>> fetchNews({int top = 30}) async {
+    final d = await BusApi.get('/news?top=$top');
+    return _parseNews(jsonEncode(d));
+  }
+
   List<NewsItem> _parseNews(String text) {
     try {
       final d = jsonDecode(text);

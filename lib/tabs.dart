@@ -421,8 +421,6 @@ class _SettingsTabState extends State<SettingsTab> {
                       : const Icon(Icons.refresh, color: kMuted)),
               _row(Icons.cloud_download_outlined, app.tr('Download timetable again', 'நேரங்களை மீண்டும் பதிவிறக்கு'),
                   onTap: repo.syncing ? null : _redownload),
-              _row(Icons.settings_ethernet, app.tr('Server address', 'சர்வர் முகவரி'),
-                  sub: app.serverConfigured ? app.serverText : app.tr('Not set', 'அமைக்கவில்லை'), onTap: _serverDialog),
             ]),
             Padding(
               padding: const EdgeInsets.only(bottom: 14),

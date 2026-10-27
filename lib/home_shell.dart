@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_state.dart';
@@ -61,7 +62,28 @@ class _HomeShellState extends State<HomeShell> {
     return ListenableBuilder(
       listenable: Listenable.merge([app, repo, auth]),
       builder: (context, _) {
-        return Scaffold(
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            if (_tab != 0) {
+              setState(() => _tab = 0);
+              return;
+            }
+            final exit = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(app.tr('Exit app?', 'வெளியேறவா?')),
+                content: Text(app.tr('Are you sure you want to exit the app?', 'நீங்கள் ஆப்பிலிருந்து வெளியேற விரும்புகிறீர்களா?')),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(app.tr('Cancel', 'இல்லை'))),
+                  FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(app.tr('Exit', 'வெளியேறு'))),
+                ],
+              ),
+            );
+            if (exit == true) SystemNavigator.pop();
+          },
+          child: Scaffold(
           drawer: _AppDrawer(onTab: (i) => setState(() => _tab = i), onUpdates: _openUpdates),
           body: SafeArea(
             top: _tab != 0,
@@ -104,14 +126,16 @@ class _HomeShellState extends State<HomeShell> {
               ),
             ],
           ),
-        );
+        ));
       },
     );
   }
 }
 
 void openTile(BuildContext context, TileInfo t) {
-  if (t.live) {
+  if (t.key == 'news') {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsListScreen()));
+  } else if (t.live) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
   } else {
     Navigator.push(context, MaterialPageRoute(builder: (_) => UnderConstructionScreen(tile: t)));
@@ -249,7 +273,7 @@ class HomeTab extends StatelessWidget {
               children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
             ),
           ),
-          const Padding(padding: EdgeInsets.fromLTRB(14, 0, 14, 0), child: _NextBusCard()),
+          const SizedBox(height: 16),
           _NewsSection(onMore: onAllServices),
         ],
       ),
@@ -946,6 +970,88 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
                   ),
               ],
             ),
+    );
+  }
+}
+
+/// All news (Tamil / English as the person chose), newest first.
+class NewsListScreen extends StatefulWidget {
+  const NewsListScreen({super.key});
+
+  @override
+  State<NewsListScreen> createState() => _NewsListScreenState();
+}
+
+class _NewsListScreenState extends State<NewsListScreen> {
+  List<NewsItem> _items = repo.news;
+  bool _loading = true;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    try {
+      final list = await repo.fetchNews();
+      if (!mounted) return;
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _failed = _items.isEmpty;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kCream,
+      appBar: AppBar(
+        backgroundColor: kCream,
+        title: Text(app.tr('Local News', 'உள்ளூர் செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: _items.isEmpty
+            ? ListView(
+                children: [
+                  const SizedBox(height: 120),
+                  Center(
+                    child: _loading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            _failed
+                                ? app.tr('Could not load news. Pull down to try again.', 'செய்திகளை ஏற்ற முடியவில்லை. கீழே இழுத்து மீண்டும் முயற்சிக்கவும்.')
+                                : app.tr('No news yet', 'செய்திகள் இல்லை'),
+                            textAlign: TextAlign.center,
+                            style: ts(15, color: kMuted),
+                          ),
+                  ),
+                ],
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
+                children: [
+                  for (final n in _items)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _NewsCard(item: n),
+                    ),
+                ],
+              ),
+      ),
     );
   }
 }

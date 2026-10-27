@@ -38,7 +38,8 @@ const List<TileInfo> kTiles = [
       title: 'Local News',
       titleTa: 'உள்ளூர் செய்திகள்',
       icon: Icons.newspaper,
-      color: Color(0xFF1E88E5)),
+      color: Color(0xFF1E88E5),
+      live: true),
   TileInfo(
       key: 'train',
       title: 'Train Timings',
@@ -139,7 +140,7 @@ List<TileInfo> currentTiles() {
       titleTa: (r['nameTa'] ?? '').toString(),
       icon: _iconFor((r['iconName'] ?? '').toString()),
       color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? const Color(0xFF1B6CA8) : base.color),
-      live: r['isLive'] == true && key == 'bus',
+      live: (r['isLive'] == true && key == 'bus') || key == 'news',
       tagline: (r['taglineEn'] ?? '').toString(),
       taglineTa: (r['taglineTa'] ?? '').toString(),
     ));
