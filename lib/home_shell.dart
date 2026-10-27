@@ -1020,7 +1020,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
       backgroundColor: kCream,
       appBar: AppBar(
         backgroundColor: kCream,
-        title: Text(app.tr('Local News', 'உள்ளூர் செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
+        title: Text(app.tr('News', 'செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
       ),
       body: RefreshIndicator(
         onRefresh: _load,

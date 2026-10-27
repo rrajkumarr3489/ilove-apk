@@ -35,8 +35,8 @@ const List<TileInfo> kTiles = [
       live: true),
   TileInfo(
       key: 'news',
-      title: 'Local News',
-      titleTa: 'உள்ளூர் செய்திகள்',
+      title: 'News',
+      titleTa: 'செய்திகள்',
       icon: Icons.newspaper,
       color: Color(0xFF1E88E5),
       live: true),
@@ -48,8 +48,8 @@ const List<TileInfo> kTiles = [
       color: Color(0xFF5E35B1)),
   TileInfo(
       key: 'services',
-      title: 'Local Services',
-      titleTa: 'உள்ளூர் சேவைகள்',
+      title: 'Home Services',
+      titleTa: 'உதவி சேவைகள்',
       icon: Icons.build,
       color: Color(0xFF00897B)),
   TileInfo(
@@ -60,14 +60,14 @@ const List<TileInfo> kTiles = [
       color: Color(0xFFD81B60)),
   TileInfo(
       key: 'shops',
-      title: 'Local Shops',
-      titleTa: 'உள்ளூர் கடைகள்',
+      title: 'Shops',
+      titleTa: 'கடைகள்',
       icon: Icons.storefront,
       color: Color(0xFFF9A825)),
   TileInfo(
       key: 'food',
-      title: 'Local Food',
-      titleTa: 'உள்ளூர் உணவு',
+      title: 'Food & Hotels',
+      titleTa: 'உணவகங்கள்',
       icon: Icons.restaurant,
       color: Color(0xFFE53935)),
   TileInfo(
