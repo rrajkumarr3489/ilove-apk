@@ -15,6 +15,7 @@ import 'bus/bus_repo.dart';
 import 'bus/bus_widgets.dart';
 import 'bus/departures_screen.dart';
 import 'bus/notices_screen.dart';
+import 'news_submit.dart';
 import 'tabs.dart';
 import 'theme.dart';
 import 'tiles.dart';
@@ -92,44 +93,75 @@ class _HomeShellState extends State<HomeShell> {
               index: _tab,
               children: [
                 HomeTab(onOpenUpdates: _openUpdates, onAllServices: () => setState(() => _tab = 2)),
-                const FavoritesTab(),
-                const AllServicesTab(),
-                const SettingsTab(),
+                FavoritesTab(),
+                AllServicesTab(),
+                SettingsTab(),
               ],
             ),
           ),
-          bottomNavigationBar: NavigationBar(
-            indicatorColor: kBrand,
-            backgroundColor: Colors.white,
-            selectedIndex: _tab,
-            onDestinationSelected: (i) => setState(() => _tab = i),
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home_outlined),
-                selectedIcon: const Icon(Icons.home, color: Colors.white),
-                label: app.tr('Home', 'முகப்பு'),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [BoxShadow(color: Color(0x33E8590C), blurRadius: 14, offset: Offset(0, -4))],
+            ),
+            child: NavigationBarTheme(
+              data: NavigationBarThemeData(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                indicatorColor: Colors.white,
+                labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600,
+                    color: Colors.white)),
+                iconTheme: WidgetStateProperty.resolveWith((states) =>
+                    IconThemeData(size: 26, color: states.contains(WidgetState.selected) ? kBrand : Colors.white)),
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.star_border),
-                selectedIcon: const Icon(Icons.star, color: Colors.white),
-                label: app.tr('Favorites', 'பிடித்தவை'),
+              child: NavigationBar(
+                selectedIndex: _tab,
+                onDestinationSelected: (i) => setState(() => _tab = i),
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home),
+                    label: app.tr('Home', 'முகப்பு'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.star_border),
+                    selectedIcon: const Icon(Icons.star),
+                    label: app.tr('Favorites', 'பிடித்தவை'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.grid_view),
+                    selectedIcon: const Icon(Icons.grid_view_rounded),
+                    label: app.tr('All services', 'அனைத்து சேவைகள்'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.person_outline),
+                    selectedIcon: const Icon(Icons.person),
+                    label: app.tr('Me', 'எனது'),
+                  ),
+                ],
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.grid_view),
-                selectedIcon: const Icon(Icons.grid_view_rounded, color: Colors.white),
-                label: app.tr('All services', 'அனைத்து சேவைகள்'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person, color: Colors.white),
-                label: app.tr('Me', 'எனது'),
-              ),
-            ],
+            ),
           ),
         ));
       },
     );
   }
+}
+
+/// One order everywhere (home, side menu, all services): the order of the design.
+const List<String> kTileOrder = ['bus', 'news', 'food', 'shops', 'parcel', 'services', 'train', 'temples', 'report', 'ai'];
+
+List<TileInfo> orderedTiles() {
+  final list = List<TileInfo>.of(currentTiles());
+  int rank(TileInfo t) {
+    final i = kTileOrder.indexOf(t.key);
+    return i < 0 ? 100 : i;
+  }
+  list.sort((a, b) => rank(a).compareTo(rank(b)));
+  return list;
 }
 
 void openTile(BuildContext context, TileInfo t) {
@@ -225,56 +257,57 @@ class HomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final banners = _banners();
     final noticeCount = repo.activeNotices(DateTime.now()).length;
-    final all = currentTiles();
-    // Home shows the main six services (same order as the design); the rest are under "All services".
-    const mainKeys = ['bus', 'news', 'food', 'shops', 'parcel', 'services'];
-    final main = <TileInfo>[];
-    for (final k in mainKeys) {
-      for (final t in all) {
-        if (t.key == k) main.add(t);
-      }
-    }
-    final tiles = main.isEmpty ? all.take(6).toList() : main;
+    final all = orderedTiles();
+    // Home shows the first six services (order of the design); the rest are under "All services".
+    final tiles = all.take(6).toList();
     final headerH = MediaQuery.of(context).padding.top + 112;
-    const bannerH = 250.0;
+    final bannerH = (MediaQuery.of(context).size.height * 0.30).clamp(190.0, 250.0).toDouble();
+    const overlap = 28.0;
     return Container(
       color: kCream,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
         children: [
+          // fixed part: header, banner and search bar stay in place
           Stack(
             clipBehavior: Clip.none,
             children: [
               Padding(
-                padding: EdgeInsets.only(top: headerH - 34),
+                padding: EdgeInsets.only(top: headerH - 34, bottom: overlap + 4),
                 child: banners.isEmpty
-                    ? const _HeroBanner(height: bannerH)
+                    ? _HeroBanner(height: bannerH)
                     : BannerCarousel(key: ValueKey(banners.map((e) => e.url).join(',')), items: banners, height: bannerH),
               ),
               Positioned(top: 0, left: 0, right: 0, child: _header(context, headerH, noticeCount)),
               Positioned(
                 left: 14,
                 right: 14,
-                bottom: -28,
+                bottom: 0,
                 child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen()))),
               ),
             ],
           ),
-          const SizedBox(height: 44),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.9,
-              children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
+          // only this part scrolls: services and news
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(top: 14, bottom: 24),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.9,
+                    children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _NewsSection(onMore: onAllServices),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          _NewsSection(onMore: onAllServices),
         ],
       ),
     );
@@ -701,30 +734,150 @@ class _ServiceTile extends StatelessWidget {
   }
 }
 
-/// Every service in one list (the third bottom tab).
+/// Every service as a colourful card (the third bottom tab).
 class AllServicesTab extends StatelessWidget {
   const AllServicesTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final tiles = currentTiles();
-    return Container(
-      color: kCream,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 18, 14, 24),
-        children: [
-          Text(app.tr('All services', 'அனைத்து சேவைகள்'), style: ts(22, weight: FontWeight.w900)),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.9,
-            children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
+    return ListenableBuilder(
+      listenable: Listenable.merge([app, repo]),
+      builder: (context, _) {
+        final tiles = orderedTiles();
+        final top = MediaQuery.of(context).padding.top;
+        return Container(
+          color: kCream,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                padding: EdgeInsets.fromLTRB(20, top + 18, 12, 22),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(app.tr('All services', 'அனைத்து சேவைகள்'), style: ts(24, weight: FontWeight.w900, color: Colors.white)),
+                          const SizedBox(height: 4),
+                          Text(app.tr('Everything in Aruppukottai, one place', 'அருப்புக்கோட்டை சேவைகள் ஒரே இடத்தில்'),
+                              style: ts(13.5, color: Colors.white.withAlpha(230))),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen())),
+                      icon: const Icon(Icons.search, color: Colors.white, size: 28),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.02,
+                  children: [for (final t in tiles) _ServiceCard(tile: t, onTap: () => openTile(context, t))],
+                ),
+              ),
+            ],
           ),
-        ],
+        );
+      },
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  final TileInfo tile;
+  final VoidCallback onTap;
+
+  const _ServiceCard({required this.tile, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = app.lang == 'ta' ? tile.titleTa : tile.title;
+    final secondary = app.lang == 'ta' ? tile.title : tile.titleTa;
+    final tag = app.lang == 'ta' ? (tile.taglineTa.isNotEmpty ? tile.taglineTa : tile.tagline) : (tile.tagline.isNotEmpty ? tile.tagline : tile.taglineTa);
+    final url = repo.mediaUrl('tile_${tile.key}.png');
+    final iconBox = Container(
+      width: 52,
+      height: 52,
+      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      padding: const EdgeInsets.all(8),
+      child: url == null
+          ? Icon(tile.icon, color: tile.color, size: 28)
+          : CachedNetworkImage(
+              imageUrl: url,
+              fit: BoxFit.contain,
+              placeholder: (c, u) => Icon(tile.icon, color: tile.color, size: 28),
+              errorWidget: (c, u, e) => Icon(tile.icon, color: tile.color, size: 28),
+            ),
+    );
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [tile.color, Color.alphaBlend(Colors.black.withAlpha(45), tile.color)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [BoxShadow(color: tile.color.withAlpha(80), blurRadius: 12, offset: const Offset(0, 6))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -14,
+                bottom: -14,
+                child: Icon(tile.icon, size: 96, color: Colors.white.withAlpha(36)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        iconBox,
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: tile.live ? Colors.white : Colors.white.withAlpha(60),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            tile.live ? app.tr('Open', 'திற') : app.tr('Soon', 'விரைவில்'),
+                            style: ts(10.5, weight: FontWeight.w800, color: tile.live ? tile.color : Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(16, weight: FontWeight.w900, color: Colors.white, height: 1.15)),
+                    const SizedBox(height: 2),
+                    Text(tag.isNotEmpty ? tag : secondary,
+                        maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(11.5, color: Colors.white.withAlpha(225), height: 1.2)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -770,7 +923,7 @@ class _AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tiles = currentTiles();
+    final tiles = orderedTiles();
     final name = auth.name;
     return Drawer(
       backgroundColor: Colors.white,
@@ -912,7 +1065,7 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final list = currentTiles().where(_match).toList();
+    final list = orderedTiles().where(_match).toList();
     return Scaffold(
       backgroundColor: kCream,
       appBar: AppBar(
@@ -1027,6 +1180,20 @@ class _NewsListScreenState extends State<NewsListScreen> {
       appBar: AppBar(
         backgroundColor: kCream,
         title: Text(app.tr('News', 'செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
+        actions: [
+          IconButton(
+            tooltip: app.tr('My news', 'நான் அனுப்பிய செய்திகள்'),
+            icon: const Icon(Icons.list_alt),
+            onPressed: () => openMyNews(context),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: kBrand,
+        foregroundColor: Colors.white,
+        onPressed: () => openAddNews(context),
+        icon: const Icon(Icons.add),
+        label: Text(app.tr('Add news', 'செய்தி சேர்க்க')),
       ),
       body: RefreshIndicator(
         onRefresh: _load,

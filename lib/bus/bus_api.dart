@@ -48,6 +48,15 @@ class BusApi {
     return _handle(res);
   }
 
+  /// Sends a picture (JPEG bytes) as the request body.
+  static Future<dynamic> postBytes(String path, List<int> bytes) async {
+    final uri = Uri.parse('${app.apiBase}$path');
+    final h = Map<String, String>.from(_headers);
+    h['Content-Type'] = 'image/jpeg';
+    final res = await http.post(uri, headers: h, body: bytes).timeout(const Duration(seconds: 60));
+    return _handle(res);
+  }
+
   static Future<dynamic> put(String path, Object body) async {
     final uri = Uri.parse('${app.apiBase}$path');
     final res = await http
