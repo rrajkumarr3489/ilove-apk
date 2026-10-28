@@ -289,7 +289,7 @@ class HomeTab extends StatelessWidget {
           // only this part scrolls: services and news
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.only(top: 14, bottom: 24),
+              padding: const EdgeInsets.only(top: 8, bottom: 12),
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -299,11 +299,11 @@ class HomeTab extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: 0.9,
+                    childAspectRatio: 1.0,
                     children: [for (final t in tiles) _ServiceTile(tile: t, onTap: () => openTile(context, t))],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 _NewsSection(onMore: onAllServices),
               ],
             ),
@@ -715,7 +715,7 @@ class _ServiceTile extends StatelessWidget {
               children: [
                 Expanded(child: Center(child: _icon())),
                 const SizedBox(height: 4),
-                Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w800, height: 1.15)),
+                Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w800, height: 1.15)),
                 const SizedBox(height: 2),
                 Row(
                   children: [
@@ -734,9 +734,23 @@ class _ServiceTile extends StatelessWidget {
   }
 }
 
-/// Every service as a colourful card (the third bottom tab).
+/// All services (third bottom tab): clean list. Live services first as wide cards, the rest as a compact grid.
 class AllServicesTab extends StatelessWidget {
   const AllServicesTab({super.key});
+
+  Widget _sectionTitle(String text, {String? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 10),
+      child: Row(
+        children: [
+          Container(width: 4, height: 18, decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(4))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: ts(16, weight: FontWeight.w900, color: kInk))),
+          if (trailing != null) Text(trailing, style: ts(12, color: kMuted, weight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -744,50 +758,68 @@ class AllServicesTab extends StatelessWidget {
       listenable: Listenable.merge([app, repo]),
       builder: (context, _) {
         final tiles = orderedTiles();
+        final live = tiles.where((t) => t.live).toList();
+        final soon = tiles.where((t) => !t.live).toList();
         final top = MediaQuery.of(context).padding.top;
         return Container(
           color: kCream,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              Container(
-                padding: EdgeInsets.fromLTRB(20, top + 18, 12, 22),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(app.tr('All services', 'அனைத்து சேவைகள்'), style: ts(24, weight: FontWeight.w900, color: Colors.white)),
-                          const SizedBox(height: 4),
-                          Text(app.tr('Everything in Aruppukottai, one place', 'அருப்புக்கோட்டை சேவைகள் ஒரே இடத்தில்'),
-                              style: ts(13.5, color: Colors.white.withAlpha(230))),
-                        ],
-                      ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: EdgeInsets.fromLTRB(20, top + 16, 20, 40),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen())),
-                      icon: const Icon(Icons.search, color: Colors.white, size: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(app.tr('All services', 'அனைத்து சேவைகள்'), style: ts(24, weight: FontWeight.w900, color: Colors.white)),
+                        const SizedBox(height: 2),
+                        Text(app.tr('Everything in Aruppukottai, one place', 'அருப்புக்கோட்டை சேவைகள் ஒரே இடத்தில்'),
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, color: Colors.white.withAlpha(235))),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: -24,
+                    child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen()))),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.02,
-                  children: [for (final t in tiles) _ServiceCard(tile: t, onTap: () => openTile(context, t))],
+              const SizedBox(height: 24),
+              if (live.isNotEmpty) ...[
+                _sectionTitle(app.tr('Available now', 'இப்போது கிடைப்பவை')),
+                for (final t in live)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: _LiveServiceRow(tile: t, onTap: () => openTile(context, t)),
+                  ),
+              ],
+              if (soon.isNotEmpty) ...[
+                _sectionTitle(app.tr('Coming soon', 'விரைவில் வருகிறது'), trailing: '${soon.length}'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      mainAxisExtent: 76,
+                    ),
+                    itemCount: soon.length,
+                    itemBuilder: (c, i) => _SoonServiceCard(tile: soon[i], onTap: () => openTile(context, soon[i])),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         );
@@ -796,86 +828,141 @@ class AllServicesTab extends StatelessWidget {
   }
 }
 
-class _ServiceCard extends StatelessWidget {
+/// Coloured rounded square with the service picture (tile_<key>.png from the server) or its icon.
+Widget _serviceIconBox(TileInfo tile, double size, {bool solid = true}) {
+  final url = repo.mediaUrl('tile_${tile.key}.png');
+  final iconSize = size * 0.5;
+  final icon = Icon(tile.icon, color: solid ? Colors.white : tile.color, size: iconSize);
+  return Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      gradient: solid
+          ? LinearGradient(colors: [tile.color, Color.alphaBlend(Colors.black.withAlpha(40), tile.color)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+          : null,
+      color: solid ? null : tile.color.withAlpha(30),
+      borderRadius: BorderRadius.circular(size * 0.3),
+    ),
+    padding: EdgeInsets.all(url == null ? 0 : size * 0.12),
+    child: url == null
+        ? Center(child: icon)
+        : CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.contain,
+            placeholder: (c, u) => Center(child: icon),
+            errorWidget: (c, u, e) => Center(child: icon),
+          ),
+  );
+}
+
+String _tileTag(TileInfo tile) {
+  final primary = app.lang == 'ta' ? tile.taglineTa : tile.tagline;
+  final other = app.lang == 'ta' ? tile.tagline : tile.taglineTa;
+  return primary.isNotEmpty ? primary : other;
+}
+
+class _LiveServiceRow extends StatelessWidget {
   final TileInfo tile;
   final VoidCallback onTap;
 
-  const _ServiceCard({required this.tile, required this.onTap});
+  const _LiveServiceRow({required this.tile, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final primary = app.lang == 'ta' ? tile.titleTa : tile.title;
-    final secondary = app.lang == 'ta' ? tile.title : tile.titleTa;
-    final tag = app.lang == 'ta' ? (tile.taglineTa.isNotEmpty ? tile.taglineTa : tile.tagline) : (tile.tagline.isNotEmpty ? tile.tagline : tile.taglineTa);
-    final url = repo.mediaUrl('tile_${tile.key}.png');
-    final iconBox = Container(
-      width: 52,
-      height: 52,
-      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-      padding: const EdgeInsets.all(8),
-      child: url == null
-          ? Icon(tile.icon, color: tile.color, size: 28)
-          : CachedNetworkImage(
-              imageUrl: url,
-              fit: BoxFit.contain,
-              placeholder: (c, u) => Icon(tile.icon, color: tile.color, size: 28),
-              errorWidget: (c, u, e) => Icon(tile.icon, color: tile.color, size: 28),
-            ),
-    );
+    final title = app.lang == 'ta' ? tile.titleTa : tile.title;
+    final sub = app.lang == 'ta' ? tile.title : tile.titleTa;
+    final tag = _tileTag(tile);
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [tile.color, Color.alphaBlend(Colors.black.withAlpha(45), tile.color)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [BoxShadow(color: tile.color.withAlpha(80), blurRadius: 12, offset: const Offset(0, 6))],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tile.color.withAlpha(50)),
+        boxShadow: [BoxShadow(color: tile.color.withAlpha(34), blurRadius: 14, offset: const Offset(0, 5))],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Stack(
-            children: [
-              Positioned(
-                right: -14,
-                bottom: -14,
-                child: Icon(tile.icon, size: 96, color: Colors.white.withAlpha(36)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        iconBox,
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: tile.live ? Colors.white : Colors.white.withAlpha(60),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            tile.live ? app.tr('Open', 'திற') : app.tr('Soon', 'விரைவில்'),
-                            style: ts(10.5, weight: FontWeight.w800, color: tile.live ? tile.color : Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(primary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(16, weight: FontWeight.w900, color: Colors.white, height: 1.15)),
-                    const SizedBox(height: 2),
-                    Text(tag.isNotEmpty ? tag : secondary,
-                        maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(11.5, color: Colors.white.withAlpha(225), height: 1.2)),
-                  ],
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                _serviceIconBox(tile, 60),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(17, weight: FontWeight.w900, color: kInk)),
+                      const SizedBox(height: 2),
+                      Text(tag.isNotEmpty ? tag : sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kMuted, height: 1.25)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(color: tile.color, borderRadius: BorderRadius.circular(20)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(app.tr('Open', 'திற'), style: ts(12.5, weight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.arrow_forward_rounded, size: 15, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SoonServiceCard extends StatelessWidget {
+  final TileInfo tile;
+  final VoidCallback onTap;
+
+  const _SoonServiceCard({required this.tile, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = app.lang == 'ta' ? tile.titleTa : tile.title;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kLine),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                _serviceIconBox(tile, 44, solid: false),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w800, color: kInk, height: 1.15)),
+                      const SizedBox(height: 3),
+                      Text(app.tr('Soon', 'விரைவில்'), style: ts(10.5, weight: FontWeight.w800, color: tile.color)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
