@@ -293,11 +293,12 @@ class HomeTab extends StatelessWidget {
           // only this part scrolls: services and news
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.only(top: 8, bottom: 12),
+              padding: const EdgeInsets.only(top: 6, bottom: 12),
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: GridView.count(
+                    padding: EdgeInsets.zero,
                     crossAxisCount: 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -779,6 +780,7 @@ class AllServicesTab extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
+                    width: double.infinity,
                     padding: EdgeInsets.fromLTRB(20, top + 16, 20, 40),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -816,6 +818,7 @@ class AllServicesTab extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
                   child: GridView.builder(
+                    padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
