@@ -293,7 +293,7 @@ class HomeTab extends StatelessWidget {
           // only this part scrolls: services and news
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.only(top: 6, bottom: 12),
+              padding: const EdgeInsets.only(top: 14, bottom: 12),
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),

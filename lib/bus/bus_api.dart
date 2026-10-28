@@ -57,10 +57,11 @@ class BusApi {
     return _handle(res);
   }
 
+  /// The host blocks HTTP PUT (error 405), so "put" is sent as POST; the server accepts both for these routes.
   static Future<dynamic> put(String path, Object body) async {
     final uri = Uri.parse('${app.apiBase}$path');
     final res = await http
-        .put(uri, headers: _headers, body: jsonEncode(body))
+        .post(uri, headers: _headers, body: jsonEncode(body))
         .timeout(const Duration(seconds: 25));
     return _handle(res);
   }
