@@ -71,11 +71,14 @@ const List<TileInfo> kTiles = [
       icon: Icons.restaurant,
       color: Color(0xFFE53935)),
   TileInfo(
-      key: 'temples',
-      title: 'Temples',
-      titleTa: 'கோயில்கள்',
-      icon: Icons.temple_hindu,
-      color: Color(0xFF8D5524)),
+      key: 'classifieds',
+      title: 'Jobs',
+      titleTa: 'வேலை வாய்ப்புகள்',
+      icon: Icons.work_outline,
+      color: Color(0xFF1565C0),
+      live: true,
+      tagline: 'Jobs near Aruppukottai',
+      taglineTa: 'அருப்புக்கோட்டை அருகில் வேலைகள்'),
   TileInfo(
       key: 'report',
       title: 'Report a Problem',
@@ -108,6 +111,8 @@ IconData _iconFor(String name) {
       return Icons.restaurant;
     case 'temple_hindu':
       return Icons.temple_hindu;
+    case 'work':
+      return Icons.work_outline;
     case 'report_problem':
       return Icons.campaign;
     case 'smart_toy':
@@ -140,7 +145,7 @@ List<TileInfo> currentTiles() {
       titleTa: (r['nameTa'] ?? '').toString(),
       icon: _iconFor((r['iconName'] ?? '').toString()),
       color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? const Color(0xFF1B6CA8) : base.color),
-      live: (r['isLive'] == true && key == 'bus') || key == 'news',
+      live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds',
       tagline: (r['taglineEn'] ?? '').toString(),
       taglineTa: (r['taglineTa'] ?? '').toString(),
     ));

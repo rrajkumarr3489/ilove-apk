@@ -15,7 +15,9 @@ import 'bus/bus_repo.dart';
 import 'bus/bus_widgets.dart';
 import 'bus/departures_screen.dart';
 import 'bus/notices_screen.dart';
+import 'classifieds.dart';
 import 'news_submit.dart';
+import 'share_util.dart';
 import 'tabs.dart';
 import 'theme.dart';
 import 'tiles.dart';
@@ -152,7 +154,7 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 /// One order everywhere (home, side menu, all services): the order of the design.
-const List<String> kTileOrder = ['bus', 'news', 'food', 'shops', 'parcel', 'services', 'train', 'temples', 'report', 'ai'];
+const List<String> kTileOrder = ['bus', 'news', 'food', 'shops', 'parcel', 'services', 'train', 'classifieds', 'report', 'ai'];
 
 List<TileInfo> orderedTiles() {
   final list = List<TileInfo>.of(currentTiles());
@@ -167,6 +169,8 @@ List<TileInfo> orderedTiles() {
 void openTile(BuildContext context, TileInfo t) {
   if (t.key == 'news') {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsListScreen()));
+  } else if (t.key == 'classifieds') {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassifiedsScreen()));
   } else if (t.live) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
   } else {
@@ -585,7 +589,12 @@ class _NewsCard extends StatelessWidget {
               ],
             ),
           ),
-          if (item.link.isNotEmpty) const Icon(Icons.chevron_right, color: kNavy),
+          IconButton(
+            tooltip: app.tr('Share', 'பகிர்'),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.share_outlined, size: 20, color: kNavy),
+            onPressed: () => showShareSheet(context, text: newsShareText(item.name(app.lang), item.link), link: item.link),
+          ),
         ],
       ),
     );
