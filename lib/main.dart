@@ -5,6 +5,7 @@ import 'app_state.dart';
 import 'auth/auth_service.dart';
 import 'bus/bus_repo.dart';
 import 'home_shell.dart';
+import 'push_service.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -24,6 +25,7 @@ class ILoveApkApp extends StatelessWidget {
     return MaterialApp(
       title: 'I Love APK',
       debugShowCheckedModeBanner: false,
+      navigatorKey: rootNavigatorKey,
       theme: buildTheme(),
       home: const AppGate(),
     );
@@ -49,6 +51,7 @@ class _AppGateState extends State<AppGate> {
     repo.registerDevice();
     repo.loadConfig();
     repo.autoSync();
+    PushService.init();   // does nothing until lib/firebase_config.dart is filled
   }
 
   @override
