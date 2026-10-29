@@ -48,6 +48,16 @@ jobs:
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="I Love APK"/' android/app/src/main/AndroidManifest.xml
 
+      # Push notifications (Firebase) need minSdk 24 and the notification permission (Android 13+).
+      - name: Android settings for push (minSdk 24 and notification permission)
+        run: |
+          f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
+          sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
+          grep -n "minSdk" "$f"
+          m=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS "$m" || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$m"
+          grep -n "POST_NOTIFICATIONS" "$m"
+
       - run: rm -rf test
       - run: flutter pub get
       - name: Make the app icon from assets/icon.png
