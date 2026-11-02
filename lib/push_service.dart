@@ -86,13 +86,25 @@ class PushService {
   /// Creates the high-importance channel (banner at the top of the screen, also on the lock screen).
   static Future<void> _initLocal() async {
     try {
-      await _local.initialize(
-        const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
-        onDidReceiveNotificationResponse: (r) {
-          final u = r.payload ?? '';
-          if (u.isNotEmpty) _openUrl(u);
-        },
-      );
+      // The app icon is called launcher_icon (made by the icon generator); ic_launcher is the fallback.
+      Object? last;
+      var ok = false;
+      for (final res in const ['@mipmap/launcher_icon', '@mipmap/ic_launcher']) {
+        try {
+          await _local.initialize(
+            InitializationSettings(android: AndroidInitializationSettings(res)),
+            onDidReceiveNotificationResponse: (r) {
+              final u = r.payload ?? '';
+              if (u.isNotEmpty) _openUrl(u);
+            },
+          );
+          ok = true;
+          break;
+        } catch (e) {
+          last = e;
+        }
+      }
+      if (!ok) throw last ?? 'no icon';
       await _local
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
@@ -108,26 +120,34 @@ class PushService {
     final n = m.notification;
     if (n == null) return;
     final url = (m.data['url'] ?? '').toString();
-    try {
-      await _local.show(
-        m.hashCode & 0x7fffffff,
-        n.title ?? '',
-        n.body ?? '',
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channel.id,
-            _channel.name,
-            channelDescription: _channel.description,
-            importance: Importance.max,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+    // The icon resource is only checked when a notification is shown, so try both names.
+    var shown = false;
+    for (final res in const ['@mipmap/launcher_icon', '@mipmap/ic_launcher']) {
+      try {
+        await _local.show(
+          m.hashCode & 0x7fffffff,
+          n.title ?? '',
+          n.body ?? '',
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channel.id,
+              _channel.name,
+              channelDescription: _channel.description,
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: res,
+            ),
           ),
-        ),
-        payload: url,
-      );
-    } catch (e) {
-      _localError = 'show: $e';
+          payload: url,
+        );
+        shown = true;
+        _localError = _localError.startsWith('init:') ? _localError : '';
+        break;
+      } catch (e) {
+        _localError = 'show($res): $e';
+      }
     }
+    if (shown) return;
     if (_localError.isNotEmpty) _showDialogFallback(n.title ?? '', '${n.body ?? ''}\n\n[banner problem] $_localError', url);
   }
 
