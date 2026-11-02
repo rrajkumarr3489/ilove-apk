@@ -25,6 +25,7 @@ class PushService {
     importance: Importance.max,
   );
   static bool _ready = false;
+  static String _localError = '';
   static String _lastAppToken = '';
   static String _lastSent = '';
 
@@ -95,7 +96,10 @@ class PushService {
       await _local
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
-    } catch (_) {}
+      await _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+    } catch (e) {
+      _localError = 'init: $e';
+    }
   }
 
   /// The app is open: Android does not show a banner by itself, so show the same kind of
@@ -121,7 +125,35 @@ class PushService {
         ),
         payload: url,
       );
-    } catch (_) {}
+    } catch (e) {
+      _localError = 'show: $e';
+    }
+    if (_localError.isNotEmpty) _showDialogFallback(n.title ?? '', '${n.body ?? ''}\n\n[banner problem] $_localError', url);
+  }
+
+  /// Used only when the banner could not be shown: the alert still reaches the person (and shows what went wrong).
+  static void _showDialogFallback(String title, String body, String url) {
+    final ctx = rootNavigatorKey.currentState?.overlay?.context;
+    if (ctx == null) return;
+    showDialog<void>(
+      context: ctx,
+      builder: (c) => AlertDialog(
+        icon: const Icon(Icons.notifications_active, color: Color(0xFFE8590C), size: 34),
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(app.tr('Later', 'பிறகு'))),
+          if (url.isNotEmpty)
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(c);
+                _openUrl(url);
+              },
+              child: Text(app.tr('Open', 'திற')),
+            ),
+        ],
+      ),
+    );
   }
 
   /// The person tapped the notification: open the page it points to (the approval page).
