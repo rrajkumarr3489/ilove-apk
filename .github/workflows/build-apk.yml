@@ -54,7 +54,7 @@ jobs:
         run: |
           f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
           # New Gradle rejects "in" inside the code namespace. Only the namespace changes; the app id stays in.aruppukottai.ilove_apk
-          sed -i -E 's/namespace[ =]+"in\.aruppukottai\.ilove_apk"/namespace = "app.aruppukottai.ilove_apk"/' "$f"
+          sed -i -E 's/namespace[ =]+"[^"]*"/namespace = "app.aruppukottai.ilove_apk"/' "$f"
           for k in $(find android/app/src/main -name 'MainActivity.*'); do sed -i -E 's/^package .*/package app.aruppukottai.ilove_apk/' "$k"; echo "$k"; head -3 "$k"; done
           sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
           python3 - "$f" <<'PY'
@@ -70,7 +70,7 @@ jobs:
               s += '\ndependencies {\n    ' + dep + '\n}\n'
           open(p, 'w').write(s)
           PY
-          grep -n -E "minSdk|esugar" "$f"
+          grep -n -E "namespace|applicationId|minSdk|esugar" "$f"
           m=android/app/src/main/AndroidManifest.xml
           grep -q POST_NOTIFICATIONS "$m" || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$m"
           grep -n "POST_NOTIFICATIONS" "$m"
