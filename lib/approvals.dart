@@ -20,6 +20,17 @@ String _pick(Map<String, dynamic> m, String base) {
   return en.isNotEmpty ? en : ta;
 }
 
+/// Reasons to pick when rejecting: [English, Tamil]. They come from the server (table dbo.RejectReasons);
+/// this list is only used when the server does not send any. The first one is selected by default.
+const List<List<String>> _reasons = [
+  ['Adult / inappropriate content', 'ஆபாச / பொருத்தமற்ற உள்ளடக்கம்'],
+  ['Harmful or violent content', 'வன்முறை / தீங்கு விளைவிக்கும் உள்ளடக்கம்'],
+  ['False or misleading information', 'தவறான / பொய்யான தகவல்'],
+  ['Spam or advertisement', 'ஸ்பேம் / விளம்பரம்'],
+  ['Abusive or hateful language', 'அவதூறு / வெறுப்பு மொழி'],
+  ['Other reason', 'வேறு காரணம்'],
+];
+
 List<Map<String, dynamic>> _maps(dynamic v) {
   if (v is! List) return <Map<String, dynamic>>[];
   return v.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
@@ -43,11 +54,15 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
   bool _loading = true;
   String? _error;
   final Set<String> _busy = <String>{};
+  List<List<String>> _reasonList = _reasons;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this, initialIndex: widget.initialTab == 1 ? 1 : 0);
+    _tabs.addListener(() {
+      if (mounted) setState(() {});
+    });
     _load();
   }
 
@@ -77,6 +92,11 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
       setState(() {
         _news = _maps(m['news']);
         _jobs = _maps(m['jobs']);
+        final rs = _maps(m['reasons'])
+            .map((r) => <String>[_s(r, 'reasonEn'), _s(r, 'reasonTa').isNotEmpty ? _s(r, 'reasonTa') : _s(r, 'reasonEn')])
+            .where((r) => r[0].isNotEmpty)
+            .toList();
+        if (rs.isNotEmpty) _reasonList = rs;
         _loading = false;
       });
     } catch (e) {
@@ -90,25 +110,71 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
     }
   }
 
-  Future<String?> _askNote() async {
-    final c = TextEditingController();
+  Future<String?> _askReason() async {
+    final list = _reasonList;
+    var chosen = 0;
     final r = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(app.tr('Reject this?', 'நிராகரிக்கவா?')),
-        content: TextField(
-          controller: c,
-          maxLength: 200,
-          decoration: InputDecoration(hintText: app.tr('Reason (optional)', 'காரணம் (விருப்பம்)')),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(app.tr('Cancel', 'வேண்டாம்'))),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _kBad),
-            onPressed: () => Navigator.pop(ctx, c.text.trim()),
-            child: Text(app.tr('Reject', 'நிராகரி')),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          titlePadding: const EdgeInsets.fromLTRB(22, 20, 22, 6),
+          contentPadding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+          title: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: _kBad.withAlpha(28), shape: BoxShape.circle),
+                child: const Icon(Icons.block, color: _kBad, size: 21),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(app.tr('Why reject?', 'ஏன் நிராகரிக்கிறீர்கள்?'), style: ts(18, weight: FontWeight.w900))),
+            ],
           ),
-        ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < list.length; i++)
+                  InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => setD(() => chosen = i),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: chosen == i ? _kBad.withAlpha(18) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: chosen == i ? _kBad : kLine),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(chosen == i ? Icons.radio_button_checked : Icons.radio_button_off,
+                              color: chosen == i ? _kBad : kMuted, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(app.lang == 'ta' ? list[i][1] : list[i][0],
+                                style: ts(14.5, weight: chosen == i ? FontWeight.w800 : FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(app.tr('Cancel', 'வேண்டாம்'))),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: _kBad, padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12)),
+              onPressed: () => Navigator.pop(ctx, '${list[chosen][0]} / ${list[chosen][1]}'),
+              child: Text(app.tr('Reject', 'நிராகரி')),
+            ),
+          ],
+        ),
       ),
     );
     return r;
@@ -119,7 +185,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
     if (id.isEmpty || _busy.contains('$kind$id')) return;
     String? note;
     if (!approve) {
-      note = await _askNote();
+      note = await _askReason();
       if (note == null) return;
     }
     setState(() => _busy.add('$kind$id'));
@@ -305,21 +371,50 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
     );
   }
 
-  Widget _tabLabel(String text, int count) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(text),
-          if (count > 0) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-              decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(10)),
-              child: Text('$count', style: ts(11.5, weight: FontWeight.w800, color: Colors.white)),
-            ),
-          ],
-        ],
+  /// One big switch button: icon, name and how many are waiting.
+  Widget _pill(int index, IconData icon, String label, int count) {
+    final on = _tabs.index == index;
+    final dark = Color.lerp(kBrand, Colors.black, 0.2)!;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _tabs.animateTo(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: BoxDecoration(
+            gradient: on ? LinearGradient(colors: [kBrand, dark], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+            color: on ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(90), blurRadius: 12, offset: const Offset(0, 5))] : const [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 21, color: on ? Colors.white : kMuted),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ts(14.5, weight: FontWeight.w800, color: on ? Colors.white : kMuted)),
+              ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                constraints: const BoxConstraints(minWidth: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: on ? Colors.white : (count > 0 ? kBrand : kLine),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$count',
+                    textAlign: TextAlign.center,
+                    style: ts(12.5, weight: FontWeight.w900, color: on ? kBrand : (count > 0 ? Colors.white : kMuted))),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -331,18 +426,25 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
       appBar: AppBar(
         backgroundColor: _kCream,
         title: Text(app.tr('Approvals', 'ஒப்புதல்கள்'), style: ts(19, weight: FontWeight.w900)),
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: kBrand,
-          unselectedLabelColor: kMuted,
-          indicatorColor: kBrand,
-          indicatorWeight: 3,
-          labelStyle: ts(14.5, weight: FontWeight.w800),
-          unselectedLabelStyle: ts(14.5, weight: FontWeight.w600),
-          tabs: [
-            _tabLabel(app.tr('News', 'செய்திகள்'), _news.length),
-            _tabLabel(app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(80),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(14, 4, 14, 12),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: kLine),
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 10, offset: const Offset(0, 3))],
+            ),
+            child: Row(
+              children: [
+                _pill(0, Icons.newspaper, app.tr('News', 'செய்திகள்'), _news.length),
+                const SizedBox(width: 4),
+                _pill(1, Icons.work_outline, app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
