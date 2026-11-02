@@ -48,12 +48,26 @@ jobs:
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="I Love APK"/' android/app/src/main/AndroidManifest.xml
 
-      # Push notifications (Firebase) need minSdk 24 and the notification permission (Android 13+).
-      - name: Android settings for push (minSdk 24 and notification permission)
+      # Push notifications (Firebase) need minSdk 24, the notification permission (Android 13+),
+      # and "desugaring" (needed by the plugin that shows the banner while the app is open).
+      - name: Android settings for push (minSdk 24, notification permission, desugaring)
         run: |
           f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
           sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
-          grep -n "minSdk" "$f"
+          python3 - "$f" <<'PY'
+          import sys, re
+          p = sys.argv[1]
+          s = open(p).read()
+          kts = p.endswith('.kts')
+          if 'oreLibraryDesugaringEnabled' not in s:
+              flag = 'isCoreLibraryDesugaringEnabled = true' if kts else 'coreLibraryDesugaringEnabled true'
+              s = re.sub(r'compileOptions\s*\{', 'compileOptions {\n        ' + flag, s, count=1)
+          if 'desugar_jdk_libs' not in s:
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kts else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              s += '\ndependencies {\n    ' + dep + '\n}\n'
+          open(p, 'w').write(s)
+          PY
+          grep -n -E "minSdk|esugar" "$f"
           m=android/app/src/main/AndroidManifest.xml
           grep -q POST_NOTIFICATIONS "$m" || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$m"
           grep -n "POST_NOTIFICATIONS" "$m"
