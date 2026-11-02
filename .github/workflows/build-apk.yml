@@ -53,9 +53,13 @@ jobs:
       - name: Android settings for push (minSdk 24, notification permission, desugaring)
         run: |
           f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
-          # New Gradle rejects "in" inside the code namespace. Only the namespace changes; the app id stays in.aruppukottai.ilove_apk
+          # New Gradle rejects the word "in" inside the code package. Everywhere in the source files
+          # (manifests, MainActivity) the package becomes app.aruppukottai.ilove_apk.
+          # The installed app id (applicationId) stays in.aruppukottai.ilove_apk, so the app still updates in place.
+          grep -rlE 'in`?\.aruppukottai\.ilove_apk' android/app/src | xargs -r sed -i -E 's/`?in`?\.aruppukottai\.ilove_apk/app.aruppukottai.ilove_apk/g'
           sed -i -E 's/namespace[ =]+"[^"]*"/namespace = "app.aruppukottai.ilove_apk"/' "$f"
-          for k in $(find android/app/src/main -name 'MainActivity.*'); do sed -i -E 's/^package .*/package app.aruppukottai.ilove_apk/' "$k"; echo "$k"; head -3 "$k"; done
+          echo "--- every place that still mentions aruppukottai:"
+          grep -rn "aruppukottai" android --include=*.xml --include=*.kt --include=*.java --include=*.gradle --include=*.kts --include=*.properties || true
           sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
           python3 - "$f" <<'PY'
           import sys, re
