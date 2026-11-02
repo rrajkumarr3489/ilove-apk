@@ -78,6 +78,16 @@ jobs:
           PY
           grep -n -E "namespace|applicationId|minSdk|esugar" "$f"
           m=android/app/src/main/AndroidManifest.xml
+          # White heart for the small notification icon, and tell Firebase to use it (and the alert channel).
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/ic_stat_notify.xml <<'XML'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+            <path android:fillColor="#FFFFFFFF"
+                android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z"/>
+          </vector>
+          XML
+          grep -q default_notification_icon "$m" || sed -i 's#</application>#<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_notify"/>\n        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="ilove_alerts"/>\n    </application>#' "$m"
           grep -q POST_NOTIFICATIONS "$m" || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$m"
           grep -n "POST_NOTIFICATIONS" "$m"
 
