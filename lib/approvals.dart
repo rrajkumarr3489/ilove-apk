@@ -7,6 +7,7 @@ import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
 import 'theme.dart';
 
+const Color _kCream = Color(0xFFFFF6EC);
 const Color _kOk = Color(0xFF1B7A3A);
 const Color _kBad = Color(0xFFB3261E);
 
@@ -269,9 +270,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   Widget build(BuildContext context) {
     final empty = _news.isEmpty && _jobs.isEmpty;
     return Scaffold(
-      backgroundColor: kCream,
+      backgroundColor: _kCream,
       appBar: AppBar(
-        backgroundColor: kCream,
+        backgroundColor: _kCream,
         title: Text(app.tr('Approvals', 'ஒப்புதல்கள்'), style: ts(19, weight: FontWeight.w900)),
       ),
       body: RefreshIndicator(
