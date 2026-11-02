@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_state.dart';
+import 'approvals.dart';
 import 'bus/bus_api.dart';
 import 'firebase_config.dart';
 
@@ -93,10 +94,7 @@ class PushService {
         try {
           await _local.initialize(
             InitializationSettings(android: AndroidInitializationSettings(res)),
-            onDidReceiveNotificationResponse: (r) {
-              final u = r.payload ?? '';
-              if (u.isNotEmpty) _openUrl(u);
-            },
+            onDidReceiveNotificationResponse: (r) => _tap(r.payload ?? ''),
           );
           ok = true;
           break;
@@ -119,10 +117,10 @@ class PushService {
   static Future<void> _onForeground(RemoteMessage m) async {
     final n = m.notification;
     if (n == null) return;
-    final url = (m.data['url'] ?? '').toString();
+    final payload = _payloadOf(m);
     // The icon resource is only checked when a notification is shown, so try both names.
     var shown = false;
-    for (final res in const ['@mipmap/launcher_icon', '@mipmap/ic_launcher']) {
+    for (final res in const ['@drawable/ic_stat_notify', '@mipmap/launcher_icon', '@mipmap/ic_launcher']) {
       try {
         await _local.show(
           m.hashCode & 0x7fffffff,
@@ -138,7 +136,7 @@ class PushService {
               icon: res,
             ),
           ),
-          payload: url,
+          payload: payload,
         );
         shown = true;
         _localError = _localError.startsWith('init:') ? _localError : '';
@@ -148,7 +146,7 @@ class PushService {
       }
     }
     if (shown) return;
-    if (_localError.isNotEmpty) _showDialogFallback(n.title ?? '', '${n.body ?? ''}\n\n[banner problem] $_localError', url);
+    if (_localError.isNotEmpty) _showDialogFallback(n.title ?? '', '${n.body ?? ''}\n\n[banner problem] $_localError', _payloadOf(m));
   }
 
   /// Used only when the banner could not be shown: the alert still reaches the person (and shows what went wrong).
@@ -167,7 +165,7 @@ class PushService {
             FilledButton(
               onPressed: () {
                 Navigator.pop(c);
-                _openUrl(url);
+                _tap(url);
               },
               child: Text(app.tr('Open', 'திற')),
             ),
@@ -176,10 +174,35 @@ class PushService {
     );
   }
 
-  /// The person tapped the notification: open the page it points to (the approval page).
-  static void _open(RemoteMessage m) {
-    final url = (m.data['url'] ?? '').toString();
-    if (url.isNotEmpty) _openUrl(url);
+  /// News / job alerts open the in-app approval screen; anything else with a link opens that link.
+  static String _payloadOf(RemoteMessage m) {
+    final type = (m.data['type'] ?? '').toString();
+    if (type == 'news' || type == 'jobs' || type == 'test') return 'approvals';
+    return (m.data['url'] ?? '').toString();
+  }
+
+  /// The person tapped the notification.
+  static void _open(RemoteMessage m) => _tap(_payloadOf(m));
+
+  static void _tap(String payload) {
+    if (payload.isEmpty) return;
+    if (payload == 'approvals') {
+      _openApprovals();
+    } else {
+      _openUrl(payload);
+    }
+  }
+
+  /// When the app was closed, the screen is not ready at once, so wait a little for it.
+  static Future<void> _openApprovals() async {
+    for (var i = 0; i < 20; i++) {
+      final nav = rootNavigatorKey.currentState;
+      if (nav != null) {
+        nav.push(MaterialPageRoute<void>(builder: (_) => const ApprovalsScreen()));
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
   }
 
   static Future<void> _openUrl(String url) async {
