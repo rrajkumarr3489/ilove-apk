@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_state.dart';
@@ -15,6 +16,14 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 /// Push notifications (Firebase). Only a logged-in person gives his phone's token to the server;
 /// the server alerts the mobile numbers listed in the table dbo.PushRecipients.
 class PushService {
+  static const String _channelId = 'ilove_alerts';
+  static final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    _channelId,
+    'I Love APK alerts',
+    description: 'New news and job alerts',
+    importance: Importance.max,
+  );
   static bool _ready = false;
   static String _lastAppToken = '';
   static String _lastSent = '';
@@ -28,6 +37,7 @@ class PushService {
         options: const FirebaseOptions(apiKey: kFbApiKey, appId: kFbAppId, messagingSenderId: kFbSenderId, projectId: kFbProjectId),
       );
       _ready = true;
+      await _initLocal();
       FirebaseMessaging.onMessage.listen(_onForeground);
       FirebaseMessaging.onMessageOpenedApp.listen(_open);
       FirebaseMessaging.instance.onTokenRefresh.listen(_send);
@@ -72,31 +82,46 @@ class PushService {
     } catch (_) {}
   }
 
-  /// The app is open: show the message as a dialog (the system tray only shows it when the app is closed).
-  static void _onForeground(RemoteMessage m) {
+  /// Creates the high-importance channel (banner at the top of the screen, also on the lock screen).
+  static Future<void> _initLocal() async {
+    try {
+      await _local.initialize(
+        const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
+        onDidReceiveNotificationResponse: (r) {
+          final u = r.payload ?? '';
+          if (u.isNotEmpty) _openUrl(u);
+        },
+      );
+      await _local
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+    } catch (_) {}
+  }
+
+  /// The app is open: Android does not show a banner by itself, so show the same kind of
+  /// notification at the top of the screen (tap opens the page).
+  static Future<void> _onForeground(RemoteMessage m) async {
     final n = m.notification;
-    final ctx = rootNavigatorKey.currentState?.overlay?.context;
-    if (n == null || ctx == null) return;
+    if (n == null) return;
     final url = (m.data['url'] ?? '').toString();
-    showDialog<void>(
-      context: ctx,
-      builder: (c) => AlertDialog(
-        icon: const Icon(Icons.notifications_active, color: Color(0xFFE8590C), size: 34),
-        title: Text(n.title ?? ''),
-        content: Text(n.body ?? ''),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: Text(app.tr('Later', 'பிறகு'))),
-          if (url.isNotEmpty)
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(c);
-                _openUrl(url);
-              },
-              child: Text(app.tr('Open', 'திற')),
-            ),
-        ],
-      ),
-    );
+    try {
+      await _local.show(
+        m.hashCode & 0x7fffffff,
+        n.title ?? '',
+        n.body ?? '',
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channel.id,
+            _channel.name,
+            channelDescription: _channel.description,
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+        payload: url,
+      );
+    } catch (_) {}
   }
 
   /// The person tapped the notification: open the page it points to (the approval page).
