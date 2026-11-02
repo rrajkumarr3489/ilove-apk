@@ -9,6 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_state.dart';
 import 'approvals.dart';
 import 'bus/bus_api.dart';
+import 'classifieds.dart';
+import 'home_shell.dart';
+import 'news_submit.dart';
 import 'firebase_config.dart';
 
 /// Lets the push service show a dialog from anywhere (attached to MaterialApp in main.dart).
@@ -177,7 +180,13 @@ class PushService {
   /// News / job alerts open the in-app approval screen; anything else with a link opens that link.
   static String _payloadOf(RemoteMessage m) {
     final type = (m.data['type'] ?? '').toString();
-    if (type == 'news' || type == 'jobs' || type == 'test') return 'approvals';
+    // The sender is told the result: approved -> open that list, not approved -> open "my news / my jobs" (shows the reason).
+    if (type == 'approved_news') return 'open:news';
+    if (type == 'approved_jobs') return 'open:jobs';
+    if (type == 'rejected_news') return 'open:mynews';
+    if (type == 'rejected_jobs') return 'open:myjobs';
+    if (type == 'jobs') return 'approvals:jobs';
+    if (type == 'news' || type == 'test') return 'approvals:news';
     return (m.data['url'] ?? '').toString();
   }
 
@@ -186,19 +195,42 @@ class PushService {
 
   static void _tap(String payload) {
     if (payload.isEmpty) return;
-    if (payload == 'approvals') {
-      _openApprovals();
+    if (payload.startsWith('approvals')) {
+      _openApprovals(payload.endsWith(':jobs') ? 1 : 0);
+    } else if (payload.startsWith('open:')) {
+      _openPage(payload.substring(5));
     } else {
       _openUrl(payload);
     }
   }
 
   /// When the app was closed, the screen is not ready at once, so wait a little for it.
-  static Future<void> _openApprovals() async {
+  static Future<void> _openApprovals(int tab) async {
     for (var i = 0; i < 20; i++) {
       final nav = rootNavigatorKey.currentState;
       if (nav != null) {
-        nav.push(MaterialPageRoute<void>(builder: (_) => const ApprovalsScreen()));
+        nav.push(MaterialPageRoute<void>(builder: (_) => ApprovalsScreen(initialTab: tab)));
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
+  }
+
+  /// Opens the News list, the Jobs (classifieds) list, or the person's own news / jobs list.
+  static Future<void> _openPage(String page) async {
+    for (var i = 0; i < 20; i++) {
+      final nav = rootNavigatorKey.currentState;
+      final ctx = rootNavigatorKey.currentContext;
+      if (nav != null && ctx != null) {
+        if (page == 'news') {
+          nav.push(MaterialPageRoute<void>(builder: (_) => const NewsListScreen()));
+        } else if (page == 'jobs') {
+          nav.push(MaterialPageRoute<void>(builder: (_) => const ClassifiedsScreen()));
+        } else if (page == 'mynews') {
+          openMyNews(ctx);
+        } else if (page == 'myjobs') {
+          openMyJobs(ctx);
+        }
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 300));

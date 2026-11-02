@@ -27,13 +27,17 @@ List<Map<String, dynamic>> _maps(dynamic v) {
 
 /// For the people who approve: the news and jobs that are waiting, with Approve / Reject buttons.
 class ApprovalsScreen extends StatefulWidget {
-  const ApprovalsScreen({super.key});
+  /// 0 = News tab, 1 = Jobs tab (the one the alert was about).
+  final int initialTab;
+
+  const ApprovalsScreen({super.key, this.initialTab = 0});
 
   @override
   State<ApprovalsScreen> createState() => _ApprovalsScreenState();
 }
 
-class _ApprovalsScreenState extends State<ApprovalsScreen> {
+class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
   List<Map<String, dynamic>> _news = [];
   List<Map<String, dynamic>> _jobs = [];
   bool _loading = true;
@@ -43,7 +47,14 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: 2, vsync: this, initialIndex: widget.initialTab == 1 ? 1 : 0);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -259,58 +270,87 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     ]);
   }
 
-  Widget _heading(String text, int count) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 8, 2, 10),
-      child: Text('$text ($count)', style: ts(15, weight: FontWeight.w900)),
+  /// One tab: pull down to refresh; shows a spinner, the error, "nothing waiting" or the cards.
+  Widget _tabBody(List<Map<String, dynamic>> items, Widget Function(Map<String, dynamic>) card) {
+    return RefreshIndicator(
+      color: kBrand,
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+        children: [
+          if (_loading && items.isEmpty)
+            const Padding(padding: EdgeInsets.only(top: 100), child: Center(child: CircularProgressIndicator()))
+          else if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 80),
+              child: Text(_error!, textAlign: TextAlign.center, style: ts(15, color: kMuted)),
+            )
+          else if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 80),
+              child: Column(
+                children: [
+                  const Icon(Icons.check_circle_outline, size: 54, color: _kOk),
+                  const SizedBox(height: 10),
+                  Text(app.tr('Nothing is waiting for approval.', 'ஒப்புதலுக்கு எதுவும் காத்திருக்கவில்லை.'),
+                      textAlign: TextAlign.center, style: ts(15, color: kMuted)),
+                ],
+              ),
+            )
+          else
+            for (final i in items) card(i),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabLabel(String text, int count) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(text),
+          if (count > 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+              decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(10)),
+              child: Text('$count', style: ts(11.5, weight: FontWeight.w800, color: Colors.white)),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final empty = _news.isEmpty && _jobs.isEmpty;
     return Scaffold(
       backgroundColor: _kCream,
       appBar: AppBar(
         backgroundColor: _kCream,
         title: Text(app.tr('Approvals', 'ஒப்புதல்கள்'), style: ts(19, weight: FontWeight.w900)),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
-          children: [
-            if (_loading && empty)
-              const Padding(padding: EdgeInsets.only(top: 120), child: Center(child: CircularProgressIndicator()))
-            else if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 100),
-                child: Text(_error!, textAlign: TextAlign.center, style: ts(15, color: kMuted)),
-              )
-            else if (empty)
-              Padding(
-                padding: const EdgeInsets.only(top: 100),
-                child: Column(
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 54, color: _kOk),
-                    const SizedBox(height: 10),
-                    Text(app.tr('Nothing is waiting for approval.', 'ஒப்புதலுக்கு எதுவும் காத்திருக்கவில்லை.'),
-                        textAlign: TextAlign.center, style: ts(15, color: kMuted)),
-                  ],
-                ),
-              )
-            else ...[
-              if (_news.isNotEmpty) ...[
-                _heading(app.tr('News', 'செய்திகள்'), _news.length),
-                for (final n in _news) _newsCard(n),
-              ],
-              if (_jobs.isNotEmpty) ...[
-                _heading(app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
-                for (final j in _jobs) _jobCard(j),
-              ],
-            ],
+        bottom: TabBar(
+          controller: _tabs,
+          labelColor: kBrand,
+          unselectedLabelColor: kMuted,
+          indicatorColor: kBrand,
+          indicatorWeight: 3,
+          labelStyle: ts(14.5, weight: FontWeight.w800),
+          unselectedLabelStyle: ts(14.5, weight: FontWeight.w600),
+          tabs: [
+            _tabLabel(app.tr('News', 'செய்திகள்'), _news.length),
+            _tabLabel(app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabs,
+        children: [
+          _tabBody(_news, _newsCard),
+          _tabBody(_jobs, _jobCard),
+        ],
       ),
     );
   }
