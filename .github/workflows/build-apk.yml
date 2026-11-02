@@ -58,6 +58,8 @@ jobs:
           # The installed app id (applicationId) stays in.aruppukottai.ilove_apk, so the app still updates in place.
           grep -rlE 'in`?\.aruppukottai\.ilove_apk' android/app/src | xargs -r sed -i -E 's/`?in`?\.aruppukottai\.ilove_apk/app.aruppukottai.ilove_apk/g'
           sed -i -E 's/namespace[ =]+"[^"]*"/namespace = "app.aruppukottai.ilove_apk"/' "$f"
+          # The app id must be plain letters (the new Flutter wraps the word "in" in backticks, which is invalid)
+          sed -i -E 's/applicationId[ =]+"[^"]*"/applicationId = "in.aruppukottai.ilove_apk"/' "$f"
           echo "--- every place that still mentions aruppukottai:"
           grep -rn "aruppukottai" android --include=*.xml --include=*.kt --include=*.java --include=*.gradle --include=*.kts --include=*.properties || true
           sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
