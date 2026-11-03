@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
-import '../art.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'bus_models.dart';
@@ -174,6 +173,31 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
     );
   }
 
+  Widget _bubble(double size, int alpha) {
+    return Container(width: size, height: size, decoration: BoxDecoration(color: Colors.white.withAlpha(alpha), shape: BoxShape.circle));
+  }
+
+  Widget _dateChip(String label, bool on, VoidCallback onTap, {IconData? icon}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: on ? kBrand : const Color(0xFFFFF4E6),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: on ? kBrand : kBrand.withAlpha(60)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon ?? (on ? Icons.check_rounded : Icons.circle_outlined), size: 17, color: on ? Colors.white : kBrand),
+          const SizedBox(width: 6),
+          Text(label, style: ts(13.5, weight: FontWeight.w800, color: on ? Colors.white : const Color(0xFF7A3A0A))),
+        ]),
+      ),
+    );
+  }
+
   Widget _searchCard() {
     final today = dayOnly(DateTime.now());
     final tomorrow = today.add(const Duration(days: 1));
@@ -183,13 +207,16 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 16, offset: Offset(0, 6))],
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 20, offset: Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Stack(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(color: const Color(0xFFFFF8F0), borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+            child: Stack(
             children: [
               Column(
                 children: [
@@ -218,17 +245,20 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                 bottom: 0,
                 child: Center(
                   child: Material(
-                    color: kBrand.withAlpha(24),
+                    color: Colors.white,
+                    elevation: 3,
+                    shadowColor: kBrand.withAlpha(90),
                     shape: const CircleBorder(),
                     child: IconButton(
                       tooltip: app.tr('Swap', 'மாற்று'),
-                      icon: const Icon(Icons.swap_vert, color: kBrand),
+                      icon: const Icon(Icons.swap_vert_rounded, color: kBrand),
                       onPressed: _swap,
                     ),
                   ),
                 ),
               ),
             ],
+          ),
           ),
           const SizedBox(height: 4),
           if (_viaId == null)
@@ -245,12 +275,12 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
               margin: const EdgeInsets.only(top: 4, bottom: 4),
               padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
               decoration: BoxDecoration(
-                color: kBlue.withAlpha(18),
-                borderRadius: BorderRadius.circular(12),
+                color: kBrand.withAlpha(20),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.alt_route, color: kBlue, size: 20),
+                  const Icon(Icons.alt_route, color: kBrand, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: GestureDetector(
@@ -273,38 +303,37 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            runSpacing: 4,
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              ChoiceChip(
-                label: Text(app.tr('Today', 'இன்று')),
-                selected: isToday,
-                onSelected: (_) => setState(() => _date = today),
-              ),
-              ChoiceChip(
-                label: Text(app.tr('Tomorrow', 'நாளை')),
-                selected: isTomorrow,
-                onSelected: (_) => setState(() => _date = tomorrow),
-              ),
-              ActionChip(
-                avatar: const Icon(Icons.calendar_month, size: 18),
-                label: Text(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி')),
-                onPressed: _pickDate,
-              ),
+              _dateChip(app.tr('Today', 'இன்று'), isToday, () => setState(() => _date = today)),
+              _dateChip(app.tr('Tomorrow', 'நாளை'), isTomorrow, () => setState(() => _date = tomorrow)),
+              _dateChip(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி'), !isToday && !isTomorrow, _pickDate,
+                  icon: Icons.calendar_month_rounded),
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: _search,
-              style: FilledButton.styleFrom(
-                backgroundColor: kBrand,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          Container(
+            height: 54,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFFF7A1A), kBrand]),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: kBrand.withAlpha(90), blurRadius: 14, offset: const Offset(0, 6))],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: _search,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.search_rounded, color: Colors.white, size: 24),
+                    const SizedBox(width: 8),
+                    Text(app.tr('Search buses', 'பேருந்துகளைத் தேடு'), style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
+                  ],
+                ),
               ),
-              icon: const Icon(Icons.search, color: Colors.white),
-              label: Text(app.tr('Search buses', 'பேருந்துகளைத் தேடு'),
-                  style: ts(16, weight: FontWeight.w800, color: Colors.white)),
             ),
           ),
         ],
@@ -410,38 +439,55 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
             padding: EdgeInsets.zero,
             children: [
               Container(
-                padding: EdgeInsets.fromLTRB(8, top + 4, 16, 22),
-                foregroundDecoration: const SkylineDecoration(),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [kNavy, kBlue],
+                    colors: [Color(0xFFFF8A2B), kBrand, Color(0xFFD9480F)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+                  boxShadow: [BoxShadow(color: Color(0x55E8590C), blurRadius: 20, offset: Offset(0, 8))],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Expanded(
-                          child: Text(app.tr('Bus Timings', 'பேருந்து நேரங்கள்'),
-                              style: ts(20, weight: FontWeight.w800, color: Colors.white)),
-                        ),
-                        const LangToggle(onDark: true),
-                      ],
-                    ),
+                    Positioned(right: -40, top: -30, child: _bubble(150, 26)),
+                    Positioned(left: -50, bottom: 60, child: _bubble(120, 20)),
+                    Positioned(right: 60, bottom: -40, child: _bubble(100, 18)),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 14),
-                      child: Text(app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
-                          style: ts(13.5, color: const Color(0xFFD6E6F5))),
+                      padding: EdgeInsets.fromLTRB(8, top + 4, 16, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              Container(
+                                width: 38,
+                                height: 38,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(color: Colors.white.withAlpha(55), shape: BoxShape.circle),
+                                child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 22),
+                              ),
+                              Expanded(
+                                child: Text(app.tr('Bus Timings', 'பேருந்து நேரங்கள்'),
+                                    style: ts(20, weight: FontWeight.w900, color: Colors.white)),
+                              ),
+                              const LangToggle(onDark: true),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 2, 8, 16),
+                            child: Text(app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
+                                style: ts(13.5, color: Colors.white.withAlpha(235), height: 1.35)),
+                          ),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _searchCard()),
+                        ],
+                      ),
                     ),
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _searchCard()),
                   ],
                 ),
               ),
@@ -478,8 +524,10 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         children: [
                           for (final s in recents)
                             ActionChip(
-                              avatar: const Icon(Icons.history, size: 16),
-                              label: Text('${repo.placeName(s.fromId)} → ${repo.placeName(s.toId)}'),
+                              backgroundColor: Colors.white,
+                              side: BorderSide(color: kBrand.withAlpha(70)),
+                              avatar: const Icon(Icons.history_rounded, size: 17, color: kBrand),
+                              label: Text('${repo.placeName(s.fromId)} → ${repo.placeName(s.toId)}', style: ts(13, weight: FontWeight.w700)),
                               onPressed: () => _go(s),
                             ),
                         ],
@@ -490,6 +538,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                       children: [
                         Expanded(
                           child: _QuickTile(
+                            color: const Color(0xFFE8590C),
                             icon: Icons.departure_board,
                             label: app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'),
                             onTap: () {
@@ -505,6 +554,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _QuickTile(
+                            color: const Color(0xFFF59E0B),
                             icon: Icons.campaign_outlined,
                             label: app.tr('Notices', 'அறிவிப்புகள்'),
                             onTap: () => Navigator.push(
@@ -518,6 +568,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                       children: [
                         Expanded(
                           child: _QuickTile(
+                            color: const Color(0xFF2E7D32),
                             icon: Icons.add_road,
                             label: app.tr('Add bus / timing', 'பேருந்து / நேரம் சேர்'),
                             onTap: () => openAddBus(context),
@@ -526,6 +577,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _QuickTile(
+                            color: const Color(0xFF6A1B9A),
                             icon: Icons.history_edu_outlined,
                             label: app.tr('My entries', 'என் பதிவுகள்'),
                             onTap: () => openMyEntries(context),
@@ -555,21 +607,41 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
 
 class _QuickTile extends StatelessWidget {
   final IconData icon;
+  final Color color;
   final String label;
   final VoidCallback onTap;
 
-  const _QuickTile({required this.icon, required this.label, required this.onTap});
+  const _QuickTile({required this.icon, required this.color, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Icon(icon, color: kBrand, size: 28),
-          const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: FontWeight.w700)),
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(14), blurRadius: 14, offset: const Offset(0, 5))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: Column(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(color: color.withAlpha(30), shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 27),
+                ),
+                const SizedBox(height: 10),
+                Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: FontWeight.w800, height: 1.25)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
