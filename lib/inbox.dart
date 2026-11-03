@@ -5,6 +5,7 @@ import 'approvals.dart';
 import 'auth/auth_guard.dart';
 import 'bus/bus_api.dart';
 import 'push_service.dart';
+import 'reports_admin.dart';
 import 'theme.dart';
 
 const Color _cream = Color(0xFFFFF6EC);
@@ -98,6 +99,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String? _error;
   int _pendingNews = -1;
   int _pendingJobs = -1;
+  int _newReports = 0;
 
   bool get _isApprover => _pendingNews >= 0;
 
@@ -144,6 +146,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     } catch (_) {
       if (mounted && _pendingNews != -1) setState(() => _pendingNews = _pendingJobs = -1);
+    }
+    if (_isApprover) {
+      try {
+        final r = await BusApi.get('/approvals/reports');
+        if (r is List && mounted) setState(() => _newReports = r.where((e) => e is Map && e['status'] == 'New').length);
+      } catch (_) {}
     }
   }
 
@@ -237,6 +245,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  Widget _reportsBanner() {
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const ReportsAdminScreen())).then((_) => _load()),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF6A1B9A).withAlpha(80)),
+        ),
+        child: Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: const Color(0xFF6A1B9A).withAlpha(28), shape: BoxShape.circle),
+            child: const Icon(Icons.flag_rounded, color: Color(0xFF6A1B9A), size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(app.tr('Reports', 'புகார்கள்'), style: ts(16, weight: FontWeight.w900)),
+              Text(
+                _newReports == 0 ? app.tr('No new reports', 'புதிய புகார் இல்லை') : app.tr('$_newReports new', '$_newReports புதியவை'),
+                style: ts(12.5, color: kMuted),
+              ),
+            ]),
+          ),
+          if (_newReports > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: const Color(0xFF6A1B9A), borderRadius: BorderRadius.circular(14)),
+              child: Text('$_newReports', style: ts(14, weight: FontWeight.w900, color: Colors.white)),
+            ),
+          const SizedBox(width: 6),
+          const Icon(Icons.chevron_right_rounded, color: kMuted),
+        ]),
+      ),
+    );
+  }
+
   Widget _card(Map<String, dynamic> n) {
     final look = _lookOf((n['kind'] ?? '').toString());
     final unread = n['isRead'] != true;
@@ -289,7 +339,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _empty() {
     return ListView(children: [
-      if (_isApprover) Padding(padding: const EdgeInsets.fromLTRB(14, 6, 14, 0), child: _approvalsBanner()),
+      if (_isApprover) Padding(padding: const EdgeInsets.fromLTRB(14, 6, 14, 0), child: Column(children: [_approvalsBanner(), _reportsBanner()])),
       const SizedBox(height: 70),
       Center(
         child: Container(
@@ -338,7 +388,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ? _empty()
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(14, 6, 14, 30),
-                        children: [if (_isApprover) _approvalsBanner(), for (final n in _items) _card(n)],
+                        children: [if (_isApprover) ...[_approvalsBanner(), _reportsBanner()], for (final n in _items) _card(n)],
                       ),
       ),
     );

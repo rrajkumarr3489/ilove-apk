@@ -14,6 +14,7 @@ import 'home_shell.dart';
 import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
+import 'reports_admin.dart';
 import 'firebase_config.dart';
 
 /// Lets the push service show a dialog from anywhere (attached to MaterialApp in main.dart).
@@ -189,6 +190,7 @@ class PushService {
     if (type == 'rejected_news') return 'open:mynews';
     if (type == 'rejected_jobs') return 'open:myjobs';
     if (type == 'report_update') return 'open:myreports';
+    if (type == 'report') return 'open:adminreports';
     if (type == 'jobs') return 'approvals:jobs';
     if (type == 'news' || type == 'test') return 'approvals:news';
     return (m.data['url'] ?? '').toString();
@@ -215,6 +217,9 @@ class PushService {
         break;
       case 'report_update':
         p = 'open:myreports';
+        break;
+      case 'report':
+        p = 'open:adminreports';
         break;
       case 'jobs':
         p = 'approvals:jobs';
@@ -268,6 +273,8 @@ class PushService {
           openMyJobs(ctx);
         } else if (page == 'myreports') {
           openMyReports(ctx);
+        } else if (page == 'adminreports') {
+          nav.push(MaterialPageRoute<void>(builder: (_) => const ReportsAdminScreen()));
         }
         return;
       }
