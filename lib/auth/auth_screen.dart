@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
-import '../art.dart';
 import '../bus/bus_api.dart';
 import '../theme.dart';
+import '../ui.dart';
 import '../widgets.dart';
 import 'auth_service.dart';
 
@@ -129,37 +129,63 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   InputDecoration _dec(String label, IconData icon, {Widget? suffix, String? prefix}) {
+    OutlineInputBorder b(Color c, double w) =>
+        OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, size: 20),
+      labelStyle: ts(14, color: kMuted),
+      floatingLabelStyle: ts(13, color: kBrand, weight: FontWeight.w800),
+      prefixIcon: Icon(icon, size: 21, color: kBrand),
       prefixText: prefix,
+      prefixStyle: ts(15, weight: FontWeight.w800),
       suffixIcon: suffix,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      border: b(kLine, 1),
+      enabledBorder: b(kLine, 1),
+      focusedBorder: b(kBrand, 1.8),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFFFFAF4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       counterText: '',
     );
   }
 
+  Widget _tab(String label, bool on, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: _busy ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: on ? kButtonGradient : null,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))] : null,
+          ),
+          child: Center(child: Text(label, style: ts(15, weight: FontWeight.w900, color: on ? Colors.white : kMuted))),
+        ),
+      ),
+    );
+  }
+
+  void _setRegister(bool v) {
+    if (_register == v) return;
+    setState(() {
+      _register = v;
+      _error = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
     return Scaffold(
       backgroundColor: kBg,
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(20, top + 12, 20, 28),
-            foregroundDecoration: const SkylineDecoration(),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [kNavy, kBlue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
-            ),
+          AppHeader(
+            skyline: true,
+            radius: 38,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 64),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -167,174 +193,169 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     IconButton(
                       tooltip: app.tr('Close', 'மூடு'),
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
                       onPressed: () => Navigator.pop(context, false),
                     ),
                     const Spacer(),
                     const LangToggle(onDark: true),
                   ],
                 ),
-                const SizedBox(height: 18),
-                const BrandMark(size: 40, onDark: true),
-                const SizedBox(height: 6),
-                Text('I Love Aruppukottai',
-                    style: ts(17, weight: FontWeight.w700, color: Colors.white)),
+                const SizedBox(height: 14),
+                const Padding(padding: EdgeInsets.only(left: 8), child: BrandMark(size: 38, onDark: true)),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text('I Love Aruppukottai', style: ts(19, weight: FontWeight.w900, color: Colors.white)),
+                ),
                 const SizedBox(height: 2),
-                Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்',
-                    style: ts(14, color: const Color(0xFFFFD6B8))),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(14, color: const Color(0xFFFFE2C6))),
+                ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  _register
-                      ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்')
-                      : app.tr('Welcome back', 'மீண்டும் வருக'),
-                  style: ts(22, weight: FontWeight.w800),
+          Transform.translate(
+            offset: const Offset(0, -34),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 24, offset: Offset(0, 10))],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _register
-                      ? app.tr('Register once. You stay logged in on this phone.',
-                          'ஒரு முறை பதிவு செய்யுங்கள். இந்த போனில் தொடர்ந்து உள்நுழைந்தபடியே இருப்பீர்கள்.')
-                      : app.tr('Login with your mobile number.', 'மொபைல் எண்ணுடன் உள்நுழையுங்கள்.'),
-                  style: ts(14, color: kMuted),
-                ),
-                const SizedBox(height: 18),
-                if (_register) ...[
-                  TextField(
-                    controller: _name,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dec(app.tr('Your name', 'உங்கள் பெயர்'), Icons.person_outline),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                TextField(
-                  controller: _mobile,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 14,
-                  decoration: _dec(app.tr('Mobile number', 'மொபைல் எண்'), Icons.phone_android, prefix: '+91 '),
-                ),
-                const SizedBox(height: 12),
-                if (_register) ...[
-                  TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: _dec(app.tr('E-mail (optional)', 'மின்னஞ்சல் (விருப்பம்)'), Icons.mail_outline),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                TextField(
-                  controller: _pass,
-                  obscureText: _hide,
-                  decoration: _dec(
-                    app.tr('Password', 'கடவுச்சொல்'),
-                    Icons.lock_outline,
-                    suffix: IconButton(
-                      icon: Icon(_hide ? Icons.visibility_off : Icons.visibility, size: 20),
-                      onPressed: () => setState(() => _hide = !_hide),
-                    ),
-                  ),
-                ),
-                if (_register) ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _pass2,
-                    obscureText: _hide,
-                    decoration: _dec(app.tr('Confirm password', 'கடவுச்சொல்லை உறுதிசெய்'), Icons.lock_outline),
-                  ),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: kRed.withAlpha(18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.error_outline, color: kRed, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(_error!, style: ts(13.5, color: kRed, height: 1.35))),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                SizedBox(
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kBrand,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: _busy
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                          )
-                        : Text(
-                            _register ? app.tr('Register', 'பதிவு செய்') : app.tr('Login', 'உள்நுழை'),
-                            style: ts(16, weight: FontWeight.w800, color: Colors.white),
-                          ),
-                  ),
-                ),
-                if (!_register)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _forgot,
-                      child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?')),
-                    ),
-                  ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _register
-                          ? app.tr('Already have an account?', 'ஏற்கனவே கணக்கு உள்ளதா?')
-                          : app.tr('New here?', 'புதிதாக வருகிறீர்களா?'),
-                      style: ts(14, color: kMuted),
-                    ),
-                    TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () => setState(() {
-                                _register = !_register;
-                                _error = null;
-                              }),
-                      child: Text(
-                        _register ? app.tr('Login', 'உள்நுழை') : app.tr('Create account', 'கணக்கு உருவாக்கு'),
-                        style: ts(14, weight: FontWeight.w800, color: kBrand),
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: const Color(0xFFFFF1E2), borderRadius: BorderRadius.circular(20)),
+                        child: Row(
+                          children: [
+                            _tab(app.tr('Login', 'உள்நுழை'), !_register, () => _setRegister(false)),
+                            _tab(app.tr('Register', 'பதிவு'), _register, () => _setRegister(true)),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Center(
-                  child: TextButton(
-                    onPressed: _busy ? null : () => Navigator.pop(context, false),
-                    child: Text(app.tr('Not now - continue as guest', 'இப்போது வேண்டாம் - விருந்தினராகத் தொடர்க'),
-                        style: ts(14, weight: FontWeight.w700, color: kBlue)),
+                      const SizedBox(height: 18),
+                      Text(
+                        _register
+                            ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்')
+                            : app.tr('Welcome back', 'மீண்டும் வருக'),
+                        style: ts(22, weight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _register
+                            ? app.tr('Register once. You stay logged in on this phone.',
+                                'ஒரு முறை பதிவு செய்யுங்கள். இந்த போனில் தொடர்ந்து உள்நுழைந்தபடியே இருப்பீர்கள்.')
+                            : app.tr('Login with your mobile number.', 'மொபைல் எண்ணுடன் உள்நுழையுங்கள்.'),
+                        style: ts(13.5, color: kMuted, height: 1.4),
+                      ),
+                      const SizedBox(height: 18),
+                      if (_register) ...[
+                        TextField(
+                          controller: _name,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: _dec(app.tr('Your name', 'உங்கள் பெயர்'), Icons.person_rounded),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      TextField(
+                        controller: _mobile,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 14,
+                        decoration: _dec(app.tr('Mobile number', 'மொபைல் எண்'), Icons.phone_android_rounded, prefix: '+91 '),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_register) ...[
+                        TextField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _dec(app.tr('E-mail (optional)', 'மின்னஞ்சல் (விருப்பம்)'), Icons.mail_rounded),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      TextField(
+                        controller: _pass,
+                        obscureText: _hide,
+                        decoration: _dec(
+                          app.tr('Password', 'கடவுச்சொல்'),
+                          Icons.lock_rounded,
+                          suffix: IconButton(
+                            icon: Icon(_hide ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 21, color: kMuted),
+                            onPressed: () => setState(() => _hide = !_hide),
+                          ),
+                        ),
+                      ),
+                      if (_register) ...[
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _pass2,
+                          obscureText: _hide,
+                          decoration: _dec(app.tr('Confirm password', 'கடவுச்சொல்லை உறுதிசெய்'), Icons.lock_reset_rounded),
+                        ),
+                      ],
+                      if (_error != null) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: kRed.withAlpha(18), borderRadius: BorderRadius.circular(14)),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.error_rounded, color: kRed, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(_error!, style: ts(13.5, color: kRed, height: 1.35))),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
+                      GradButton(
+                        label: _register ? app.tr('Register', 'பதிவு செய்') : app.tr('Login', 'உள்நுழை'),
+                        icon: _register ? Icons.how_to_reg_rounded : Icons.login_rounded,
+                        busy: _busy,
+                        onTap: _submit,
+                      ),
+                      if (!_register)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _forgot,
+                            child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 6),
+                      Row(children: [
+                        const Expanded(child: Divider(color: kLine)),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(app.tr('or', 'அல்லது'), style: ts(12.5, color: kMuted))),
+                        const Expanded(child: Divider(color: kLine)),
+                      ]),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : () => Navigator.pop(context, false),
+                        icon: const Icon(Icons.explore_rounded, size: 20),
+                        label: Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க')),
+                      ),
+                      const SizedBox(height: 2),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: _serverDialog,
+                          icon: const Icon(Icons.settings_ethernet_rounded, size: 16, color: kMuted),
+                          label: Text(app.tr('Server address', 'சர்வர் முகவரி'), style: ts(12, color: kMuted)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: _serverDialog,
-                    icon: const Icon(Icons.settings_ethernet, size: 16),
-                    label: Text(app.tr('Server address', 'சர்வர் முகவரி'), style: ts(12.5, color: kMuted)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
