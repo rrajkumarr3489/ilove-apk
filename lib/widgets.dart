@@ -151,7 +151,7 @@ class LangToggle extends StatelessWidget {
             label,
             style: ts(13,
                 weight: FontWeight.w700,
-                color: sel ? (onDark ? kNavy : Colors.white) : (onDark ? Colors.white : kMuted)),
+                color: sel ? (onDark ? kBrand : Colors.white) : (onDark ? Colors.white : kMuted)),
           ),
         ),
       );
