@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../theme.dart';
+import '../ui.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
 import 'bus_widgets.dart';
@@ -62,72 +63,78 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
         final canPrev = _date.isAfter(today);
         final canNext = _date.isBefore(today.add(Duration(days: _maxDays)));
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              '${repo.placeName(widget.fromId)} → ${repo.placeName(widget.toId)}',
-              style: ts(17, weight: FontWeight.w800),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            actions: [
-              IconButton(
-                tooltip: app.tr('Save this search', 'இந்தத் தேடலைச் சேமி'),
-                icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? kRed : null),
-                onPressed: () => repo.toggleFavSearch(_saved),
-              ),
-            ],
-          ),
           body: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-                child: Row(
+              AppHeader(
+                radius: 30,
+                padding: const EdgeInsets.fromLTRB(4, 2, 10, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: canPrev ? () => _shift(-1) : null,
+                    Row(
+                      children: [
+                        IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${repo.placeName(widget.fromId)} → ${repo.placeName(widget.toId)}',
+                                style: ts(19, weight: FontWeight.w900, color: Colors.white),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                app.tr('${results.length} bus(es) found', '${results.length} பேருந்து(கள்) கிடைத்தன'),
+                                style: ts(12.5, color: Colors.white.withAlpha(225), weight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: app.tr('Save this search', 'இந்தத் தேடலைச் சேமி'),
+                          icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? const Color(0xFFFFD0D0) : Colors.white),
+                          onPressed: () => repo.toggleFavSearch(_saved),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(fmtDate(_date), style: ts(16, weight: FontWeight.w800)),
-                          if (isToday) Text(app.tr('Today', 'இன்று'), style: ts(12, color: kBrand, weight: FontWeight.w700)),
-                        ],
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: DateStrip(
+                        date: _date,
+                        isToday: isToday,
+                        canPrev: canPrev,
+                        canNext: canNext,
+                        onPrev: () => _shift(-1),
+                        onNext: () => _shift(1),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: canNext ? () => _shift(1) : null,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (isToday)
-                      ChoiceChip(
-                        label: Text(app.tr('From now', 'இப்போதிலிருந்து')),
-                        selected: _fromNow,
-                        onSelected: (_) => setState(() => _fromNow = true),
+                    if (isToday || widget.viaId != null) ...[
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (isToday) HeaderChip(app.tr('From now', 'இப்போதிலிருந்து'), on: _fromNow, onTap: () => setState(() => _fromNow = true)),
+                            if (isToday) HeaderChip(app.tr('Whole day', 'நாள் முழுவதும்'), on: !_fromNow, onTap: () => setState(() => _fromNow = false)),
+                            if (widget.viaId != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(color: Colors.white.withAlpha(40), borderRadius: BorderRadius.circular(30)),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  const Icon(Icons.alt_route, size: 15, color: Colors.white),
+                                  const SizedBox(width: 5),
+                                  Text('${app.tr('Via', 'வழி')}: ${repo.placeName(widget.viaId!)}', style: ts(12.5, weight: FontWeight.w800, color: Colors.white)),
+                                ]),
+                              ),
+                          ],
+                        ),
                       ),
-                    if (isToday)
-                      ChoiceChip(
-                        label: Text(app.tr('Whole day', 'நாள் முழுவதும்')),
-                        selected: !_fromNow,
-                        onSelected: (_) => setState(() => _fromNow = false),
-                      ),
-                    if (widget.viaId != null)
-                      Pill('${app.tr('Via', 'வழி')}: ${repo.placeName(widget.viaId!)}',
-                          color: kBlue, icon: Icons.alt_route),
-                    Text(
-                      app.tr('${results.length} bus(es)', '${results.length} பேருந்து(கள்)'),
-                      style: ts(13, color: kMuted, weight: FontWeight.w600),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -135,7 +142,7 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
                 child: results.isEmpty
                     ? _empty(isToday, canNext)
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         itemCount: results.length + 1,
                         itemBuilder: (context, i) {
                           if (i == results.length) return _footer();
@@ -172,6 +179,8 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
           : hints.join(' '),
       action: Wrap(
         spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
         children: [
           if (isToday && _fromNow)
             OutlinedButton(
@@ -203,102 +212,134 @@ class _ResultCard extends StatelessWidget {
     final via = viaText(b.viaIds);
     final tag = b.trip.tag(app.lang);
     final fav = repo.isFavTrip(b.trip.id);
+    final accent = r.typeId != null ? typeColor(r.typeId) : kBrand;
     return Opacity(
       opacity: cancelled ? 0.6 : 1,
-      child: SoftCard(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.fromLTRB(14, 12, 6, 10),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RouteDetailScreen(
-              routeId: r.id,
-              tripId: b.trip.id,
-              date: b.serviceDate,
-              boardId: b.fromPlaceId,
-              alightId: b.toPlaceId,
-            ),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(fmtClock(b.departsMin),
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: kInk,
-                            decoration: cancelled ? TextDecoration.lineThrough : null)),
-                    Text(app.tr('Departs', 'புறப்பாடு'), style: ts(11.5, color: kMuted)),
-                  ],
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: kSoftShadow),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RouteDetailScreen(
+                  routeId: r.id,
+                  tripId: b.trip.id,
+                  date: b.serviceDate,
+                  boardId: b.fromPlaceId,
+                  alightId: b.toPlaceId,
                 ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(fmtDur(b.durationMin), style: ts(12, color: kMuted, weight: FontWeight.w600)),
-                      Row(
+              ),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 6, color: accent),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 6, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(width: 8),
-                          const Icon(Icons.circle, size: 7, color: kMuted),
-                          Expanded(child: Container(height: 1.5, color: kLine)),
-                          const Icon(Icons.arrow_forward_ios, size: 11, color: kMuted),
-                          const SizedBox(width: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    fmtClock(b.departsMin),
+                                    style: TextStyle(
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w900,
+                                      color: kInk,
+                                      decoration: cancelled ? TextDecoration.lineThrough : null,
+                                    ),
+                                  ),
+                                  Text(app.tr('Departs', 'புறப்பாடு'), style: ts(11.5, color: kMuted)),
+                                ],
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Column(
+                                    children: [
+                                      Text(fmtDur(b.durationMin), style: ts(12, color: kMuted, weight: FontWeight.w700)),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.circle, size: 7, color: kBrand),
+                                          Expanded(child: Container(height: 2, color: kBrand.withAlpha(60))),
+                                          Container(
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: BoxDecoration(color: kBrand.withAlpha(26), shape: BoxShape.circle),
+                                            child: const Icon(Icons.directions_bus_rounded, size: 15, color: kBrand),
+                                          ),
+                                          Expanded(child: Container(height: 2, color: kBrand.withAlpha(60))),
+                                          const Icon(Icons.circle, size: 7, color: kBrand),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    arriveDay > 0 ? '${fmtClock(b.arrivesMin)} +$arriveDay' : fmtClock(b.arrivesMin),
+                                    style: ts(16.5, weight: FontWeight.w800),
+                                  ),
+                                  Text(app.tr('Arrives', 'வருகை'), style: ts(11.5, color: kMuted)),
+                                ],
+                              ),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? kRed : kMuted, size: 23),
+                                onPressed: () => repo.toggleFavTrip(b.trip.id),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (r.typeId != null) Pill(typeName(r.typeId), color: typeColor(r.typeId), filled: true),
+                              if (r.routeNo.isNotEmpty) Pill(r.routeNo, color: kNavy, icon: Icons.tag),
+                              if (b.trip.platform.isNotEmpty) Pill('${app.tr('Platform', 'நடைமேடை')} ${b.trip.platform}', color: kMuted),
+                              if (b.fare != null) Pill(fmtFare(b.fare), color: kGreen, icon: Icons.payments_outlined),
+                              StatusBadge(b.status, delay: b.delay),
+                            ],
+                          ),
+                          if (via.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, right: 8),
+                              child: Text('${app.tr('via', 'வழி')} $via', style: ts(13, color: kMuted, height: 1.35)),
+                            ),
+                          if (tag.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, right: 8),
+                              child: Text(tag, style: ts(12.5, color: kBlue, weight: FontWeight.w700)),
+                            ),
+                          if (b.notice != null && b.notice!.msg(app.lang).isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, right: 8),
+                              child: Text(b.notice!.msg(app.lang), style: ts(12.5, color: const Color(0xFFB26A00), height: 1.35)),
+                            ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(arriveDay > 0 ? '${fmtClock(b.arrivesMin)} +$arriveDay' : fmtClock(b.arrivesMin),
-                        style: ts(16, weight: FontWeight.w800)),
-                    Text(app.tr('Arrives', 'வருகை'), style: ts(11.5, color: kMuted)),
-                  ],
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? kRed : kMuted, size: 22),
-                  onPressed: () => repo.toggleFavTrip(b.trip.id),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (r.typeId != null) Pill(typeName(r.typeId), color: typeColor(r.typeId), filled: true),
-                if (r.routeNo.isNotEmpty) Pill(r.routeNo, color: kNavy, icon: Icons.tag),
-                if (b.trip.platform.isNotEmpty)
-                  Pill('${app.tr('Platform', 'நடைமேடை')} ${b.trip.platform}', color: kMuted),
-                if (b.fare != null) Pill(fmtFare(b.fare), color: kGreen, icon: Icons.payments_outlined),
-                StatusBadge(b.status, delay: b.delay),
-              ],
-            ),
-            if (via.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8, right: 8),
-                child: Text('${app.tr('via', 'வழி')} $via', style: ts(13, color: kMuted, height: 1.35)),
-              ),
-            if (tag.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, right: 8),
-                child: Text(tag, style: ts(12.5, color: kBlue, weight: FontWeight.w600)),
-              ),
-            if (b.notice != null && b.notice!.msg(app.lang).isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, right: 8),
-                child: Text(b.notice!.msg(app.lang), style: ts(12.5, color: const Color(0xFFB26A00), height: 1.35)),
-              ),
-          ],
+          ),
         ),
       ),
     );

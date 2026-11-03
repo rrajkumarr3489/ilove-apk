@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../app_state.dart';
 import '../theme.dart';
+import '../ui.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
 import 'bus_submit_screens.dart';
@@ -105,7 +106,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
             actions: [
               IconButton(
                 tooltip: app.tr('Copy', 'நகலெடு'),
-                icon: const Icon(Icons.copy_all_outlined),
+                icon: const Icon(Icons.share_rounded),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: _copyText(r, stops, sel)));
                   if (context.mounted) showMsg(context, app.tr('Copied. You can paste it in WhatsApp.', 'நகலெடுக்கப்பட்டது. WhatsApp-ல் ஒட்டலாம்.'));
@@ -113,7 +114,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
               ),
               IconButton(
                 tooltip: app.tr('Save', 'சேமி'),
-                icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? kRed : null),
+                icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? kRed : null),
                 onPressed: () => repo.toggleFavRoute(r.id),
               ),
             ],
@@ -127,21 +128,15 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
               SectionTitle(app.tr('Departure from ${repo.placeName(r.fromId)}', '${repo.placeName(r.fromId)} புறப்பாடு')),
               _tripChips(running, all, sel),
               const SizedBox(height: 14),
-              SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment<bool>(
-                    value: false,
-                    icon: const Icon(Icons.timeline),
-                    label: Text(app.tr('Stops', 'நிறுத்தங்கள்')),
-                  ),
-                  ButtonSegment<bool>(
-                    value: true,
-                    icon: const Icon(Icons.map_outlined),
-                    label: Text(app.tr('Map', 'வரைபடம்')),
-                  ),
-                ],
-                selected: <bool>{_map},
-                onSelectionChanged: (s) => setState(() => _map = s.first),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(color: const Color(0xFFFFF1E2), borderRadius: BorderRadius.circular(20)),
+                child: Row(
+                  children: [
+                    _toggleBtn(Icons.timeline_rounded, app.tr('Stops', 'நிறுத்தங்கள்'), !_map, () => setState(() => _map = false)),
+                    _toggleBtn(Icons.map_rounded, app.tr('Map', 'வரைபடம்'), _map, () => setState(() => _map = true)),
+                  ],
+                ),
               ),
               const SizedBox(height: 14),
               if (_map) _mapView(stops) else _timeline(stops, sel, bi, ai),
@@ -149,7 +144,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
                 padding: const EdgeInsets.only(top: 14),
                 child: OutlinedButton.icon(
                   onPressed: () => openAddTiming(context, r.id),
-                  icon: const Icon(Icons.add_alarm),
+                  icon: const Icon(Icons.add_alarm_rounded),
                   label: Text(app.tr('Add a timing for this bus', 'இந்த பேருந்துக்கு நேரம் சேர்')),
                 ),
               ),
@@ -160,7 +155,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, color: kBlue, size: 20),
+                        const Icon(Icons.info_rounded, color: kBrand, size: 20),
                         const SizedBox(width: 10),
                         Expanded(child: Text(r.notes(app.lang), style: ts(13.5, height: 1.4))),
                       ],
@@ -174,39 +169,84 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
     );
   }
 
+  Widget _toggleBtn(IconData icon, String label, bool on, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            gradient: on ? kButtonGradient : null,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))] : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 19, color: on ? Colors.white : kMuted),
+              const SizedBox(width: 7),
+              Text(label, style: ts(14.5, weight: FontWeight.w900, color: on ? Colors.white : kMuted)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _header(BusRoute r) {
     final operatorName = r.operatorName(app.lang);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [kNavy, kBlue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        borderRadius: BorderRadius.circular(26),
+        gradient: kHeaderGradient,
+        boxShadow: const [BoxShadow(color: Color(0x55E8590C), blurRadius: 18, offset: Offset(0, 8))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(repo.placeName(r.fromId), style: ts(14, color: const Color(0xFFBFD8EE), weight: FontWeight.w600)),
-          Text(routeTitle(r), style: ts(20, weight: FontWeight.w900, color: Colors.white, height: 1.2)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (r.typeId != null) Pill(typeName(r.typeId), color: typeColor(r.typeId), filled: true),
-              if (r.routeNo.isNotEmpty) Pill(r.routeNo, color: Colors.white, icon: Icons.tag),
-              if (operatorName.isNotEmpty) Pill(operatorName, color: Colors.white),
-            ],
+          Positioned(
+            right: -40,
+            top: -50,
+            child: Container(width: 140, height: 140, decoration: BoxDecoration(color: Colors.white.withAlpha(26), shape: BoxShape.circle)),
           ),
-          const SizedBox(height: 12),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _metric(Icons.schedule, fmtDur(r.duration)),
-              if (r.fareTotal != null) _metric(Icons.payments_outlined, fmtFare(r.fareTotal)),
-              if (r.distanceKm != null) _metric(Icons.route, '${r.distanceKm!.toStringAsFixed(0)} km'),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(color: Colors.white.withAlpha(50), shape: BoxShape.circle),
+                    child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(routeTitle(r), style: ts(20, weight: FontWeight.w900, color: Colors.white, height: 1.2))),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (r.typeId != null) Pill(typeName(r.typeId), color: Colors.white, icon: Icons.directions_bus_filled_rounded),
+                  if (r.routeNo.isNotEmpty) Pill(r.routeNo, color: Colors.white, icon: Icons.tag),
+                  if (operatorName.isNotEmpty) Pill(operatorName, color: Colors.white),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                decoration: BoxDecoration(color: Colors.white.withAlpha(36), borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                    _metric(Icons.schedule_rounded, fmtDur(r.duration)),
+                    if (r.fareTotal != null) _metric(Icons.payments_rounded, fmtFare(r.fareTotal)),
+                    if (r.distanceKm != null) _metric(Icons.route_rounded, '${r.distanceKm!.toStringAsFixed(0)} km'),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -216,12 +256,12 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
 
   Widget _metric(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(right: 18),
+      padding: const EdgeInsets.only(right: 20),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFFBFD8EE)),
-          const SizedBox(width: 5),
-          Text(text, style: ts(14, weight: FontWeight.w700, color: Colors.white)),
+          Icon(icon, size: 17, color: const Color(0xFFFFE2C6)),
+          const SizedBox(width: 6),
+          Text(text, style: ts(14, weight: FontWeight.w800, color: Colors.white)),
         ],
       ),
     );
@@ -246,13 +286,14 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
           ),
         Wrap(
           spacing: 8,
-          runSpacing: 4,
+          runSpacing: 8,
           children: [
             for (final t in list)
-              ChoiceChip(
-                label: Text(fmtClock(t.departMin)),
-                selected: sel != null && sel.id == t.id,
-                onSelected: (_) => setState(() => _tripId = t.id),
+              ChoicePill(
+                fmtClock(t.departMin),
+                on: sel != null && sel.id == t.id,
+                icon: Icons.schedule_rounded,
+                onTap: () => setState(() => _tripId = t.id),
               ),
           ],
         ),
@@ -278,7 +319,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
     final isBoard = i == bi;
     final isAlight = i == ai;
     final dim = bi >= 0 && ai >= 0 && (i < bi || i > ai);
-    final Color dot = first ? kGreen : (last ? kRed : (isBoard || isAlight ? kBrand : kBlue));
+    final Color dot = first ? kGreen : (last ? kRed : (isBoard || isAlight ? kBrand : const Color(0xFFF2A65A)));
     String time = '--';
     if (t != null) {
       final m = t.departMin + s.offset;
@@ -316,7 +357,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
                       border: Border.all(color: dot, width: 3),
                     ),
                   ),
-                  if (!last) Expanded(child: Container(width: 2, color: kLine)),
+                  if (!last) Expanded(child: Container(width: 2, color: kBrand.withAlpha(50))),
                 ],
               ),
             ),
@@ -362,7 +403,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
         height: 30,
         child: Container(
           decoration: BoxDecoration(
-            color: first ? kGreen : (last ? kRed : kBlue),
+            color: first ? kGreen : (last ? kRed : kBrand),
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
           ),
@@ -391,7 +432,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
     return Column(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           child: SizedBox(
             height: 340,
             child: Stack(
@@ -407,7 +448,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
                   ),
                   children: [
                     TileLayer(urlTemplate: kTileUrl, userAgentPackageName: kTileAgent),
-                    PolylineLayer(polylines: [Polyline(points: points, strokeWidth: 4, color: kBlue)]),
+                    PolylineLayer(polylines: [Polyline(points: points, strokeWidth: 4, color: kBrand)]),
                     MarkerLayer(markers: markers),
                   ],
                 ),

@@ -112,6 +112,83 @@ String placeTypeLabel(String type) {
   }
 }
 
+/// Date switcher shown inside the orange header: < Fri, 23 Oct . Today >
+class DateStrip extends StatelessWidget {
+  final DateTime date;
+  final bool isToday;
+  final bool canPrev;
+  final bool canNext;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  const DateStrip({
+    super.key,
+    required this.date,
+    required this.isToday,
+    required this.canPrev,
+    required this.canNext,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(color: Colors.white.withAlpha(46), borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 30),
+            color: Colors.white,
+            disabledColor: Colors.white30,
+            onPressed: canPrev ? onPrev : null,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(fmtDate(date), style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
+                if (isToday) Text(app.tr('Today', 'இன்று'), style: ts(11.5, weight: FontWeight.w800, color: const Color(0xFFFFE2C6))),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded, size: 30),
+            color: Colors.white,
+            disabledColor: Colors.white30,
+            onPressed: canNext ? onNext : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small filter chip for use on the orange header.
+class HeaderChip extends StatelessWidget {
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+
+  const HeaderChip(this.label, {super.key, required this.on, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: on ? Colors.white : Colors.white.withAlpha(40),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(label, style: ts(13, weight: FontWeight.w800, color: on ? kBrand : Colors.white)),
+      ),
+    );
+  }
+}
+
 /// Small coloured label (bus type, route number, platform...).
 class Pill extends StatelessWidget {
   final String text;
@@ -125,7 +202,7 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     final fg = filled ? Colors.white : color;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: filled ? color : color.withAlpha(28),
         borderRadius: BorderRadius.circular(20),

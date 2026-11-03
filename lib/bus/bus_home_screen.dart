@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../theme.dart';
+import '../ui.dart';
 import '../widgets.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
@@ -135,8 +136,6 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
   }
 
   Widget _field({
-    required IconData icon,
-    required Color color,
     required String label,
     required int? id,
     required String hint,
@@ -145,55 +144,22 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
     final name = id == null ? '' : repo.placeName(id);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 10, 56, 10),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(2, 10, 6, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: ts(12, color: kMuted, weight: FontWeight.w600)),
-                  const SizedBox(height: 1),
-                  Text(
-                    name.isEmpty ? hint : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ts(17, weight: FontWeight.w800, color: name.isEmpty ? kMuted : kInk),
-                  ),
-                ],
-              ),
+            Text(label, style: ts(12, color: kMuted, weight: FontWeight.w700)),
+            const SizedBox(height: 2),
+            Text(
+              name.isEmpty ? hint : name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ts(18, weight: FontWeight.w900, color: name.isEmpty ? kMuted : kInk),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _bubble(double size, int alpha) {
-    return Container(width: size, height: size, decoration: BoxDecoration(color: Colors.white.withAlpha(alpha), shape: BoxShape.circle));
-  }
-
-  Widget _dateChip(String label, bool on, VoidCallback onTap, {IconData? icon}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: on ? kBrand : const Color(0xFFFFF4E6),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: on ? kBrand : kBrand.withAlpha(60)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon ?? (on ? Icons.check_rounded : Icons.circle_outlined), size: 17, color: on ? Colors.white : kBrand),
-          const SizedBox(width: 6),
-          Text(label, style: ts(13.5, weight: FontWeight.w800, color: on ? Colors.white : const Color(0xFF7A3A0A))),
-        ]),
       ),
     );
   }
@@ -204,80 +170,83 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
     final isToday = sameDay(_date, today);
     final isTomorrow = sameDay(_date, tomorrow);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 20, offset: Offset(0, 8))],
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 22, offset: Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(color: const Color(0xFFFFF8F0), borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
-            child: Stack(
-            children: [
-              Column(
+            padding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
+            decoration: BoxDecoration(color: const Color(0xFFFFF8F0), borderRadius: BorderRadius.circular(22), border: Border.all(color: kLine)),
+            child: IntrinsicHeight(
+              child: Row(
                 children: [
-                  _field(
-                    icon: Icons.trip_origin,
-                    color: kGreen,
-                    label: app.tr('From', 'எங்கிருந்து'),
-                    id: _fromId,
-                    hint: app.tr('Choose starting place', 'தொடங்கும் இடம்'),
-                    onTap: _pickFrom,
+                  Column(
+                    children: [
+                      const SizedBox(height: 18),
+                      const Icon(Icons.trip_origin, color: kGreen, size: 20),
+                      Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 4), color: kBrand.withAlpha(70))),
+                      const Icon(Icons.location_on, color: kRed, size: 22),
+                      const SizedBox(height: 18),
+                    ],
                   ),
-                  const Divider(height: 1, color: kLine),
-                  _field(
-                    icon: Icons.location_on,
-                    color: kRed,
-                    label: app.tr('To', 'எங்கு'),
-                    id: _toId,
-                    hint: app.tr('Choose destination', 'சேருமிடம்'),
-                    onTap: _pickTo,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _field(
+                          label: app.tr('From', 'எங்கிருந்து'),
+                          id: _fromId,
+                          hint: app.tr('Choose starting place', 'தொடங்கும் இடம்'),
+                          onTap: _pickFrom,
+                        ),
+                        const Divider(height: 1, color: kLine),
+                        _field(
+                          label: app.tr('To', 'எங்கு'),
+                          id: _toId,
+                          hint: app.tr('Choose destination', 'சேருமிடம்'),
+                          onTap: _pickTo,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Center(
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 3,
+                      shadowColor: kBrand.withAlpha(90),
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        tooltip: app.tr('Swap', 'மாற்று'),
+                        icon: const Icon(Icons.swap_vert_rounded, color: kBrand),
+                        onPressed: _swap,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: Material(
-                    color: Colors.white,
-                    elevation: 3,
-                    shadowColor: kBrand.withAlpha(90),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: app.tr('Swap', 'மாற்று'),
-                      icon: const Icon(Icons.swap_vert_rounded, color: kBrand),
-                      onPressed: _swap,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           if (_viaId == null)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: _pickVia,
-                icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)')),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
               ),
             )
           else
             Container(
               margin: const EdgeInsets.only(top: 4, bottom: 4),
               padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-              decoration: BoxDecoration(
-                color: kBrand.withAlpha(20),
-                borderRadius: BorderRadius.circular(14),
-              ),
+              decoration: BoxDecoration(color: kBrand.withAlpha(20), borderRadius: BorderRadius.circular(14)),
               child: Row(
                 children: [
                   const Icon(Icons.alt_route, color: kBrand, size: 20),
@@ -287,58 +256,45 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                       onTap: _pickVia,
                       child: Text(
                         '${app.tr('Via', 'வழி')}: ${repo.placeName(_viaId!)}',
-                        style: ts(15, weight: FontWeight.w700),
+                        style: ts(15, weight: FontWeight.w800),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => setState(() => _viaId = null),
-                  ),
+                  IconButton(icon: const Icon(Icons.close_rounded, size: 20), onPressed: () => setState(() => _viaId = null)),
                 ],
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _dateChip(app.tr('Today', 'இன்று'), isToday, () => setState(() => _date = today)),
-              _dateChip(app.tr('Tomorrow', 'நாளை'), isTomorrow, () => setState(() => _date = tomorrow)),
-              _dateChip(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி'), !isToday && !isTomorrow, _pickDate,
-                  icon: Icons.calendar_month_rounded),
+              ChoicePill(app.tr('Today', 'இன்று'), on: isToday, onTap: () => setState(() => _date = today)),
+              ChoicePill(app.tr('Tomorrow', 'நாளை'), on: isTomorrow, onTap: () => setState(() => _date = tomorrow)),
+              ChoicePill(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி'),
+                  on: !isToday && !isTomorrow, onTap: _pickDate, icon: Icons.calendar_month_rounded),
             ],
           ),
-          const SizedBox(height: 14),
-          Container(
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFFF7A1A), kBrand]),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: kBrand.withAlpha(90), blurRadius: 14, offset: const Offset(0, 6))],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: _search,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.search_rounded, color: Colors.white, size: 24),
-                    const SizedBox(width: 8),
-                    Text(app.tr('Search buses', 'பேருந்துகளைத் தேடு'), style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(height: 16),
+          GradButton(label: app.tr('Search buses', 'பேருந்துகளைத் தேடு'), icon: Icons.search_rounded, onTap: _search),
         ],
       ),
     );
+  }
+
+  /// Well-known places people travel to from Aruppukottai. Only those that exist in the timetable are shown.
+  List<Place> _popular() {
+    const names = ['Madurai', 'Virudhunagar', 'Sivakasi', 'Rajapalayam', 'Tirunelveli', 'Coimbatore', 'Chennai', 'Thoothukudi', 'Rameswaram', 'Kovilpatti'];
+    final out = <Place>[];
+    for (final n in names) {
+      final p = repo.placeByName(n);
+      if (p != null && p.id != _fromId) out.add(p);
+      if (out.length >= 8) break;
+    }
+    return out;
   }
 
   Widget _statusCard() {
@@ -351,8 +307,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
               const Icon(Icons.link_off, color: kRed),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(app.tr('The server address is not set.', 'சர்வர் முகவரி அமைக்கப்படவில்லை.'),
-                    style: ts(15, weight: FontWeight.w700)),
+                child: Text(app.tr('The server address is not set.', 'சர்வர் முகவரி அமைக்கப்படவில்லை.'), style: ts(15, weight: FontWeight.w700)),
               ),
             ]),
             const SizedBox(height: 10),
@@ -367,8 +322,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
           const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(app.tr('Getting the latest bus timetable...', 'சமீபத்திய பேருந்து நேரங்களைப் பெறுகிறது...'),
-                style: ts(14.5, weight: FontWeight.w600)),
+            child: Text(app.tr('Getting the latest bus timetable...', 'சமீபத்திய பேருந்து நேரங்களைப் பெறுகிறது...'), style: ts(14.5, weight: FontWeight.w600)),
           ),
         ]),
       );
@@ -398,28 +352,32 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
         ),
       );
     }
-    return Row(
-      children: [
-        Icon(repo.lastError == null ? Icons.check_circle : Icons.cloud_off,
-            size: 16, color: repo.lastError == null ? kGreen : kAmber),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            repo.lastError == null
-                ? app.tr('Timetable updated ${agoText(repo.lastSync)}', 'நேரங்கள் புதுப்பிக்கப்பட்டது: ${agoText(repo.lastSync)}')
-                : '${repo.lastError} ${app.tr('Showing the last saved timetable.', 'கடைசியாகச் சேமித்த நேரங்கள் காட்டப்படுகின்றன.')}',
-            style: ts(12.5, color: kMuted),
+    final ok = repo.lastError == null;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+      decoration: BoxDecoration(color: (ok ? kGreen : kAmber).withAlpha(22), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Icon(ok ? Icons.check_circle_rounded : Icons.cloud_off_rounded, size: 18, color: ok ? kGreen : const Color(0xFFB26A00)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              ok
+                  ? app.tr('Timetable updated ${agoText(repo.lastSync)}', 'நேரங்கள் புதுப்பிக்கப்பட்டது: ${agoText(repo.lastSync)}')
+                  : '${repo.lastError} ${app.tr('Showing the last saved timetable.', 'கடைசியாகச் சேமித்த நேரங்கள் காட்டப்படுகின்றன.')}',
+              style: ts(12.5, color: kMuted, weight: FontWeight.w600),
+            ),
           ),
-        ),
-        repo.syncing
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-            : IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: app.tr('Refresh', 'புதுப்பி'),
-                icon: const Icon(Icons.refresh, size: 20),
-                onPressed: () => repo.sync(),
-              ),
-      ],
+          repo.syncing
+              ? const Padding(padding: EdgeInsets.all(10), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+              : IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: app.tr('Refresh', 'புதுப்பி'),
+                  icon: const Icon(Icons.refresh_rounded, size: 21),
+                  onPressed: () => repo.sync(),
+                ),
+        ],
+      ),
     );
   }
 
@@ -429,70 +387,48 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
       listenable: busListen,
       builder: (context, _) {
         _ensureDefaults();
-        final top = MediaQuery.of(context).padding.top;
         final notices = repo.activeNotices(DateTime.now());
-        final recents = repo.recents
-            .where((s) => repo.places[s.fromId] != null && repo.places[s.toId] != null)
-            .toList();
+        final recents = repo.recents.where((s) => repo.places[s.fromId] != null && repo.places[s.toId] != null).toList();
+        final popular = _popular();
         return Scaffold(
           body: ListView(
             padding: EdgeInsets.zero,
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFF8A2B), kBrand, Color(0xFFD9480F)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
-                  boxShadow: [BoxShadow(color: Color(0x55E8590C), blurRadius: 20, offset: Offset(0, 8))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
+              AppHeader(
+                radius: 36,
+                padding: const EdgeInsets.fromLTRB(8, 4, 16, 26),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Positioned(right: -40, top: -30, child: _bubble(150, 26)),
-                    Positioned(left: -50, bottom: 60, child: _bubble(120, 20)),
-                    Positioned(right: 60, bottom: -40, child: _bubble(100, 18)),
+                    Row(
+                      children: [
+                        IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                        Container(
+                          width: 38,
+                          height: 38,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(color: Colors.white.withAlpha(55), shape: BoxShape.circle),
+                          child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 22),
+                        ),
+                        Expanded(
+                          child: Text(app.tr('Bus Timings', 'பேருந்து நேரங்கள்'), style: ts(20, weight: FontWeight.w900, color: Colors.white)),
+                        ),
+                        const LangToggle(onDark: true),
+                      ],
+                    ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(8, top + 4, 16, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                              Container(
-                                width: 38,
-                                height: 38,
-                                margin: const EdgeInsets.only(right: 10),
-                                decoration: BoxDecoration(color: Colors.white.withAlpha(55), shape: BoxShape.circle),
-                                child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 22),
-                              ),
-                              Expanded(
-                                child: Text(app.tr('Bus Timings', 'பேருந்து நேரங்கள்'),
-                                    style: ts(20, weight: FontWeight.w900, color: Colors.white)),
-                              ),
-                              const LangToggle(onDark: true),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 2, 8, 16),
-                            child: Text(app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
-                                style: ts(13.5, color: Colors.white.withAlpha(235), height: 1.35)),
-                          ),
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _searchCard()),
-                        ],
+                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                      child: Text(
+                        app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
+                        style: ts(13.5, color: Colors.white.withAlpha(235), height: 1.35),
                       ),
                     ),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _searchCard()),
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -500,19 +436,18 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                     if (notices.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       SoftCard(
-                        color: kAmber.withAlpha(28),
-                        onTap: () => Navigator.push(
-                            context, MaterialPageRoute(builder: (_) => const NoticesScreen())),
+                        color: const Color(0xFFFFF1D6),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticesScreen())),
                         child: Row(children: [
-                          const Icon(Icons.campaign, color: Color(0xFFB26A00)),
-                          const SizedBox(width: 10),
+                          const IconBubble(Icons.campaign_rounded, color: Color(0xFFB26A00), size: 40),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               app.tr('${notices.length} notice(s) for today', 'இன்று ${notices.length} அறிவிப்பு(கள்)'),
-                              style: ts(14.5, weight: FontWeight.w700),
+                              style: ts(14.5, weight: FontWeight.w800),
                             ),
                           ),
-                          const Icon(Icons.chevron_right),
+                          const Icon(Icons.chevron_right_rounded),
                         ]),
                       ),
                     ],
@@ -533,13 +468,33 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         ],
                       ),
                     ],
+                    if (popular.isNotEmpty) ...[
+                      SectionTitle(app.tr('Popular from Aruppukottai', 'அருப்புக்கோட்டையிலிருந்து பிரபலமானவை')),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final p in popular)
+                            ActionChip(
+                              backgroundColor: const Color(0xFFFFF4E6),
+                              side: BorderSide(color: kBrand.withAlpha(60)),
+                              avatar: const Icon(Icons.near_me_rounded, size: 16, color: kBrand),
+                              label: Text(p.name(app.lang), style: ts(13, weight: FontWeight.w800, color: const Color(0xFF7A3A0A))),
+                              onPressed: () {
+                                setState(() => _toId = p.id);
+                                _search();
+                              },
+                            ),
+                        ],
+                      ),
+                    ],
                     SectionTitle(app.tr('Quick links', 'விரைவு இணைப்புகள்')),
                     Row(
                       children: [
                         Expanded(
                           child: _QuickTile(
                             color: const Color(0xFFE8590C),
-                            icon: Icons.departure_board,
+                            icon: Icons.departure_board_rounded,
                             label: app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'),
                             onTap: () {
                               final id = _fromId ?? repo.placeByName('Aruppukottai')?.id;
@@ -555,10 +510,9 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         Expanded(
                           child: _QuickTile(
                             color: const Color(0xFFF59E0B),
-                            icon: Icons.campaign_outlined,
+                            icon: Icons.campaign_rounded,
                             label: app.tr('Notices', 'அறிவிப்புகள்'),
-                            onTap: () => Navigator.push(
-                                context, MaterialPageRoute(builder: (_) => const NoticesScreen())),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticesScreen())),
                           ),
                         ),
                       ],
@@ -569,7 +523,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         Expanded(
                           child: _QuickTile(
                             color: const Color(0xFF2E7D32),
-                            icon: Icons.add_road,
+                            icon: Icons.add_road_rounded,
                             label: app.tr('Add bus / timing', 'பேருந்து / நேரம் சேர்'),
                             onTap: () => openAddBus(context),
                           ),
@@ -578,7 +532,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         Expanded(
                           child: _QuickTile(
                             color: const Color(0xFF6A1B9A),
-                            icon: Icons.history_edu_outlined,
+                            icon: Icons.history_edu_rounded,
                             label: app.tr('My entries', 'என் பதிவுகள்'),
                             onTap: () => openMyEntries(context),
                           ),
@@ -615,33 +569,15 @@ class _QuickTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(14), blurRadius: 14, offset: const Offset(0, 5))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            child: Column(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(color: color.withAlpha(30), shape: BoxShape.circle),
-                  child: Icon(icon, color: color, size: 27),
-                ),
-                const SizedBox(height: 10),
-                Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: FontWeight.w800, height: 1.25)),
-              ],
-            ),
-          ),
-        ),
+    return SoftCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Column(
+        children: [
+          IconBubble(icon, color: color, size: 54),
+          const SizedBox(height: 10),
+          Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: FontWeight.w800, height: 1.25)),
+        ],
       ),
     );
   }

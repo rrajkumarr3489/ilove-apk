@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../app_state.dart';
 import '../theme.dart';
+import '../ui.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
 import 'bus_widgets.dart';
@@ -47,31 +48,49 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
         message: app.tr('Try a different spelling.', 'வேறு எழுத்துக்கூட்டலில் தேடிப் பாருங்கள்.'),
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: places.length,
-      separatorBuilder: (c, i) => const Divider(height: 1, color: kLine),
       itemBuilder: (context, i) {
         final p = places[i];
         final pos = repo.coordOf(p.id);
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(color: kBrand.withAlpha(24), borderRadius: BorderRadius.circular(12)),
-            child: Icon(placeIcon(p.type), color: kBrand, size: 22),
-          ),
-          title: Text(p.name(app.lang), style: ts(15.5, weight: FontWeight.w700)),
-          subtitle: Text(_subtitle(p), style: ts(12.5, color: kMuted)),
-          trailing: pos == null
-              ? null
-              : IconButton(
-                  tooltip: 'Google Maps',
-                  icon: const Icon(Icons.map_outlined, color: kBlue),
-                  onPressed: () => openInGoogleMaps(context, pos),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: kSoftShadow),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => Navigator.pop(context, p),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+                child: Row(
+                  children: [
+                    IconBubble(placeIcon(p.type), size: 46),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.name(app.lang), style: ts(15.5, weight: FontWeight.w800)),
+                          const SizedBox(height: 2),
+                          Text(_subtitle(p), style: ts(12.5, color: kMuted)),
+                        ],
+                      ),
+                    ),
+                    if (pos != null)
+                      IconButton(
+                        tooltip: 'Google Maps',
+                        icon: const Icon(Icons.map_outlined, color: kBrand),
+                        onPressed: () => openInGoogleMaps(context, pos),
+                      )
+                    else
+                      const Padding(padding: EdgeInsets.only(right: 10), child: Icon(Icons.chevron_right_rounded, color: kMuted)),
+                  ],
                 ),
-          onTap: () => Navigator.pop(context, p),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -87,7 +106,7 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
           height: 44,
           child: GestureDetector(
             onTap: () => setState(() => _sel = p),
-            child: Icon(Icons.location_on, size: 40, color: identical(_sel, p) ? kBrand : kBlue),
+            child: Icon(Icons.location_on, size: 40, color: identical(_sel, p) ? kGreen : kBrand),
           ),
         ),
     ];
@@ -159,38 +178,67 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
       builder: (context, _) {
         final places = repo.servedPlaces(_q.text, all: widget.allPlaces);
         return Scaffold(
-          appBar: AppBar(
-            title: Text(widget.title),
-            actions: [
-              IconButton(
-                tooltip: _map ? app.tr('List', 'பட்டியல்') : app.tr('Map', 'வரைபடம்'),
-                icon: Icon(_map ? Icons.list : Icons.map_outlined),
-                onPressed: () => setState(() {
-                  _map = !_map;
-                  _sel = null;
-                }),
-              ),
-            ],
-          ),
           body: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-                child: TextField(
-                  controller: _q,
-                  autofocus: !_map,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: app.tr('Search place', 'இடத்தைத் தேடுங்கள்'),
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: kLine),
+              AppHeader(
+                radius: 28,
+                padding: const EdgeInsets.fromLTRB(4, 2, 10, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                        Expanded(child: Text(widget.title, style: ts(19, weight: FontWeight.w900, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        Container(
+                          decoration: BoxDecoration(color: Colors.white.withAlpha(46), borderRadius: BorderRadius.circular(20)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _modeBtn(Icons.list_rounded, !_map, () => setState(() {
+                                    _map = false;
+                                    _sel = null;
+                                  })),
+                              _modeBtn(Icons.map_rounded, _map, () => setState(() {
+                                    _map = true;
+                                    _sel = null;
+                                  })),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 14, offset: Offset(0, 5))],
+                        ),
+                        child: TextField(
+                          controller: _q,
+                          autofocus: !_map,
+                          onChanged: (_) => setState(() {}),
+                          style: ts(16, weight: FontWeight.w700),
+                          decoration: InputDecoration(
+                            hintText: app.tr('Search place', 'இடத்தைத் தேடுங்கள்'),
+                            hintStyle: ts(15, color: kMuted),
+                            prefixIcon: const Icon(Icons.search_rounded, color: kBrand),
+                            suffixIcon: _q.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    icon: const Icon(Icons.close_rounded, size: 20, color: kMuted),
+                                    onPressed: () => setState(() => _q.clear()),
+                                  ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(child: _map ? _mapView(places) : _list(places)),
@@ -198,6 +246,18 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _modeBtn(IconData icon, bool on, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: on ? Colors.white : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+        child: Icon(icon, size: 21, color: on ? kBrand : Colors.white),
+      ),
     );
   }
 }
