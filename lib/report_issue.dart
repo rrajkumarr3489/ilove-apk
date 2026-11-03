@@ -137,7 +137,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       selected: on,
       showCheckmark: false,
       selectedColor: kBrand,
-      labelStyle: ts(13.5, weight: FontWeight.w700, color: on ? Colors.white : null),
+      labelStyle: ts(13.5, weight: FontWeight.w700, color: on ? Colors.white : const Color(0xFF1C1B1F)),
       onSelected: _saving ? null : (_) => setState(() => _type = key),
     );
   }
