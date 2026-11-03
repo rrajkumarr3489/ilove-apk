@@ -84,7 +84,10 @@ const List<TileInfo> kTiles = [
       title: 'Report a Problem',
       titleTa: 'பிரச்சனை தெரிவிக்க',
       icon: Icons.campaign,
-      color: Color(0xFF6A1B9A)),
+      color: Color(0xFF6A1B9A),
+      live: true,
+      tagline: 'Tell us about any problem',
+      taglineTa: 'எந்த சிக்கலையும் தெரிவியுங்கள்'),
   TileInfo(
       key: 'ai',
       title: 'AI Assistant',
@@ -145,7 +148,7 @@ List<TileInfo> currentTiles() {
       titleTa: (r['nameTa'] ?? '').toString(),
       icon: _iconFor((r['iconName'] ?? '').toString()),
       color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? const Color(0xFF1B6CA8) : base.color),
-      live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds',
+      live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds' || key == 'report',
       tagline: (r['taglineEn'] ?? '').toString(),
       taglineTa: (r['taglineTa'] ?? '').toString(),
     ));

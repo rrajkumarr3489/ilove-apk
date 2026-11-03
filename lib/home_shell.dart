@@ -17,6 +17,7 @@ import 'bus/departures_screen.dart';
 import 'bus/notices_screen.dart';
 import 'classifieds.dart';
 import 'news_submit.dart';
+import 'report_issue.dart';
 import 'share_util.dart';
 import 'tabs.dart';
 import 'theme.dart';
@@ -171,6 +172,8 @@ void openTile(BuildContext context, TileInfo t) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsListScreen()));
   } else if (t.key == 'classifieds') {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassifiedsScreen()));
+  } else if (t.key == 'report') {
+    openReportIssue(context);
   } else if (t.live) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
   } else {
