@@ -12,6 +12,7 @@ import 'bus/bus_widgets.dart';
 import 'bus/notices_screen.dart';
 import 'bus/route_detail_screen.dart';
 import 'config.dart';
+import 'report_issue.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -434,6 +435,8 @@ class _SettingsTabState extends State<SettingsTab> {
             _group([
               _row(Icons.campaign_outlined, app.tr('Notices', 'அறிவிப்புகள்'),
                   onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const NoticesScreen()))),
+              _row(Icons.flag_outlined, app.tr('Report an issue', 'சிக்கலைத் தெரிவி'), onTap: () => openReportIssue(context)),
+              _row(Icons.history, app.tr('My reports', 'என் புகார்கள்'), onTap: () => openMyReports(context)),
               _row(Icons.info_outline, app.tr('About', 'பற்றி'),
                   sub: 'I Love Aruppukottai  v$kAppVersion',
                   onTap: () => showDialog<void>(

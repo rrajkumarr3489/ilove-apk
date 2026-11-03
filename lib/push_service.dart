@@ -12,6 +12,7 @@ import 'bus/bus_api.dart';
 import 'classifieds.dart';
 import 'home_shell.dart';
 import 'news_submit.dart';
+import 'report_issue.dart';
 import 'firebase_config.dart';
 
 /// Lets the push service show a dialog from anywhere (attached to MaterialApp in main.dart).
@@ -185,6 +186,7 @@ class PushService {
     if (type == 'approved_jobs') return 'open:jobs';
     if (type == 'rejected_news') return 'open:mynews';
     if (type == 'rejected_jobs') return 'open:myjobs';
+    if (type == 'report_update') return 'open:myreports';
     if (type == 'jobs') return 'approvals:jobs';
     if (type == 'news' || type == 'test') return 'approvals:news';
     return (m.data['url'] ?? '').toString();
@@ -230,6 +232,8 @@ class PushService {
           openMyNews(ctx);
         } else if (page == 'myjobs') {
           openMyJobs(ctx);
+        } else if (page == 'myreports') {
+          openMyReports(ctx);
         }
         return;
       }
