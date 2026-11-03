@@ -11,6 +11,7 @@ import 'approvals.dart';
 import 'bus/bus_api.dart';
 import 'classifieds.dart';
 import 'home_shell.dart';
+import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
 import 'firebase_config.dart';
@@ -119,6 +120,7 @@ class PushService {
   /// The app is open: Android does not show a banner by itself, so show the same kind of
   /// notification at the top of the screen (tap opens the page).
   static Future<void> _onForeground(RemoteMessage m) async {
+    inbox.refresh();
     final n = m.notification;
     if (n == null) return;
     final payload = _payloadOf(m);
@@ -194,6 +196,38 @@ class PushService {
 
   /// The person tapped the notification.
   static void _open(RemoteMessage m) => _tap(_payloadOf(m));
+
+  /// Used by the bell inbox: opens the same page that tapping the notification would open.
+  static void openKind(String kind, String url) {
+    String p;
+    switch (kind) {
+      case 'approved_news':
+        p = 'open:news';
+        break;
+      case 'approved_jobs':
+        p = 'open:jobs';
+        break;
+      case 'rejected_news':
+        p = 'open:mynews';
+        break;
+      case 'rejected_jobs':
+        p = 'open:myjobs';
+        break;
+      case 'report_update':
+        p = 'open:myreports';
+        break;
+      case 'jobs':
+        p = 'approvals:jobs';
+        break;
+      case 'news':
+      case 'test':
+        p = 'approvals:news';
+        break;
+      default:
+        p = url;
+    }
+    _tap(p);
+  }
 
   static void _tap(String payload) {
     if (payload.isEmpty) return;

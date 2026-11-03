@@ -16,6 +16,7 @@ import 'bus/bus_widgets.dart';
 import 'bus/departures_screen.dart';
 import 'bus/notices_screen.dart';
 import 'classifieds.dart';
+import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
 import 'share_util.dart';
@@ -34,8 +35,28 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    auth.addListener(inbox.refresh);
+    inbox.refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    auth.removeListener(inbox.refresh);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) inbox.refresh();
+  }
 
   void _openUpdates() {
     Navigator.push(
@@ -240,13 +261,20 @@ class HomeTab extends StatelessWidget {
                   icon: const Icon(Icons.menu, color: Colors.white, size: 30),
                 ),
                 const Expanded(child: Center(child: _HeaderLogo())),
-                IconButton(
-                  onPressed: onOpenUpdates,
-                  icon: Badge(
-                    isLabelVisible: noticeCount > 0,
-                    label: Text('$noticeCount'),
-                    child: const Icon(Icons.notifications, color: Colors.white, size: 30),
-                  ),
+                ListenableBuilder(
+                  listenable: inbox,
+                  builder: (context, _) {
+                    final loggedIn = (app.token ?? '').isNotEmpty;
+                    final count = loggedIn ? inbox.unread : noticeCount;
+                    return IconButton(
+                      onPressed: loggedIn ? () => openNotifications(context) : onOpenUpdates,
+                      icon: Badge(
+                        isLabelVisible: count > 0,
+                        label: Text('$count'),
+                        child: const Icon(Icons.notifications, color: Colors.white, size: 30),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -1084,6 +1112,22 @@ class _AppDrawer extends StatelessWidget {
             ),
           const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: Divider()),
           _pageTile(context, Icons.star_border, app.tr('Favorites', 'பிடித்தவை'), 1),
+          ListenableBuilder(
+            listenable: inbox,
+            builder: (context, _) => ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+              leading: Badge(
+                isLabelVisible: inbox.unread > 0,
+                label: Text('${inbox.unread}'),
+                child: const Icon(Icons.notifications_active_outlined, color: kNavy),
+              ),
+              title: Text(app.tr('Notifications', 'அறிவிப்புகள்'), style: ts(15, weight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                openNotifications(context);
+              },
+            ),
+          ),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 20),
             leading: const Icon(Icons.notifications_none, color: kNavy),
