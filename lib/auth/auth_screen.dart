@@ -190,7 +190,7 @@ class _AuthScreenState extends State<AuthScreen> {
           AppHeader(
             bubbles: false,
             radius: 26,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 26),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -205,17 +205,25 @@ class _AuthScreenState extends State<AuthScreen> {
                     const LangToggle(onDark: true),
                   ],
                 ),
-                const SizedBox(height: 14),
-                const Padding(padding: EdgeInsets.only(left: 8), child: BrandMark(size: 38, onDark: true)),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text('I Love Aruppukottai', style: ts(19, weight: FontWeight.w900, color: Colors.white)),
-                ),
                 const SizedBox(height: 2),
                 Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(14, color: kOnBrandSoft)),
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                  child: Row(
+                    children: [
+                      const BrandMark(size: 17, onDark: true),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('I Love Aruppukottai', style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(12.5, color: kOnBrandSoft)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
