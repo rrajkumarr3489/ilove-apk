@@ -140,23 +140,32 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
     required int? id,
     required String hint,
     required VoidCallback onTap,
+    required IconData icon,
+    required Color iconColor,
   }) {
     final name = id == null ? '' : repo.placeName(id);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(2, 10, 6, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.fromLTRB(16, 11, 60, 11),
+        child: Row(
           children: [
-            Text(label, style: ts(12, color: kMuted, weight: FontWeight.w700)),
-            const SizedBox(height: 2),
-            Text(
-              name.isEmpty ? hint : name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: ts(18, weight: FontWeight.w900, color: name.isEmpty ? kMuted : kInk),
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: ts(11.5, color: kMuted, weight: FontWeight.w700)),
+                  const SizedBox(height: 1),
+                  Text(
+                    name.isEmpty ? hint : name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ts(17.5, weight: FontWeight.w900, color: name.isEmpty ? kMuted : kInk),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -164,124 +173,109 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
     );
   }
 
-  Widget _searchCard() {
+  /// From / To sit directly on the blue header: one white block, no nested boxes.
+  Widget _fromTo() {
+    return Stack(
+      children: [
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          child: Column(
+            children: [
+              _field(
+                label: app.tr('From', 'எங்கிருந்து'),
+                id: _fromId,
+                hint: app.tr('Choose starting place', 'தொடங்கும் இடம்'),
+                onTap: _pickFrom,
+                icon: Icons.trip_origin,
+                iconColor: kGreen,
+              ),
+              const Divider(height: 1, indent: 52, color: kLine),
+              _field(
+                label: app.tr('To', 'எங்கு'),
+                id: _toId,
+                hint: app.tr('Choose destination', 'சேருமிடம்'),
+                onTap: _pickTo,
+                icon: Icons.location_on,
+                iconColor: kRed,
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          right: 10,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: Material(
+              color: kTint,
+              shape: const CircleBorder(),
+              child: IconButton(
+                tooltip: app.tr('Swap', 'மாற்று'),
+                icon: const Icon(Icons.swap_vert_rounded, color: kBrand),
+                onPressed: _swap,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _searchForm() {
     final today = dayOnly(DateTime.now());
     final tomorrow = today.add(const Duration(days: 1));
     final isToday = sameDay(_date, today);
     final isTomorrow = sameDay(_date, tomorrow);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 22, offset: Offset(0, 10))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
-            decoration: BoxDecoration(color: kTintSoft, borderRadius: BorderRadius.circular(22), border: Border.all(color: kLine)),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  Column(
-                    children: [
-                      const SizedBox(height: 18),
-                      const Icon(Icons.trip_origin, color: kGreen, size: 20),
-                      Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 4), color: kBrand.withAlpha(70))),
-                      const Icon(Icons.location_on, color: kRed, size: 22),
-                      const SizedBox(height: 18),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _field(
-                          label: app.tr('From', 'எங்கிருந்து'),
-                          id: _fromId,
-                          hint: app.tr('Choose starting place', 'தொடங்கும் இடம்'),
-                          onTap: _pickFrom,
-                        ),
-                        const Divider(height: 1, color: kLine),
-                        _field(
-                          label: app.tr('To', 'எங்கு'),
-                          id: _toId,
-                          hint: app.tr('Choose destination', 'சேருமிடம்'),
-                          onTap: _pickTo,
-                        ),
-                      ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_viaId == null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _pickVia,
+              icon: const Icon(Icons.add_rounded, size: 19),
+              label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 2),
+            child: Row(
+              children: [
+                const Icon(Icons.alt_route, color: kBrand, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _pickVia,
+                    child: Text(
+                      '${app.tr('Via', 'வழி')}: ${repo.placeName(_viaId!)}',
+                      style: ts(15, weight: FontWeight.w800),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Center(
-                    child: Material(
-                      color: Colors.white,
-                      elevation: 3,
-                      shadowColor: kBrand.withAlpha(90),
-                      shape: const CircleBorder(),
-                      child: IconButton(
-                        tooltip: app.tr('Swap', 'மாற்று'),
-                        icon: const Icon(Icons.swap_vert_rounded, color: kBrand),
-                        onPressed: _swap,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                IconButton(icon: const Icon(Icons.close_rounded, size: 20), onPressed: () => setState(() => _viaId = null)),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          if (_viaId == null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _pickVia,
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
-              ),
-            )
-          else
-            Container(
-              margin: const EdgeInsets.only(top: 4, bottom: 4),
-              padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-              decoration: BoxDecoration(color: kBrand.withAlpha(20), borderRadius: BorderRadius.circular(14)),
-              child: Row(
-                children: [
-                  const Icon(Icons.alt_route, color: kBrand, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickVia,
-                      child: Text(
-                        '${app.tr('Via', 'வழி')}: ${repo.placeName(_viaId!)}',
-                        style: ts(15, weight: FontWeight.w800),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  IconButton(icon: const Icon(Icons.close_rounded, size: 20), onPressed: () => setState(() => _viaId = null)),
-                ],
-              ),
-            ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              ChoicePill(app.tr('Today', 'இன்று'), on: isToday, onTap: () => setState(() => _date = today)),
-              ChoicePill(app.tr('Tomorrow', 'நாளை'), on: isTomorrow, onTap: () => setState(() => _date = tomorrow)),
-              ChoicePill(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி'),
-                  on: !isToday && !isTomorrow, onTap: _pickDate, icon: Icons.calendar_month_rounded),
-            ],
-          ),
-          const SizedBox(height: 16),
-          GradButton(label: app.tr('Search buses', 'பேருந்துகளைத் தேடு'), icon: Icons.search_rounded, onTap: _search),
-        ],
-      ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ChoicePill(app.tr('Today', 'இன்று'), on: isToday, onTap: () => setState(() => _date = today)),
+            ChoicePill(app.tr('Tomorrow', 'நாளை'), on: isTomorrow, onTap: () => setState(() => _date = tomorrow)),
+            ChoicePill(!isToday && !isTomorrow ? fmtDate(_date) : app.tr('Pick date', 'தேதி'),
+                on: !isToday && !isTomorrow, onTap: _pickDate, icon: Icons.calendar_month_rounded),
+          ],
+        ),
+        const SizedBox(height: 18),
+        GradButton(label: app.tr('Search buses', 'பேருந்துகளைத் தேடு'), icon: Icons.search_rounded, onTap: _search),
+      ],
     );
   }
 
@@ -353,9 +347,8 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
       );
     }
     final ok = repo.lastError == null;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-      decoration: BoxDecoration(color: (ok ? kGreen : kAmber).withAlpha(22), borderRadius: BorderRadius.circular(16)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 0, 0),
       child: Row(
         children: [
           Icon(ok ? Icons.check_circle_rounded : Icons.cloud_off_rounded, size: 18, color: ok ? kGreen : const Color(0xFFB26A00)),
@@ -391,25 +384,20 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
         final recents = repo.recents.where((s) => repo.places[s.fromId] != null && repo.places[s.toId] != null).toList();
         final popular = _popular();
         return Scaffold(
+          backgroundColor: Colors.white,
           body: ListView(
             padding: EdgeInsets.zero,
             children: [
               AppHeader(
-                radius: 36,
-                padding: const EdgeInsets.fromLTRB(8, 4, 16, 26),
+                bubbles: false,
+                radius: 26,
+                padding: const EdgeInsets.fromLTRB(8, 4, 16, 22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                        Container(
-                          width: 38,
-                          height: 38,
-                          margin: const EdgeInsets.only(right: 10),
-                          decoration: BoxDecoration(color: Colors.white.withAlpha(55), shape: BoxShape.circle),
-                          child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 22),
-                        ),
                         Expanded(
                           child: Text(app.tr('Bus Timings', 'பேருந்து நேரங்கள்'), style: ts(20, weight: FontWeight.w900, color: Colors.white)),
                         ),
@@ -417,21 +405,23 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                       ],
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                      padding: const EdgeInsets.fromLTRB(8, 2, 8, 14),
                       child: Text(
                         app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
                         style: ts(13.5, color: Colors.white.withAlpha(235), height: 1.35),
                       ),
                     ),
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _searchCard()),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _fromTo()),
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _searchForm(),
+                    const SizedBox(height: 18),
                     _statusCard(),
                     if (notices.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -459,8 +449,8 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         children: [
                           for (final s in recents)
                             ActionChip(
-                              backgroundColor: Colors.white,
-                              side: BorderSide(color: kBrand.withAlpha(70)),
+                              backgroundColor: kTint,
+                              side: BorderSide.none,
                               avatar: const Icon(Icons.history_rounded, size: 17, color: kBrand),
                               label: Text('${repo.placeName(s.fromId)} → ${repo.placeName(s.toId)}', style: ts(13, weight: FontWeight.w700)),
                               onPressed: () => _go(s),
@@ -477,7 +467,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                           for (final p in popular)
                             ActionChip(
                               backgroundColor: kTint,
-                              side: BorderSide(color: kBrand.withAlpha(60)),
+                              side: BorderSide.none,
                               avatar: const Icon(Icons.near_me_rounded, size: 16, color: kBrand),
                               label: Text(p.name(app.lang), style: ts(13, weight: FontWeight.w800, color: kChipText)),
                               onPressed: () {

@@ -130,18 +130,18 @@ class _AuthScreenState extends State<AuthScreen> {
 
   InputDecoration _dec(String label, IconData icon, {Widget? suffix, String? prefix}) {
     OutlineInputBorder b(Color c, double w) =>
-        OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: c, width: w));
+        OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
       labelText: label,
       labelStyle: ts(14, color: kMuted),
       floatingLabelStyle: ts(13, color: kBrand, weight: FontWeight.w800),
-      prefixIcon: Icon(icon, size: 21, color: kBrand),
+      prefixIcon: Icon(icon, size: 21, color: kMuted),
       prefixText: prefix,
       prefixStyle: ts(15, weight: FontWeight.w800),
       suffixIcon: suffix,
-      border: b(kLine, 1),
-      enabledBorder: b(kLine, 1),
-      focusedBorder: b(kBrand, 1.8),
+      border: b(Colors.transparent, 0),
+      enabledBorder: b(Colors.transparent, 0),
+      focusedBorder: b(kBrand, 1.6),
       filled: true,
       fillColor: kTintSoft,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
@@ -149,19 +149,24 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  /// Plain text tab with an underline: no boxes.
   Widget _tab(String label, bool on, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: _busy ? null : onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            gradient: on ? kButtonGradient : null,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))] : null,
-          ),
-          child: Center(child: Text(label, style: ts(15, weight: FontWeight.w900, color: on ? Colors.white : kMuted))),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(label, style: ts(16, weight: FontWeight.w900, color: on ? kBrand : kMuted)),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 3,
+              decoration: BoxDecoration(color: on ? kBrand : Colors.transparent, borderRadius: BorderRadius.circular(3)),
+            ),
+          ],
         ),
       ),
     );
@@ -178,14 +183,14 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBg,
+      backgroundColor: Colors.white,
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
           AppHeader(
-            skyline: true,
-            radius: 38,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 64),
+            bubbles: false,
+            radius: 26,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 26),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -215,34 +220,22 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
             ),
           ),
-          Transform.translate(
-            offset: const Offset(0, -34),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 24, offset: Offset(0, 10))],
-                ),
-                child: AnimatedSize(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            child: AnimatedSize(
                   duration: const Duration(milliseconds: 220),
                   alignment: Alignment.topCenter,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(20)),
-                        child: Row(
-                          children: [
-                            _tab(app.tr('Login', 'உள்நுழை'), !_register, () => _setRegister(false)),
-                            _tab(app.tr('Register', 'பதிவு'), _register, () => _setRegister(true)),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          _tab(app.tr('Login', 'உள்நுழை'), !_register, () => _setRegister(false)),
+                          _tab(app.tr('Register', 'பதிவு'), _register, () => _setRegister(true)),
+                        ],
                       ),
-                      const SizedBox(height: 18),
+                      const Divider(height: 1, color: kLine),
+                      const SizedBox(height: 20),
                       Text(
                         _register
                             ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்')
@@ -338,11 +331,11 @@ class _AuthScreenState extends State<AuthScreen> {
                         Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(app.tr('or', 'அல்லது'), style: ts(12.5, color: kMuted))),
                         const Expanded(child: Divider(color: kLine)),
                       ]),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
+                      const SizedBox(height: 4),
+                      TextButton.icon(
                         onPressed: _busy ? null : () => Navigator.pop(context, false),
                         icon: const Icon(Icons.explore_rounded, size: 20),
-                        label: Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க')),
+                        label: Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க'), style: ts(15, weight: FontWeight.w800, color: kBrand)),
                       ),
                       const SizedBox(height: 2),
                       Center(
@@ -355,8 +348,6 @@ class _AuthScreenState extends State<AuthScreen> {
                     ],
                   ),
                 ),
-              ),
-            ),
           ),
         ],
       ),

@@ -10,6 +10,7 @@ class AppHeader extends StatelessWidget {
   final EdgeInsets padding;
   final double radius;
   final bool skyline;
+  final bool bubbles;
 
   const AppHeader({
     super.key,
@@ -17,6 +18,7 @@ class AppHeader extends StatelessWidget {
     this.padding = const EdgeInsets.fromLTRB(8, 4, 16, 20),
     this.radius = 32,
     this.skyline = false,
+    this.bubbles = true,
   });
 
   Widget _bubble(double size, int alpha) {
@@ -36,9 +38,11 @@ class AppHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(right: -40, top: -30, child: _bubble(150, 26)),
-          Positioned(left: -50, bottom: 30, child: _bubble(120, 20)),
-          Positioned(right: 70, bottom: -50, child: _bubble(100, 18)),
+          if (bubbles) ...[
+            Positioned(right: -40, top: -30, child: _bubble(150, 26)),
+            Positioned(left: -50, bottom: 30, child: _bubble(120, 20)),
+            Positioned(right: 70, bottom: -50, child: _bubble(100, 18)),
+          ],
           Padding(
             padding: EdgeInsets.fromLTRB(padding.left, top + padding.top, padding.right, padding.bottom),
             child: child,
@@ -133,7 +137,6 @@ class ChoicePill extends StatelessWidget {
         decoration: BoxDecoration(
           color: on ? kBrand : kTint,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: on ? kBrand : kBrand.withAlpha(60)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon ?? (on ? Icons.check_rounded : Icons.circle_outlined), size: 17, color: on ? Colors.white : kBrand),
