@@ -9,7 +9,7 @@ import 'bus/bus_api.dart';
 import 'share_util.dart';
 import 'theme.dart';
 
-const Color _kCream = Color(0xFFFFF6EC);
+const Color _kCream = kBg;
 const Color _kJobBlue = Color(0xFF1565C0);
 
 /// Picks the Tamil or English text of a field (falls back to the other language when empty).
@@ -218,7 +218,7 @@ class _ClassifiedsScreenState extends State<ClassifiedsScreen> {
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
                     hintText: app.tr('Search jobs, shops, places', 'வேலை, கடை, இடம் தேடுங்கள்'),
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: Colors.white,
                     isDense: true,
@@ -282,7 +282,7 @@ class _ClassifiedsScreenState extends State<ClassifiedsScreen> {
   }
 }
 
-Widget _pill(String text, {Color bg = const Color(0xFFF1EDE6), Color? fgColor, IconData? icon}) {
+Widget _pill(String text, {Color bg = kTint, Color? fgColor, IconData? icon}) {
   final fg = fgColor ?? kInk;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -318,7 +318,7 @@ class _JobCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(color: _kJobBlue.withAlpha(24), borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.work_outline, color: _kJobBlue),
+            child: const Icon(Icons.work_outline_rounded, color: _kJobBlue),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -346,7 +346,7 @@ class _JobCard extends StatelessWidget {
           ),
           IconButton(
             tooltip: app.tr('Share', 'பகிர்'),
-            icon: const Icon(Icons.share_outlined, size: 20, color: kNavy),
+            icon: const Icon(Icons.share_rounded, size: 20, color: kNavy),
             onPressed: () => showShareSheet(context, text: jobShareText(job), link: _s(job, 'applyUrl')),
           ),
         ],
@@ -423,7 +423,7 @@ class JobDetailScreen extends StatelessWidget {
             actions: [
               IconButton(
                 tooltip: app.tr('Share', 'பகிர்'),
-                icon: const Icon(Icons.share_outlined),
+                icon: const Icon(Icons.share_rounded),
                 onPressed: () => showShareSheet(context, text: jobShareText(job), link: link),
               ),
             ],
@@ -453,7 +453,7 @@ class JobDetailScreen extends StatelessWidget {
                   children: [
                     _row(Icons.currency_rupee, app.tr('Salary', 'சம்பளம்'), _s(job, 'salaryText')),
                     _row(Icons.place_outlined, app.tr('Place', 'இடம்'), _s(job, 'locationText')),
-                    _row(Icons.person_outline, app.tr('Contact person', 'தொடர்புக்கு'), cname),
+                    _row(Icons.person_rounded, app.tr('Contact person', 'தொடர்புக்கு'), cname),
                     _row(Icons.call_outlined, app.tr('Phone', 'தொலைபேசி'), phone),
                     _row(Icons.schedule, app.tr('Posted on', 'பதிவு செய்த நாள்'), _date(_s(job, 'postedOn'))),
                     _row(Icons.event_busy_outlined, app.tr('Valid till', 'கடைசி நாள்'), _date(_s(job, 'expiresOn'))),
@@ -649,7 +649,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 36),
+          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 36),
           title: Text(app.tr('Job saved', 'வேலை சேமிக்கப்பட்டது')),
           content: Text(app.tr('Thank you! Your job will appear for everyone after it is approved.',
               'நன்றி! ஒப்புதல் கிடைத்த பிறகு உங்கள் வேலை அனைவருக்கும் தெரியும்.')),
@@ -683,7 +683,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
             decoration: BoxDecoration(color: const Color(0xFFFFF1D6), borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Color(0xFF9A5B00), size: 20),
+                const Icon(Icons.info_rounded, color: Color(0xFF9A5B00), size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

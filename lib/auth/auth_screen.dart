@@ -143,7 +143,7 @@ class _AuthScreenState extends State<AuthScreen> {
       enabledBorder: b(kLine, 1),
       focusedBorder: b(kBrand, 1.8),
       filled: true,
-      fillColor: const Color(0xFFFFFAF4),
+      fillColor: kTintSoft,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       counterText: '',
     );
@@ -210,7 +210,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 2),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
-                  child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(14, color: const Color(0xFFFFE2C6))),
+                  child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(14, color: kOnBrandSoft)),
                 ),
               ],
             ),
@@ -234,7 +234,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(color: const Color(0xFFFFF1E2), borderRadius: BorderRadius.circular(20)),
+                        decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(20)),
                         child: Row(
                           children: [
                             _tab(app.tr('Login', 'உள்நுழை'), !_register, () => _setRegister(false)),

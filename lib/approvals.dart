@@ -7,7 +7,7 @@ import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
 import 'theme.dart';
 
-const Color _kCream = Color(0xFFFFF6EC);
+const Color _kCream = kBg;
 const Color _kOk = Color(0xFF1B7A3A);
 const Color _kBad = Color(0xFFB3261E);
 
@@ -219,7 +219,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(foregroundColor: _kBad, side: const BorderSide(color: _kBad)),
             onPressed: busy ? null : () => _act(kind, item, false),
-            icon: const Icon(Icons.close),
+            icon: const Icon(Icons.close_rounded),
             label: Text(app.tr('Reject', 'நிராகரி')),
           ),
         ),
@@ -439,9 +439,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
             ),
             child: Row(
               children: [
-                _pill(0, Icons.newspaper, app.tr('News', 'செய்திகள்'), _news.length),
+                _pill(0, Icons.newspaper_rounded, app.tr('News', 'செய்திகள்'), _news.length),
                 const SizedBox(width: 4),
-                _pill(1, Icons.work_outline, app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
+                _pill(1, Icons.work_outline_rounded, app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
               ],
             ),
           ),

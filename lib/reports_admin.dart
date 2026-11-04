@@ -7,8 +7,8 @@ import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
 import 'theme.dart';
 
-const Color _cream = Color(0xFFFFF6EC);
-const List<Color> _grad = [Color(0xFFFF7A1A), kBrand];
+const Color _cream = kBg;
+const List<Color> _grad = [kBrandLight, kBrand];
 
 List<BoxShadow> get _soft => [BoxShadow(color: Colors.black.withAlpha(14), blurRadius: 14, offset: const Offset(0, 5))];
 
@@ -426,7 +426,7 @@ class _ReportsAdminScreenState extends State<ReportsAdminScreen> {
                     padding: const EdgeInsets.fromLTRB(14, 4, 14, 30),
                     children: [
                       Row(children: [
-                        _stat(app.tr('New', 'புதிய'), _count('New'), const Color(0xFFE8590C), Icons.fiber_new_rounded),
+                        _stat(app.tr('New', 'புதிய'), _count('New'), kBrand, Icons.fiber_new_rounded),
                         const SizedBox(width: 10),
                         _stat(app.tr('In progress', 'நடப்பில்'), _count('InProgress'), const Color(0xFF1A56C4), Icons.build_rounded),
                         const SizedBox(width: 10),
@@ -517,7 +517,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                 for (final q in _quick)
                   ActionChip(
                     label: Text(q[0], style: ts(12, weight: FontWeight.w700)),
-                    backgroundColor: const Color(0xFFFFF4E6),
+                    backgroundColor: kTint,
                     side: BorderSide(color: kBrand.withAlpha(70)),
                     onPressed: () => setState(() {
                       _reply.text = q[0];

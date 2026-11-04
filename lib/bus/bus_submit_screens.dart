@@ -224,7 +224,7 @@ Future<void> _thanks(BuildContext context) async {
   await showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      icon: const Icon(Icons.check_circle, color: kGreen, size: 36),
+      icon: const Icon(Icons.check_circle_rounded, color: kGreen, size: 36),
       title: Text(app.tr('Thank you!', 'நன்றி!')),
       content: Text(
         app.tr(
@@ -487,7 +487,7 @@ class _AddBusScreenState extends State<AddBusScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: kRed),
+                    icon: const Icon(Icons.close_rounded, color: kRed),
                     onPressed: () => setState(() {
                       _via[i].minutes.dispose();
                       _via.removeAt(i);

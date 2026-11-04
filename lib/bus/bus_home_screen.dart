@@ -181,7 +181,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
-            decoration: BoxDecoration(color: const Color(0xFFFFF8F0), borderRadius: BorderRadius.circular(22), border: Border.all(color: kLine)),
+            decoration: BoxDecoration(color: kTintSoft, borderRadius: BorderRadius.circular(22), border: Border.all(color: kLine)),
             child: IntrinsicHeight(
               child: Row(
                 children: [
@@ -345,7 +345,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
             const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: () => repo.sync(),
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh_rounded),
               label: Text(app.tr('Try again', 'மீண்டும் முயற்சி')),
             ),
           ],
@@ -476,10 +476,10 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                         children: [
                           for (final p in popular)
                             ActionChip(
-                              backgroundColor: const Color(0xFFFFF4E6),
+                              backgroundColor: kTint,
                               side: BorderSide(color: kBrand.withAlpha(60)),
                               avatar: const Icon(Icons.near_me_rounded, size: 16, color: kBrand),
-                              label: Text(p.name(app.lang), style: ts(13, weight: FontWeight.w800, color: const Color(0xFF7A3A0A))),
+                              label: Text(p.name(app.lang), style: ts(13, weight: FontWeight.w800, color: kChipText)),
                               onPressed: () {
                                 setState(() => _toId = p.id);
                                 _search();
@@ -493,7 +493,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
                       children: [
                         Expanded(
                           child: _QuickTile(
-                            color: const Color(0xFFE8590C),
+                            color: kBrand,
                             icon: Icons.departure_board_rounded,
                             label: app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'),
                             onTap: () {

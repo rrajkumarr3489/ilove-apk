@@ -130,7 +130,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: const Color(0xFFFFF1E2), borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(20)),
                 child: Row(
                   children: [
                     _toggleBtn(Icons.timeline_rounded, app.tr('Stops', 'நிறுத்தங்கள்'), !_map, () => setState(() => _map = false)),
@@ -202,7 +202,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
         gradient: kHeaderGradient,
-        boxShadow: const [BoxShadow(color: Color(0x55E8590C), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Stack(
         children: [
@@ -259,7 +259,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
       padding: const EdgeInsets.only(right: 20),
       child: Row(
         children: [
-          Icon(icon, size: 17, color: const Color(0xFFFFE2C6)),
+          Icon(icon, size: 17, color: kOnBrandSoft),
           const SizedBox(width: 6),
           Text(text, style: ts(14, weight: FontWeight.w800, color: Colors.white)),
         ],
@@ -319,7 +319,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
     final isBoard = i == bi;
     final isAlight = i == ai;
     final dim = bi >= 0 && ai >= 0 && (i < bi || i > ai);
-    final Color dot = first ? kGreen : (last ? kRed : (isBoard || isAlight ? kBrand : const Color(0xFFF2A65A)));
+    final Color dot = first ? kGreen : (last ? kRed : (isBoard || isAlight ? kBrand : kBrandMid));
     String time = '--';
     if (t != null) {
       final m = t.departMin + s.offset;
@@ -417,7 +417,7 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
       return SoftCard(
         child: Column(
           children: [
-            const Icon(Icons.map_outlined, color: kMuted, size: 36),
+            const Icon(Icons.map_rounded, color: kMuted, size: 36),
             const SizedBox(height: 8),
             Text(
               app.tr('The map needs locations for the places on this route. They are added by the admin.',

@@ -1,25 +1,65 @@
 import 'package:flutter/material.dart';
 
-const Color kBrand = Color(0xFFE8590C);
-// kNavy / kBlue keep their old names so every screen compiles, but they are warm now (no blue anywhere).
-const Color kNavy = Color(0xFF3D2314);
-const Color kBlue = Color(0xFFD9480F);
-const Color kBg = Color(0xFFFFF6EC);
-const Color kInk = Color(0xFF1C1B1F);
-const Color kMuted = Color(0xFF6B6B76);
-const Color kLine = Color(0xFFEFE3D3);
+// ===== THEME PALETTE =====
+// Every screen uses these names, so the whole look of the app is changed from this one block.
+// (Old orange theme: replace this file with theme_orange_BACKUP.dart.)
+
+// Brand (primary) colours
+const Color kBrand = Color(0xFF2A7DE1);
+const Color kBrandLight = Color(0xFF4DA3FF);
+const Color kBrandDark = Color(0xFF1B5FC2);
+const Color kBrandMid = Color(0xFF8DBBF2);
+const Color kBrandShadow = Color(0x552A7DE1);
+
+// Soft tints and text on tints
+const Color kTint = Color(0xFFE8F2FF);
+const Color kTintSoft = Color(0xFFF3F8FF);
+const Color kOnBrandSoft = Color(0xFFD9EAFF);
+const Color kChipText = Color(0xFF174A99);
+
+// Page, text and lines
+const Color kBg = Color(0xFFF4F8FE);
+const Color kInk = Color(0xFF172033);
+const Color kMuted = Color(0xFF5F6B7E);
+const Color kLine = Color(0xFFDDE8F5);
+const Color kNavy = Color(0xFF0F2A4D);
+const Color kBlue = Color(0xFF1E6FD9);
+
+// Home banner sky (dawn scene)
+const Color kSkyTop = Color(0xFF1B4F9C);
+const Color kSkyMid = Color(0xFF2F7FE0);
+const Color kSkyLow = Color(0xFF74B8FF);
+const Color kSkyHorizon = Color(0xFFCFE8FF);
+const Color kSun = Color(0xFFFFF4C9);
+const Color kSunGlow = Color(0x66FFF4C9);
+const Color kBirds = Color(0xCCFFFFFF);
+const Color kTowerFar = Color(0x660F2E5C);
+const Color kTowerMain = Color(0xFF0F2E5C);
+const Color kGround = Color(0xFF0B2347);
+
+// Home service tile colours
+const Color kTileBus = Color(0xFF2A7DE1);
+const Color kTileNews = Color(0xFF0EA5E9);
+const Color kTileTrain = Color(0xFF6366F1);
+const Color kTileServices = Color(0xFF14B8A6);
+const Color kTileParcel = Color(0xFFE0559A);
+const Color kTileShops = Color(0xFFF59E0B);
+const Color kTileFood = Color(0xFFEF4444);
+const Color kTileJobs = Color(0xFF1D4ED8);
+const Color kTileReport = Color(0xFF8B5CF6);
+const Color kTileAi = Color(0xFF0891B2);
 const Color kGreen = Color(0xFF1E8E5A);
 const Color kRed = Color(0xFFD32F2F);
 const Color kAmber = Color(0xFFF9A825);
 
-/// Orange header / button gradient used on every screen.
+/// Header / button gradient used on every screen.
 const LinearGradient kHeaderGradient = LinearGradient(
-  colors: [Color(0xFFFF8A2B), kBrand, Color(0xFFD9480F)],
+  colors: [kBrandLight, kBrand, kBrandDark],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
 );
 
-const LinearGradient kButtonGradient = LinearGradient(colors: [Color(0xFFFF7A1A), kBrand]);
+const LinearGradient kButtonGradient = LinearGradient(colors: [kBrandLight, kBrand]);
 
 const List<BoxShadow> kSoftShadow = [
   BoxShadow(color: Color(0x14000000), blurRadius: 14, offset: Offset(0, 5)),

@@ -32,7 +32,7 @@ class AppHeader extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: kHeaderGradient,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(radius)),
-        boxShadow: const [BoxShadow(color: Color(0x55E8590C), blurRadius: 20, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 20, offset: Offset(0, 8))],
       ),
       child: Stack(
         children: [
@@ -131,14 +131,14 @@ class ChoicePill extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: on ? kBrand : const Color(0xFFFFF4E6),
+          color: on ? kBrand : kTint,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: on ? kBrand : kBrand.withAlpha(60)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon ?? (on ? Icons.check_rounded : Icons.circle_outlined), size: 17, color: on ? Colors.white : kBrand),
           const SizedBox(width: 6),
-          Text(label, style: ts(13.5, weight: FontWeight.w800, color: on ? Colors.white : const Color(0xFF7A3A0A))),
+          Text(label, style: ts(13.5, weight: FontWeight.w800, color: on ? Colors.white : kChipText)),
         ]),
       ),
     );

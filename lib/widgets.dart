@@ -192,7 +192,7 @@ class BrandMark extends StatelessWidget {
             TextSpan(text: 'I ', style: TextStyle(color: onDark ? Colors.white : kBrand)),
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: Icon(Icons.favorite, color: const Color(0xFFFF5252), size: size * 0.9),
+              child: Icon(Icons.favorite_rounded, color: const Color(0xFFFF5252), size: size * 0.9),
             ),
             TextSpan(text: ' APK', style: TextStyle(color: onDark ? Colors.white : kNavy)),
           ],

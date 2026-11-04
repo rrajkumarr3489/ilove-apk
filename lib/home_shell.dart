@@ -25,7 +25,7 @@ import 'theme.dart';
 import 'tiles.dart';
 import 'widgets.dart';
 
-const Color kCream = Color(0xFFFFF6EC);
+const Color kCream = kBg;
 
 /// Bottom tabs: Home, Favorites, All services, Me.
 class HomeShell extends StatefulWidget {
@@ -69,7 +69,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -125,21 +125,21 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
           ),
           bottomNavigationBar: Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [BoxShadow(color: Color(0x33E8590C), blurRadius: 14, offset: Offset(0, -4))],
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              boxShadow: [BoxShadow(color: Color(0x1F1B3A66), blurRadius: 18, offset: Offset(0, -4))],
             ),
             child: NavigationBarTheme(
               data: NavigationBarThemeData(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                indicatorColor: Colors.white,
+                indicatorColor: kTint,
                 labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
                     fontSize: 11.5,
                     fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600,
-                    color: Colors.white)),
+                    color: states.contains(WidgetState.selected) ? kBrand : kMuted)),
                 iconTheme: WidgetStateProperty.resolveWith((states) =>
-                    IconThemeData(size: 26, color: states.contains(WidgetState.selected) ? kBrand : Colors.white)),
+                    IconThemeData(size: 26, color: states.contains(WidgetState.selected) ? kBrand : kMuted)),
               ),
               child: NavigationBar(
                 selectedIndex: _tab,
@@ -147,12 +147,12 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                 destinations: [
                   NavigationDestination(
                     icon: const Icon(Icons.home_outlined),
-                    selectedIcon: const Icon(Icons.home),
+                    selectedIcon: const Icon(Icons.home_rounded),
                     label: app.tr('Home', 'முகப்பு'),
                   ),
                   NavigationDestination(
-                    icon: const Icon(Icons.star_border),
-                    selectedIcon: const Icon(Icons.star),
+                    icon: const Icon(Icons.star_border_rounded),
+                    selectedIcon: const Icon(Icons.star_rounded),
                     label: app.tr('Favorites', 'பிடித்தவை'),
                   ),
                   NavigationDestination(
@@ -161,8 +161,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
                     label: app.tr('All services', 'அனைத்து சேவைகள்'),
                   ),
                   NavigationDestination(
-                    icon: const Icon(Icons.person_outline),
-                    selectedIcon: const Icon(Icons.person),
+                    icon: const Icon(Icons.person_outline_rounded),
+                    selectedIcon: const Icon(Icons.person_rounded),
                     label: app.tr('Me', 'எனது'),
                   ),
                 ],
@@ -250,7 +250,7 @@ class HomeTab extends StatelessWidget {
         height: height,
         padding: EdgeInsets.only(top: top + 2, left: 6, right: 6),
         decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          gradient: LinearGradient(colors: [kBrandLight, kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
         ),
         child: Column(
           children: [
@@ -258,7 +258,7 @@ class HomeTab extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Icons.menu, color: Colors.white, size: 30),
+                  icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 30),
                 ),
                 const Expanded(child: Center(child: _HeaderLogo())),
                 ListenableBuilder(
@@ -271,7 +271,7 @@ class HomeTab extends StatelessWidget {
                       icon: Badge(
                         isLabelVisible: count > 0,
                         label: Text('$count'),
-                        child: const Icon(Icons.notifications, color: Colors.white, size: 30),
+                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 30),
                       ),
                     );
                   },
@@ -456,7 +456,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x00FFF6EC), kCream],
+                    colors: [Color(0x00F4F8FE), kCream],
                   ),
                 ),
               ),
@@ -491,7 +491,7 @@ class _SearchBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        boxShadow: const [BoxShadow(color: Color(0x40FF8A1F), blurRadius: 18, offset: Offset(0, 6))],
+        boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 18, offset: Offset(0, 6))],
       ),
       child: Material(
         color: Colors.white,
@@ -503,7 +503,7 @@ class _SearchBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             child: Row(
               children: [
-                const Icon(Icons.search, color: kNavy, size: 28),
+                const Icon(Icons.search_rounded, color: kNavy, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -513,7 +513,7 @@ class _SearchBar extends StatelessWidget {
                     style: ts(16, color: kInk, weight: FontWeight.w600),
                   ),
                 ),
-                const Icon(Icons.mic, color: kNavy, size: 26),
+                const Icon(Icons.mic_rounded, color: kNavy, size: 26),
               ],
             ),
           ),
@@ -544,7 +544,7 @@ class _NewsSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.campaign, color: kRed, size: 30),
+              const Icon(Icons.campaign_rounded, color: kRed, size: 30),
               const SizedBox(width: 8),
               Expanded(child: Text(app.tr("Today's news", 'இன்றைய செய்திகள்'), style: ts(19, weight: FontWeight.w900))),
             ],
@@ -556,7 +556,7 @@ class _NewsSection extends StatelessWidget {
               child: SoftCard(
                 child: Row(
                   children: [
-                    const Icon(Icons.newspaper, color: kMuted),
+                    const Icon(Icons.newspaper_rounded, color: kMuted),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(app.tr('News will appear here soon', 'செய்திகள் விரைவில் இங்கே வரும்'),
@@ -624,7 +624,7 @@ class _NewsCard extends StatelessWidget {
           IconButton(
             tooltip: app.tr('Share', 'பகிர்'),
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.share_outlined, size: 20, color: kNavy),
+            icon: const Icon(Icons.share_rounded, size: 20, color: kNavy),
             onPressed: () => showShareSheet(context, text: newsShareText(item.name(app.lang), item.link), link: item.link),
           ),
         ],
@@ -653,7 +653,7 @@ class _NextBusCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.directions_bus, color: kBrand, size: 20),
+                const Icon(Icons.directions_bus_rounded, color: kBrand, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(app.tr('Next buses from Aruppukottai', 'அருப்புக்கோட்டையிலிருந்து அடுத்த பேருந்துகள்'),
@@ -763,7 +763,7 @@ class _ServiceTile extends StatelessWidget {
                     Expanded(
                       child: Text(secondary, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11, color: kInk)),
                     ),
-                    const Icon(Icons.chevron_right, size: 18, color: kNavy),
+                    const Icon(Icons.chevron_right_rounded, size: 18, color: kNavy),
                   ],
                 ),
               ],
@@ -814,7 +814,7 @@ class AllServicesTab extends StatelessWidget {
                     width: double.infinity,
                     padding: EdgeInsets.fromLTRB(20, top + 16, 20, 40),
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      gradient: LinearGradient(colors: [kBrandLight, kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
                       borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
                     ),
                     child: Column(
@@ -1035,7 +1035,7 @@ class UnderConstructionScreen extends StatelessWidget {
           action: FilledButton.icon(
             onPressed: () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => const BusHomeScreen())),
-            icon: const Icon(Icons.directions_bus),
+            icon: const Icon(Icons.directions_bus_rounded),
             label: Text(app.tr('Open Bus Timings', 'பேருந்து நேரங்களைத் திற')),
           ),
         ),
@@ -1063,7 +1063,7 @@ class _AppDrawer extends StatelessWidget {
           Container(
             padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 22, 20, 20),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFFFF7A1A), kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: LinearGradient(colors: [kBrandLight, kBrand], begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.only(bottomRight: Radius.circular(30)),
             ),
             child: Column(
@@ -1098,7 +1098,7 @@ class _AppDrawer extends StatelessWidget {
               title: Text(app.lang == 'ta' ? t.titleTa : t.title, style: ts(15, weight: FontWeight.w700)),
               subtitle: Text(app.lang == 'ta' ? t.title : t.titleTa, style: ts(12, color: kMuted)),
               trailing: t.live
-                  ? const Icon(Icons.chevron_right, color: kMuted)
+                  ? const Icon(Icons.chevron_right_rounded, color: kMuted)
                   : Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(color: kAmber.withAlpha(60), borderRadius: BorderRadius.circular(8)),
@@ -1111,7 +1111,7 @@ class _AppDrawer extends StatelessWidget {
               },
             ),
           const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: Divider()),
-          _pageTile(context, Icons.star_border, app.tr('Favorites', 'பிடித்தவை'), 1),
+          _pageTile(context, Icons.star_border_rounded, app.tr('Favorites', 'பிடித்தவை'), 1),
           ListenableBuilder(
             listenable: inbox,
             builder: (context, _) => ListTile(
@@ -1119,7 +1119,7 @@ class _AppDrawer extends StatelessWidget {
               leading: Badge(
                 isLabelVisible: inbox.unread > 0,
                 label: Text('${inbox.unread}'),
-                child: const Icon(Icons.notifications_active_outlined, color: kNavy),
+                child: const Icon(Icons.notifications_active_rounded, color: kNavy),
               ),
               title: Text(app.tr('Notifications', 'அறிவிப்புகள்'), style: ts(15, weight: FontWeight.w600)),
               onTap: () {
@@ -1130,14 +1130,14 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-            leading: const Icon(Icons.notifications_none, color: kNavy),
+            leading: const Icon(Icons.notifications_none_rounded, color: kNavy),
             title: Text(app.tr('Updates', 'தகவல்கள்'), style: ts(15, weight: FontWeight.w600)),
             onTap: () {
               Navigator.pop(context);
               onUpdates();
             },
           ),
-          _pageTile(context, Icons.settings_outlined, app.tr('Settings', 'அமைப்புகள்'), 3),
+          _pageTile(context, Icons.settings_rounded, app.tr('Settings', 'அமைப்புகள்'), 3),
           const SizedBox(height: 16),
         ],
       ),
@@ -1175,7 +1175,7 @@ class _HeaderLogo extends StatelessWidget {
         children: [
           Text('I', style: style),
           SizedBox(width: 6),
-          Icon(Icons.favorite, color: Color(0xFFE50914), size: 50),
+          Icon(Icons.favorite_rounded, color: Color(0xFFE50914), size: 50),
           SizedBox(width: 6),
           Text('APK', style: style),
         ],
@@ -1228,7 +1228,7 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
             suffixIcon: _q.isEmpty
                 ? null
                 : IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close_rounded),
                     onPressed: () {
                       _c.clear();
                       setState(() => _q = '');
@@ -1268,7 +1268,7 @@ class _ServiceSearchScreenState extends State<ServiceSearchScreen> {
                           if (!t.live)
                             Text(app.tr('Soon', 'விரைவில்'), style: ts(11, weight: FontWeight.w800, color: const Color(0xFF8A5A00)))
                           else
-                            const Icon(Icons.chevron_right, color: kNavy),
+                            const Icon(Icons.chevron_right_rounded, color: kNavy),
                         ],
                       ),
                     ),

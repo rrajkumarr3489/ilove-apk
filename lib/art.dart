@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'theme.dart';
+
 /// Hand-drawn (vector) scenery: a temple tower (gopuram), sun, birds.
 /// Drawn by code, so it adds nothing to the APK size and stays sharp on every screen.
 
@@ -90,7 +92,7 @@ class TempleScenePainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF5A1620), Color(0xFFB8321C), Color(0xFFF07A1A), Color(0xFFFFC15A)],
+          colors: [kSkyTop, kSkyMid, kSkyLow, kSkyHorizon],
           stops: [0.0, 0.42, 0.78, 1.0],
         ).createShader(rect),
     );
@@ -100,18 +102,18 @@ class TempleScenePainter extends CustomPainter {
       sun,
       size.height * 0.62,
       Paint()
-        ..shader = RadialGradient(colors: [const Color(0x66FFE9A8), const Color(0x00FFE9A8)])
+        ..shader = RadialGradient(colors: [kSunGlow, kSunGlow.withAlpha(0)])
             .createShader(Rect.fromCircle(center: sun, radius: size.height * 0.62)),
     );
-    canvas.drawCircle(sun, size.height * 0.14, Paint()..color = const Color(0xFFFFE3A0));
+    canvas.drawCircle(sun, size.height * 0.14, Paint()..color = kSun);
 
-    _birds(canvas, size, const Color(0xCCFFE9C8));
+    _birds(canvas, size, kBirds);
 
     final base = size.height + 1;
     // far, lighter tower
-    drawGopuram(canvas, size.width * 0.66, base, size.height * 0.5, const Color(0x66410F14));
+    drawGopuram(canvas, size.width * 0.66, base, size.height * 0.5, kTowerFar);
     // main tower
-    drawGopuram(canvas, size.width * 0.86, base, size.height * 0.78, const Color(0xFF3A0D12));
+    drawGopuram(canvas, size.width * 0.86, base, size.height * 0.78, kTowerMain);
     // low wall / trees line
     final ground = Path()..moveTo(0, size.height);
     for (var x = 0.0; x <= size.width; x += 24) {
@@ -120,7 +122,7 @@ class TempleScenePainter extends CustomPainter {
     }
     ground.lineTo(size.width, size.height);
     ground.close();
-    canvas.drawPath(ground, Paint()..color = const Color(0xFF2B0A0E));
+    canvas.drawPath(ground, Paint()..color = kGround);
   }
 
   @override

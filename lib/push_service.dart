@@ -15,6 +15,7 @@ import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
 import 'reports_admin.dart';
+import 'theme.dart';
 import 'firebase_config.dart';
 
 /// Lets the push service show a dialog from anywhere (attached to MaterialApp in main.dart).
@@ -163,7 +164,7 @@ class PushService {
     showDialog<void>(
       context: ctx,
       builder: (c) => AlertDialog(
-        icon: const Icon(Icons.notifications_active, color: Color(0xFFE8590C), size: 34),
+        icon: const Icon(Icons.notifications_active, color: kBrand, size: 34),
         title: Text(title),
         content: Text(body),
         actions: [

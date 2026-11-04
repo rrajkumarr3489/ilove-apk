@@ -12,7 +12,7 @@ import 'bus/bus_repo.dart';
 import 'config.dart';
 import 'theme.dart';
 
-const Color _cream = Color(0xFFFFF6EC);
+const Color _cream = kBg;
 
 /// Opens the "Report an issue" form. Only logged-in people can report.
 /// [refKind]/[refText] are filled when the report is about one item (e.g. a bus time).
@@ -39,7 +39,7 @@ Future<void> openMyReports(BuildContext context) async {
   await Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MyReportsScreen()));
 }
 
-const List<Color> _grad = [Color(0xFFFF7A1A), kBrand];
+const List<Color> _grad = [kBrandLight, kBrand];
 
 class _TypeInfo {
   final String key, en, ta;
@@ -261,7 +261,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 14),
         width: double.infinity,
-        decoration: BoxDecoration(color: const Color(0xFFFFF4E6), borderRadius: BorderRadius.circular(20), border: Border.all(color: kBrand.withAlpha(90), width: 1.4)),
+        decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBrand.withAlpha(90), width: 1.4)),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           const Icon(Icons.add_photo_alternate_rounded, size: 30, color: kBrand),
           const SizedBox(width: 12),

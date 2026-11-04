@@ -87,9 +87,9 @@ IconData placeIcon(String type) {
       return Icons.holiday_village;
     case 'BusStand':
     case 'BusStop':
-      return Icons.directions_bus;
+      return Icons.directions_bus_rounded;
     case 'RailwayStation':
-      return Icons.train;
+      return Icons.train_rounded;
     default:
       return Icons.place;
   }
@@ -148,7 +148,7 @@ class DateStrip extends StatelessWidget {
             child: Column(
               children: [
                 Text(fmtDate(date), style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
-                if (isToday) Text(app.tr('Today', 'இன்று'), style: ts(11.5, weight: FontWeight.w800, color: const Color(0xFFFFE2C6))),
+                if (isToday) Text(app.tr('Today', 'இன்று'), style: ts(11.5, weight: FontWeight.w800, color: kOnBrandSoft)),
               ],
             ),
           ),
@@ -241,7 +241,7 @@ class StatusBadge extends StatelessWidget {
         return Pill(app.tr('Diverted', 'பாதை மாற்றம்'),
             color: const Color(0xFF6A1B9A), icon: Icons.alt_route);
       case 'Info':
-        return Pill(app.tr('Notice', 'அறிவிப்பு'), color: kBlue, icon: Icons.info_outline);
+        return Pill(app.tr('Notice', 'அறிவிப்பு'), color: kBlue, icon: Icons.info_rounded);
       default:
         return const SizedBox.shrink();
     }
@@ -344,7 +344,7 @@ class NoticeTile extends StatelessWidget {
         break;
       default:
         c = kBlue;
-        icon = Icons.info_outline;
+        icon = Icons.info_rounded;
     }
     final msg = notice.msg(app.lang);
     final title = notice.kind == 'Delayed' && notice.delay != null

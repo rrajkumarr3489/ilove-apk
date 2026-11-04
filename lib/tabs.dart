@@ -46,7 +46,7 @@ class FavoritesTab extends StatelessWidget {
             Expanded(
               child: (routes.isEmpty && searches.isEmpty && trips.isEmpty)
                   ? EmptyState(
-                      icon: Icons.favorite_border,
+                      icon: Icons.favorite_border_rounded,
                       title: app.tr('Nothing saved yet', 'இன்னும் எதுவும் சேமிக்கவில்லை'),
                       message: app.tr('Tap the heart on a bus or a search to keep it here.',
                           'பேருந்து அல்லது தேடலில் இதய குறியைத் தட்டினால் இங்கே இருக்கும்.'),
@@ -68,7 +68,7 @@ class FavoritesTab extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.search, color: kBrand),
+                                  const Icon(Icons.search_rounded, color: kBrand),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
@@ -77,7 +77,7 @@ class FavoritesTab extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.favorite, color: kRed),
+                                    icon: const Icon(Icons.favorite_rounded, color: kRed),
                                     onPressed: () => repo.toggleFavSearch(s),
                                   ),
                                 ],
@@ -108,7 +108,7 @@ class FavoritesTab extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.favorite, color: kRed),
+                                    icon: const Icon(Icons.favorite_rounded, color: kRed),
                                     onPressed: () => repo.toggleFavTrip(t.id),
                                   ),
                                 ],
@@ -127,7 +127,7 @@ class FavoritesTab extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.directions_bus, color: kBlue),
+                                  const Icon(Icons.directions_bus_rounded, color: kBlue),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
@@ -139,7 +139,7 @@ class FavoritesTab extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.favorite, color: kRed),
+                                    icon: const Icon(Icons.favorite_rounded, color: kRed),
                                     onPressed: () => repo.toggleFavRoute(r.id),
                                   ),
                                 ],
@@ -175,7 +175,7 @@ class UpdatesTab extends StatelessWidget {
                 tooltip: app.tr('Refresh', 'புதுப்பி'),
                 icon: repo.syncing
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2))
-                    : const Icon(Icons.refresh),
+                    : const Icon(Icons.refresh_rounded),
                 onPressed: repo.syncing ? null : () => repo.sync(),
               ),
             ),
@@ -209,7 +209,7 @@ class _SettingsTabState extends State<SettingsTab> {
       leading: Icon(icon, color: color ?? kBlue),
       title: Text(title, style: ts(15.5, weight: FontWeight.w700, color: color ?? kInk)),
       subtitle: sub == null ? null : Text(sub, style: ts(12.5, color: kMuted)),
-      trailing: trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right, color: kMuted)),
+      trailing: trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right_rounded, color: kMuted)),
       onTap: onTap,
     );
   }
@@ -325,7 +325,7 @@ class _SettingsTabState extends State<SettingsTab> {
           children: [
             Row(
               children: [
-                const CircleAvatar(radius: 22, backgroundColor: kLine, child: Icon(Icons.person_outline, color: kMuted)),
+                const CircleAvatar(radius: 22, backgroundColor: kLine, child: Icon(Icons.person_rounded, color: kMuted)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -408,7 +408,7 @@ class _SettingsTabState extends State<SettingsTab> {
               ]),
             _group([
               ListTile(
-                leading: const Icon(Icons.translate, color: kBlue),
+                leading: const Icon(Icons.translate_rounded, color: kBlue),
                 title: Text(app.tr('Language', 'மொழி'), style: ts(15.5, weight: FontWeight.w700)),
                 trailing: const LangToggle(),
               ),
@@ -419,7 +419,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   onTap: repo.syncing ? null : () => repo.sync(),
                   trailing: repo.syncing
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2))
-                      : const Icon(Icons.refresh, color: kMuted)),
+                      : const Icon(Icons.refresh_rounded, color: kMuted)),
               _row(Icons.cloud_download_outlined, app.tr('Download timetable again', 'நேரங்களை மீண்டும் பதிவிறக்கு'),
                   onTap: repo.syncing ? null : _redownload),
             ]),
@@ -436,8 +436,8 @@ class _SettingsTabState extends State<SettingsTab> {
               _row(Icons.campaign_outlined, app.tr('Notices', 'அறிவிப்புகள்'),
                   onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const NoticesScreen()))),
               _row(Icons.flag_outlined, app.tr('Report an issue', 'சிக்கலைத் தெரிவி'), onTap: () => openReportIssue(context)),
-              _row(Icons.history, app.tr('My reports', 'என் புகார்கள்'), onTap: () => openMyReports(context)),
-              _row(Icons.info_outline, app.tr('About', 'பற்றி'),
+              _row(Icons.history_rounded, app.tr('My reports', 'என் புகார்கள்'), onTap: () => openMyReports(context)),
+              _row(Icons.info_rounded, app.tr('About', 'பற்றி'),
                   sub: 'I Love Aruppukottai  v$kAppVersion',
                   onTap: () => showDialog<void>(
                         context: context,

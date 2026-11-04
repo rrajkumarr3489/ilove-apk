@@ -8,7 +8,7 @@ import 'push_service.dart';
 import 'reports_admin.dart';
 import 'theme.dart';
 
-const Color _cream = Color(0xFFFFF6EC);
+const Color _cream = kBg;
 
 /// Number of notifications the person has not opened yet (red number on the bell).
 class Inbox extends ChangeNotifier {
@@ -74,7 +74,7 @@ _Look _lookOf(String kind) {
     case 'rejected_jobs':
       return const _Look(Icons.cancel_rounded, Color(0xFFE53935));
     case 'news':
-      return const _Look(Icons.newspaper_rounded, Color(0xFFE8590C));
+      return const _Look(Icons.newspaper_rounded, kBrand);
     case 'jobs':
       return const _Look(Icons.work_rounded, Color(0xFF1565C0));
     case 'report_update':
@@ -209,7 +209,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         padding: const EdgeInsets.all(14),
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFFFF7A1A), kBrand]),
+          gradient: const LinearGradient(colors: [kBrandLight, kBrand]),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: kBrand.withAlpha(70), blurRadius: 14, offset: const Offset(0, 6))],
         ),

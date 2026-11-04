@@ -100,7 +100,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 36),
+          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 36),
           title: Text(app.tr('News saved', 'செய்தி சேமிக்கப்பட்டது')),
           content: Text(app.tr('Thank you! Your news will appear for everyone after it is approved.',
               'நன்றி! ஒப்புதல் கிடைத்த பிறகு உங்கள் செய்தி அனைவருக்கும் தெரியும்.')),
@@ -144,7 +144,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
         height: 170,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF4E6),
+          color: kTint,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: kLine),
         ),
@@ -157,9 +157,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF6EC),
+      backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF6EC),
+        backgroundColor: kBg,
         title: Text(_id == null ? app.tr('Add news', 'செய்தி சேர்க்க') : app.tr('Change news', 'செய்தியை மாற்று'),
             style: ts(19, weight: FontWeight.w900)),
       ),
@@ -171,7 +171,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
             decoration: BoxDecoration(color: const Color(0xFFFFF1D6), borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Color(0xFF9A5B00), size: 20),
+                const Icon(Icons.info_rounded, color: Color(0xFF9A5B00), size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -298,9 +298,9 @@ class _MyNewsScreenState extends State<MyNewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF6EC),
+      backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF6EC),
+        backgroundColor: kBg,
         title: Text(app.tr('My news', 'நான் அனுப்பிய செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
       ),
       floatingActionButton: FloatingActionButton.extended(

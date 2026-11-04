@@ -81,7 +81,7 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                     if (pos != null)
                       IconButton(
                         tooltip: 'Google Maps',
-                        icon: const Icon(Icons.map_outlined, color: kBrand),
+                        icon: const Icon(Icons.map_rounded, color: kBrand),
                         onPressed: () => openInGoogleMaps(context, pos),
                       )
                     else
@@ -158,7 +158,7 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                       const SizedBox(width: 10),
                       OutlinedButton.icon(
                         onPressed: () => openInGoogleMaps(context, LatLng(sel.lat!, sel.lng!)),
-                        icon: const Icon(Icons.map_outlined, size: 18),
+                        icon: const Icon(Icons.map_rounded, size: 18),
                         label: const Text('Google Maps'),
                       ),
                     ],

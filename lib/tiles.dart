@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'bus/bus_repo.dart';
+import 'theme.dart';
 
 /// A tile on the home screen. Only tiles with [live] = true open a working module.
 class TileInfo {
@@ -30,52 +31,52 @@ const List<TileInfo> kTiles = [
       key: 'bus',
       title: 'Bus Timings',
       titleTa: 'பேருந்து நேரங்கள்',
-      icon: Icons.directions_bus,
-      color: Color(0xFFE8590C),
+      icon: Icons.directions_bus_rounded,
+      color: kTileBus,
       live: true),
   TileInfo(
       key: 'news',
       title: 'News',
       titleTa: 'செய்திகள்',
-      icon: Icons.newspaper,
-      color: Color(0xFF1E88E5),
+      icon: Icons.newspaper_rounded,
+      color: kTileNews,
       live: true),
   TileInfo(
       key: 'train',
       title: 'Train Timings',
       titleTa: 'ரயில் நேரங்கள்',
-      icon: Icons.train,
-      color: Color(0xFF5E35B1)),
+      icon: Icons.train_rounded,
+      color: kTileTrain),
   TileInfo(
       key: 'services',
       title: 'Home Services',
       titleTa: 'உதவி சேவைகள்',
-      icon: Icons.build,
-      color: Color(0xFF00897B)),
+      icon: Icons.build_rounded,
+      color: kTileServices),
   TileInfo(
       key: 'parcel',
       title: 'Parcel Service',
       titleTa: 'பார்சல் சேவை',
-      icon: Icons.local_shipping,
-      color: Color(0xFFD81B60)),
+      icon: Icons.local_shipping_rounded,
+      color: kTileParcel),
   TileInfo(
       key: 'shops',
       title: 'Shops',
       titleTa: 'கடைகள்',
-      icon: Icons.storefront,
-      color: Color(0xFFF9A825)),
+      icon: Icons.storefront_rounded,
+      color: kTileShops),
   TileInfo(
       key: 'food',
       title: 'Food & Hotels',
       titleTa: 'உணவகங்கள்',
-      icon: Icons.restaurant,
-      color: Color(0xFFE53935)),
+      icon: Icons.restaurant_rounded,
+      color: kTileFood),
   TileInfo(
       key: 'classifieds',
       title: 'Jobs',
       titleTa: 'வேலை வாய்ப்புகள்',
-      icon: Icons.work_outline,
-      color: Color(0xFF1565C0),
+      icon: Icons.work_outline_rounded,
+      color: kTileJobs,
       live: true,
       tagline: 'Jobs near Aruppukottai',
       taglineTa: 'அருப்புக்கோட்டை அருகில் வேலைகள்'),
@@ -83,8 +84,8 @@ const List<TileInfo> kTiles = [
       key: 'report',
       title: 'Report a Problem',
       titleTa: 'பிரச்சனை தெரிவிக்க',
-      icon: Icons.campaign,
-      color: Color(0xFF6A1B9A),
+      icon: Icons.campaign_rounded,
+      color: kTileReport,
       live: true,
       tagline: 'Tell us about any problem',
       taglineTa: 'எந்த சிக்கலையும் தெரிவியுங்கள்'),
@@ -92,36 +93,36 @@ const List<TileInfo> kTiles = [
       key: 'ai',
       title: 'AI Assistant',
       titleTa: 'AI உதவியாளர்',
-      icon: Icons.smart_toy,
-      color: Color(0xFF1565C0)),
+      icon: Icons.smart_toy_rounded,
+      color: kTileAi),
 ];
 
 IconData _iconFor(String name) {
   switch (name) {
     case 'article':
-      return Icons.newspaper;
+      return Icons.newspaper_rounded;
     case 'directions_bus':
-      return Icons.directions_bus;
+      return Icons.directions_bus_rounded;
     case 'train':
-      return Icons.train;
+      return Icons.train_rounded;
     case 'build':
-      return Icons.build;
+      return Icons.build_rounded;
     case 'local_shipping':
-      return Icons.local_shipping;
+      return Icons.local_shipping_rounded;
     case 'store':
-      return Icons.storefront;
+      return Icons.storefront_rounded;
     case 'restaurant':
-      return Icons.restaurant;
+      return Icons.restaurant_rounded;
     case 'temple_hindu':
-      return Icons.temple_hindu;
+      return Icons.temple_hindu_rounded;
     case 'work':
-      return Icons.work_outline;
+      return Icons.work_outline_rounded;
     case 'report_problem':
-      return Icons.campaign;
+      return Icons.campaign_rounded;
     case 'smart_toy':
-      return Icons.smart_toy;
+      return Icons.smart_toy_rounded;
     default:
-      return Icons.apps;
+      return Icons.apps_rounded;
   }
 }
 
@@ -147,7 +148,7 @@ List<TileInfo> currentTiles() {
       title: (r['nameEn'] ?? '').toString(),
       titleTa: (r['nameTa'] ?? '').toString(),
       icon: _iconFor((r['iconName'] ?? '').toString()),
-      color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? const Color(0xFF1B6CA8) : base.color),
+      color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? kBlue : base.color),
       live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds' || key == 'report',
       tagline: (r['taglineEn'] ?? '').toString(),
       taglineTa: (r['taglineTa'] ?? '').toString(),
