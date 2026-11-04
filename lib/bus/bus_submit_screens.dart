@@ -228,10 +228,10 @@ Future<void> _thanks(BuildContext context) async {
       title: Text(app.tr('Thank you!', 'நன்றி!')),
       content: Text(
         app.tr(
-          'Your details were sent. They will appear in the app after our team checks them. '
-              'You can follow the status in "My entries".',
-          'உங்கள் விவரங்கள் அனுப்பப்பட்டன. எங்கள் குழு சரிபார்த்த பிறகு ஆப்பில் தெரியும். '
-              '"என் பதிவுகள்" பகுதியில் நிலையைப் பார்க்கலாம்.',
+          'Your bus details were added and are now live in the app. '
+              'You can see them in "My entries".',
+          'உங்கள் விவரங்கள் சேர்க்கப்பட்டன. இப்போது ஆப்பில் தெரியும். '
+              '"என் பதிவுகள்" பகுதியில் பார்க்கலாம்.',
         ),
         style: ts(14.5, height: 1.4),
       ),
@@ -389,8 +389,8 @@ class _AddBusScreenState extends State<AddBusScreen> {
                 Expanded(
                   child: Text(
                     app.tr(
-                        'Added as ${auth.name}. Our team checks every entry before it appears in the app.',
-                        '${auth.name} என்ற பெயரில் சேர்க்கப்படும். ஆப்பில் வருவதற்கு முன் எங்கள் குழு ஒவ்வொன்றையும் சரிபார்க்கும்.'),
+                        'Added as ${auth.name}. It goes live in the app straight away.',
+                        '${auth.name} என்ற பெயரில் சேர்க்கப்படும். உடனே ஆப்பில் தெரியும்.'),
                     style: ts(13, height: 1.4),
                   ),
                 ),
@@ -528,7 +528,7 @@ class _AddBusScreenState extends State<AddBusScreen> {
               icon: _busy
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                   : const Icon(Icons.send),
-              label: Text(app.tr('Send for checking', 'சரிபார்க்க அனுப்பு'), style: ts(16, weight: FontWeight.w800, color: Colors.white)),
+              label: Text(app.tr('Send', 'அனுப்பு'), style: ts(16, weight: FontWeight.w800, color: Colors.white)),
             ),
           ),
         ],
@@ -637,7 +637,7 @@ class _AddTimingScreenState extends State<AddTimingScreen> {
               icon: _busy
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                   : const Icon(Icons.send),
-              label: Text(app.tr('Send for checking', 'சரிபார்க்க அனுப்பு'), style: ts(16, weight: FontWeight.w800, color: Colors.white)),
+              label: Text(app.tr('Send', 'அனுப்பு'), style: ts(16, weight: FontWeight.w800, color: Colors.white)),
             ),
           ),
         ],
