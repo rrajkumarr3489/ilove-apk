@@ -11,6 +11,25 @@ import 'food_repo.dart';
 import 'food_widgets.dart';
 import 'hotel_menu_screen.dart';
 
+class _Cuisine {
+  final String en;
+  final String ta;
+  final IconData icon;
+  final String key; // words searched in the hotel's name / cuisine, split by |
+
+  const _Cuisine(this.en, this.ta, this.icon, this.key);
+}
+
+const List<_Cuisine> _kCuisines = [
+  _Cuisine('All', 'அனைத்தும்', Icons.apps_rounded, ''),
+  _Cuisine('Tiffin', 'டிபன்', Icons.breakfast_dining_rounded, 'tiffin|டிபன்|idli|dosa|இட்லி|தோசை'),
+  _Cuisine('Meals', 'சாப்பாடு', Icons.rice_bowl_rounded, 'meals|mess|சாப்பாடு|மெஸ்'),
+  _Cuisine('Biriyani', 'பிரியாணி', Icons.dinner_dining_rounded, 'biriyani|biryani|பிரியாணி'),
+  _Cuisine('Snacks', 'ஸ்நாக்ஸ்', Icons.bakery_dining_rounded, 'snack|chat|bakery|ஸ்நாக்ஸ்|பேக்கரி'),
+  _Cuisine('Tea & Juice', 'டீ / ஜூஸ்', Icons.local_cafe_rounded, 'tea|coffee|juice|டீ|காபி|ஜூஸ்'),
+  _Cuisine('Sweets', 'இனிப்பு', Icons.cake_rounded, 'sweet|இனிப்பு|ஸ்வீட்'),
+];
+
 class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
 
@@ -23,6 +42,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   bool _veg = false;
   bool _open = false;
   bool _delivery = false;
+  int _cuisine = 0;
 
   @override
   void initState() {
@@ -38,11 +58,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   List<FoodHotel> _filtered() {
     final q = _q.text.trim().toLowerCase();
+    final words = _kCuisines[_cuisine].key.isEmpty ? <String>[] : _kCuisines[_cuisine].key.split('|');
     return food.hotels.where((h) {
       if (_veg && !h.pureVeg) return false;
       if (_open && !(h.openNow && h.acceptsOrders)) return false;
       if (_delivery && !h.canDeliver) return false;
       if (q.isNotEmpty && !h.searchText.contains(q)) return false;
+      if (words.isNotEmpty && !words.any((w) => h.searchText.contains(w))) return false;
       return true;
     }).toList();
   }
@@ -50,8 +72,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   Widget _header() {
     return AppHeader(
       bubbles: false,
-      radius: 28,
-      padding: const EdgeInsets.fromLTRB(4, 4, 14, 16),
+      radius: 30,
+      padding: const EdgeInsets.fromLTRB(4, 4, 14, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,32 +87,45 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(app.tr('Food & Hotels', 'உணவகங்கள்'), style: ts(20, weight: FontWeight.w800, color: Colors.white)),
-                    Text(app.tr('Hot food from Aruppukottai hotels', 'அருப்புக்கோட்டை ஹோட்டல்களில் இருந்து சுடச்சுட'),
-                        style: ts(12, color: kOnBrandSoft)),
+                    Row(children: [
+                      const Icon(Icons.location_on_rounded, size: 14, color: kOnBrandSoft),
+                      const SizedBox(width: 3),
+                      Text(app.tr('Delivering in', 'டெலிவரி'), style: ts(11.5, color: kOnBrandSoft)),
+                    ]),
+                    Text(app.tr('Aruppukottai', 'அருப்புக்கோட்டை'), style: ts(19, weight: FontWeight.w800, color: Colors.white)),
                   ],
                 ),
               ),
               const LangToggle(onDark: true),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.only(left: 12),
             child: Container(
-              height: 46,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [BoxShadow(color: Color(0x330B2347), blurRadius: 14, offset: Offset(0, 6))],
+              ),
               child: TextField(
                 controller: _q,
                 onChanged: (_) => setState(() {}),
-                style: ts(14),
+                style: ts(14.5),
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   filled: false,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   prefixIcon: const Icon(Icons.search_rounded, color: kBrand),
+                  suffixIcon: _q.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20, color: kMuted),
+                          onPressed: () => setState(_q.clear),
+                        ),
                   hintText: app.tr('Search hotel or food…', 'ஹோட்டல் / உணவு தேடுங்கள்…'),
                   hintStyle: ts(14, color: kMuted),
                 ),
@@ -98,6 +133,82 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _banner() {
+    return FadeSlide(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+        height: 118,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF0F2A4D), Color(0xFF2F7FE0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: const [BoxShadow(color: Color(0x332A7DE1), blurRadius: 18, offset: Offset(0, 8))],
+        ),
+        child: Stack(
+          children: [
+            Positioned(right: -18, bottom: -22, child: Icon(Icons.ramen_dining_rounded, size: 150, color: Colors.white.withAlpha(30))),
+            Positioned(right: 70, top: -20, child: Icon(Icons.local_pizza_rounded, size: 80, color: Colors.white.withAlpha(22))),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 120, 16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(color: Colors.white.withAlpha(36), borderRadius: BorderRadius.circular(8)),
+                    child: Text(app.tr('OUR TOWN · OUR FOOD', 'நம் ஊர் · நம் உணவு'), style: ts(10, weight: FontWeight.w800, color: Colors.white)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(app.tr('Hot food, right at your door', 'சுடச்சுட உணவு, உங்கள் வீட்டு வாசலில்'),
+                      style: ts(18, weight: FontWeight.w800, color: Colors.white, height: 1.2)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cuisineRow() {
+    return SizedBox(
+      height: 92,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: _kCuisines.length,
+        itemBuilder: (c, i) {
+          final cu = _kCuisines[i];
+          final on = _cuisine == i;
+          return GestureDetector(
+            onTap: () => setState(() => _cuisine = i),
+            child: Container(
+              width: 74,
+              color: Colors.transparent,
+              child: Column(children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: on ? kHeaderGradient : null,
+                    color: on ? null : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: on ? kBrandShadow : const Color(0x142A7DE1), blurRadius: on ? 14 : 8, offset: const Offset(0, 4))],
+                  ),
+                  child: Icon(cu.icon, size: 26, color: on ? Colors.white : kBrand),
+                ),
+                const SizedBox(height: 6),
+                Text(app.tr(cu.en, cu.ta), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11.5, weight: on ? FontWeight.w800 : FontWeight.w600, color: on ? kBrandDark : kInk)),
+              ]),
+            ),
+          );
+        },
       ),
     );
   }
@@ -124,7 +235,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Widget _filters() {
     return SizedBox(
-      height: 40,
+      height: 38,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -139,96 +250,157 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  Widget _card(FoodHotel h) {
+  Widget _title(String t, {String? trailing}) => Padding(
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 12),
+        child: Row(children: [
+          Container(width: 4, height: 18, decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(4))),
+          const SizedBox(width: 8),
+          Text(t, style: ts(18, weight: FontWeight.w800)),
+          const Spacer(),
+          if (trailing != null) Text(trailing, style: ts(13, weight: FontWeight.w700, color: kMuted)),
+        ]),
+      );
+
+  Widget _glass(Widget child) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(color: Colors.black.withAlpha(110), borderRadius: BorderRadius.circular(10)),
+        child: child,
+      );
+
+  Widget _card(FoodHotel h, int index) {
     final closed = !h.openNow || !h.acceptsOrders;
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HotelMenuScreen(hotel: h))),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [BoxShadow(color: Color(0x142A7DE1), blurRadius: 18, offset: Offset(0, 8))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: FoodPhoto(file: h.picture, radius: 22, gray: closed),
-                ),
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Row(children: [
-                    if (h.pureVeg)
-                      _tag(app.tr('PURE VEG', 'சைவம்'), kGreen),
-                    if (closed) ...[
-                      if (h.pureVeg) const SizedBox(width: 6),
-                      _tag(h.openNow ? app.tr('NOT TAKING ORDERS', 'ஆர்டர் இல்லை') : app.tr('CLOSED NOW', 'மூடப்பட்டுள்ளது'), kNavy),
-                    ],
-                  ]),
-                ),
-                Positioned(right: 12, bottom: 12, child: RatingBadge(rating: h.rating, count: h.ratingCount)),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(18, weight: FontWeight.w800)),
-                  if (h.cuisine.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(h.cuisine, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, color: kMuted)),
-                  ],
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 6,
+    final offer = (h.canDeliver && h.freeAbove != null && h.freeAbove! > 0 && h.deliveryFee > 0)
+        ? app.tr('Free delivery above ${rupee(h.freeAbove!)}', '${rupee(h.freeAbove!)}-க்கு மேல் இலவச டெலிவரி')
+        : (h.canDeliver && h.deliveryFee <= 0 ? app.tr('Free delivery', 'இலவச டெலிவரி') : null);
+    return FadeSlide(
+      index: index,
+      child: GestureDetector(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HotelMenuScreen(hotel: h))),
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: const [BoxShadow(color: Color(0x1A2A7DE1), blurRadius: 22, offset: Offset(0, 10))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                child: SizedBox(
+                  height: 176,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      _info(Icons.timer_outlined, '${h.prepMinutes}-${h.prepMinutes + 10} ${app.tr('min', 'நிமி')}'),
-                      _info(Icons.delivery_dining_rounded, h.deliveryText),
-                      if (h.priceFrom != null) _info(Icons.currency_rupee_rounded, app.tr('From ${rupee(h.priceFrom!)}', '${rupee(h.priceFrom!)} முதல்')),
+                      HotelCover(hotel: h, gray: closed),
+                      Positioned(
+                        left: 12,
+                        top: 12,
+                        child: Row(children: [
+                          if (h.pureVeg)
+                            _glass(Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.eco_rounded, size: 13, color: Color(0xFF7BE0A8)),
+                              const SizedBox(width: 4),
+                              Text(app.tr('PURE VEG', 'சைவம்'), style: ts(10.5, weight: FontWeight.w800, color: Colors.white)),
+                            ])),
+                        ]),
+                      ),
+                      if (closed)
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(color: kRed, borderRadius: BorderRadius.circular(10)),
+                            child: Text(h.openNow ? app.tr('NOT TAKING ORDERS', 'ஆர்டர் இல்லை') : app.tr('CLOSED', 'மூடப்பட்டது'),
+                                style: ts(10.5, weight: FontWeight.w800, color: Colors.white)),
+                          ),
+                        ),
+                      if (offer != null)
+                        Positioned(
+                          left: 12,
+                          bottom: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.local_offer_rounded, size: 14, color: kBrand),
+                              const SizedBox(width: 5),
+                              Text(offer, style: ts(11.5, weight: FontWeight.w800, color: kBrandDark)),
+                            ]),
+                          ),
+                        ),
+                      Positioned(
+                        right: 12,
+                        bottom: 12,
+                        child: _glass(Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.timer_outlined, size: 14, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text('${h.prepMinutes}-${h.prepMinutes + 10} ${app.tr('min', 'நிமி')}', style: ts(12, weight: FontWeight.w800, color: Colors.white)),
+                        ])),
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(child: Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(19, weight: FontWeight.w800))),
+                      const SizedBox(width: 8),
+                      RatingBadge(rating: h.rating, count: h.ratingCount),
+                    ]),
+                    if (h.cuisine.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(h.cuisine, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, color: kMuted)),
+                    ],
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      decoration: BoxDecoration(color: kTintSoft, borderRadius: BorderRadius.circular(14)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _info(Icons.delivery_dining_rounded, h.deliveryText),
+                          if (h.minOrder > 0) _info(Icons.shopping_basket_outlined, app.tr('Min ${rupee(h.minOrder)}', 'குறைந்தது ${rupee(h.minOrder)}')),
+                          if (h.priceFrom != null) _info(Icons.currency_rupee_rounded, app.tr('From ${rupee(h.priceFrom!)}', '${rupee(h.priceFrom!)} முதல்')),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _tag(String t, Color c) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(8)),
-        child: Text(t, style: ts(10.5, weight: FontWeight.w800, color: Colors.white)),
-      );
-
   Widget _info(IconData i, String t) => Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(i, size: 15, color: kBrand),
         const SizedBox(width: 4),
-        Text(t, style: ts(12.5, weight: FontWeight.w600, color: kChipText)),
+        Text(t, style: ts(12, weight: FontWeight.w700, color: kChipText)),
       ]);
 
   Widget _state(IconData icon, String title, String sub, {VoidCallback? retry}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 60, 32, 20),
+      padding: const EdgeInsets.fromLTRB(32, 40, 32, 20),
       child: Column(children: [
         Container(
-          width: 84,
-          height: 84,
+          width: 96,
+          height: 96,
           decoration: const BoxDecoration(color: kTint, shape: BoxShape.circle),
-          child: Icon(icon, size: 40, color: kBrand),
+          child: Icon(icon, size: 44, color: kBrand),
         ),
         const SizedBox(height: 16),
-        Text(title, textAlign: TextAlign.center, style: ts(17, weight: FontWeight.w800)),
+        Text(title, textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w800)),
         const SizedBox(height: 6),
-        Text(sub, textAlign: TextAlign.center, style: ts(13, color: kMuted, height: 1.4)),
+        Text(sub, textAlign: TextAlign.center, style: ts(13.5, color: kMuted, height: 1.4)),
         if (retry != null) ...[
           const SizedBox(height: 16),
           TextButton.icon(onPressed: retry, icon: const Icon(Icons.refresh_rounded), label: Text(app.tr('Try again', 'மீண்டும் முயற்சி'))),
@@ -237,11 +409,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  Widget _skeleton() => Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-        height: 250,
-        decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(22)),
-      );
+  Widget _skeleton() => const Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 20), child: PulseBox(height: 270, radius: 26));
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +430,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           body = _state(Icons.search_off_rounded, app.tr('No match', 'எதுவும் கிடைக்கவில்லை'),
               app.tr('Try another name or remove a filter.', 'வேறு பெயர் அல்லது filter-ஐ நீக்கி பாருங்கள்.'));
         } else {
-          body = Column(children: [for (final h in list) _card(h)]);
+          body = Column(children: [for (var i = 0; i < list.length; i++) _card(list[i], i)]);
         }
         return Scaffold(
           backgroundColor: kBg,
@@ -274,10 +442,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   onRefresh: () => food.loadHotels(force: true),
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.only(top: 14, bottom: cart.isEmpty ? 24 : 96),
+                    padding: EdgeInsets.only(top: 18, bottom: cart.isEmpty ? 24 : 96),
                     children: [
+                      _banner(),
+                      _cuisineRow(),
+                      const SizedBox(height: 10),
                       _filters(),
-                      const SizedBox(height: 14),
+                      _title(app.tr('Hotels near you', 'உங்கள் அருகில் உள்ள ஹோட்டல்கள்'), trailing: food.loadedOnce ? '${list.length}' : null),
                       body,
                     ],
                   ),

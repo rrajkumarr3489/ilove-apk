@@ -24,6 +24,69 @@ class _CartScreenState extends State<CartScreen> {
     super.dispose();
   }
 
+  Widget _topInfo(FoodHotel h) {
+    final free = h.freeAbove ?? 0;
+    final showBar = cart.fulfil == 'Delivery' && h.canDeliver && h.deliveryFee > 0 && free > 0;
+    final reached = showBar && cart.itemsTotal >= free;
+    final left = free - cart.itemsTotal;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFE8F2FF), Color(0xFFF6FAFF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kLine),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: const BoxDecoration(color: kBrand, shape: BoxShape.circle),
+            child: const Icon(Icons.schedule_rounded, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                cart.fulfil == 'Delivery'
+                    ? app.tr('Arrives in ${h.prepMinutes + 10}-${h.prepMinutes + 20} min', '${h.prepMinutes + 10}-${h.prepMinutes + 20} நிமிடத்தில் வரும்')
+                    : app.tr('Ready in ${h.prepMinutes}-${h.prepMinutes + 10} min', '${h.prepMinutes}-${h.prepMinutes + 10} நிமிடத்தில் தயார்'),
+                style: ts(15, weight: FontWeight.w800, color: kChipText),
+              ),
+              Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kMuted)),
+            ]),
+          ),
+        ]),
+        if (showBar) ...[
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: (cart.itemsTotal / free).clamp(0.0, 1.0).toDouble(),
+              minHeight: 7,
+              backgroundColor: Colors.white,
+              valueColor: AlwaysStoppedAnimation<Color>(reached ? kGreen : kBrand),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(children: [
+            Icon(reached ? Icons.celebration_rounded : Icons.local_offer_rounded, size: 16, color: reached ? kGreen : kBrand),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                reached
+                    ? app.tr('Yay! You got FREE delivery', 'சூப்பர்! இலவச டெலிவரி கிடைத்தது')
+                    : app.tr('Add ${rupee(left)} more for FREE delivery', 'இலவச டெலிவரிக்கு இன்னும் ${rupee(left)} சேர்க்கவும்'),
+                style: ts(12.5, weight: FontWeight.w800, color: reached ? kGreen : kChipText),
+              ),
+            ),
+          ]),
+        ],
+      ]),
+    );
+  }
+
   Widget _line(CartLine l) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -159,6 +222,7 @@ class _CartScreenState extends State<CartScreen> {
                   : ListView(
                       padding: const EdgeInsets.only(top: 16, bottom: 24),
                       children: [
+                        if (hh != null) _topInfo(hh),
                         _card(Column(children: [
                           for (var i = 0; i < cart.lines.length; i++) ...[
                             _line(cart.lines[i]),
