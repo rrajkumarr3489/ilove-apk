@@ -16,6 +16,7 @@ import 'bus/bus_widgets.dart';
 import 'bus/departures_screen.dart';
 import 'bus/notices_screen.dart';
 import 'classifieds.dart';
+import 'food/food_home_screen.dart';
 import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
@@ -195,6 +196,8 @@ void openTile(BuildContext context, TileInfo t) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassifiedsScreen()));
   } else if (t.key == 'report') {
     openReportIssue(context);
+  } else if (t.key == 'food') {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodHomeScreen()));
   } else if (t.live) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const BusHomeScreen()));
   } else {

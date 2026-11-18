@@ -70,7 +70,8 @@ const List<TileInfo> kTiles = [
       title: 'Food & Hotels',
       titleTa: 'உணவகங்கள்',
       icon: Icons.restaurant_rounded,
-      color: kTileFood),
+      color: kTileFood,
+      live: true),
   TileInfo(
       key: 'classifieds',
       title: 'Jobs',
@@ -149,7 +150,7 @@ List<TileInfo> currentTiles() {
       titleTa: (r['nameTa'] ?? '').toString(),
       icon: _iconFor((r['iconName'] ?? '').toString()),
       color: _colorFor((r['colorHex'] ?? '').toString(), base == null ? kBlue : base.color),
-      live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds' || key == 'report',
+      live: (r['isLive'] == true && key == 'bus') || key == 'news' || key == 'classifieds' || key == 'report' || key == 'food',
       tagline: (r['taglineEn'] ?? '').toString(),
       taglineTa: (r['taglineTa'] ?? '').toString(),
     ));
