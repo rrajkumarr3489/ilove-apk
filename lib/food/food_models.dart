@@ -39,6 +39,8 @@ class FoodHotel {
   final int ratingCount;
   final double? priceFrom;
   final int itemCount;
+  final double? lat;
+  final double? lng;
 
   FoodHotel({
     required this.id,
@@ -66,6 +68,8 @@ class FoodHotel {
     this.ratingCount = 0,
     this.priceFrom,
     this.itemCount = 0,
+    this.lat,
+    this.lng,
   });
 
   factory FoodHotel.fromJson(Map<String, dynamic> j) => FoodHotel(
@@ -94,6 +98,8 @@ class FoodHotel {
         ratingCount: _i(j['ratingCount']),
         priceFrom: j['priceFrom'] == null ? null : _d(j['priceFrom']),
         itemCount: _i(j['itemCount']),
+        lat: j['latitude'] == null ? null : _d(j['latitude']),
+        lng: j['longitude'] == null ? null : _d(j['longitude']),
       );
 
   String get name => _pick(nameEn, nameTa);
@@ -227,5 +233,40 @@ class HotelMenu {
     return HotelMenu(FoodHotel.fromJson(j['hotel'] as Map<String, dynamic>), cats, items);
   }
 
+  String categoryName(int? id) {
+    for (final c in categories) {
+      if (c.id == id) return c.name;
+    }
+    return '';
+  }
+
   List<FoodItem> itemsIn(int? categoryId) => items.where((i) => i.categoryId == categoryId).toList();
+}
+
+/// A dish together with the hotel that sells it (used for search and the "popular dishes" row).
+class DishHit {
+  final FoodHotel hotel;
+  final FoodItem item;
+  final String category;
+
+  DishHit(this.hotel, this.item, this.category);
+}
+
+/// A banner from the admin panel (top of the Food screen).
+class FoodBanner {
+  final int id;
+  final String image;
+  final String? bgColor;
+  final String linkType; // None / Hotel / Filter
+  final String? linkValue;
+
+  FoodBanner({required this.id, required this.image, this.bgColor, this.linkType = 'None', this.linkValue});
+
+  factory FoodBanner.fromJson(Map<String, dynamic> j) => FoodBanner(
+        id: _i(j['bannerId']),
+        image: _s(j['imageFile']) ?? '',
+        bgColor: _s(j['bgColor']),
+        linkType: _s(j['linkType']) ?? 'None',
+        linkValue: _s(j['linkValue']),
+      );
 }
