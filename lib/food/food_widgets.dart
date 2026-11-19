@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../app_state.dart';
 import '../bus/bus_repo.dart';
 import '../theme.dart';
 import 'food_models.dart';
@@ -97,7 +98,7 @@ class QtyStepper extends StatelessWidget {
           _btn(Icons.remove_rounded, onMinus),
           SizedBox(
             width: 24,
-            child: Text('$qty', textAlign: TextAlign.center, style: ts(15, weight: FontWeight.w800, color: Colors.white)),
+            child: Text('$qty', textAlign: TextAlign.center, style: ts(15, weight: FontWeight.w700, color: Colors.white)),
           ),
           _btn(Icons.add_rounded, onPlus),
         ],
@@ -119,14 +120,14 @@ class RatingBadge extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(8)),
-        child: Text('NEW', style: ts(11, weight: FontWeight.w800, color: kBrandDark)),
+        child: Text('NEW', style: ts(11, weight: FontWeight.w700, color: kBrandDark)),
       );
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: kGreen, borderRadius: BorderRadius.circular(8)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(rating.toStringAsFixed(1), style: ts(12, weight: FontWeight.w800, color: Colors.white)),
+        Text(rating.toStringAsFixed(1), style: ts(12, weight: FontWeight.w700, color: Colors.white)),
         const SizedBox(width: 2),
         const Icon(Icons.star_rounded, size: 13, color: Colors.white),
       ]),
@@ -198,7 +199,7 @@ class HotelCover extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withAlpha(110), width: 2),
               ),
-              child: Text(letter, style: ts(34, weight: FontWeight.w800, color: Colors.white)),
+              child: Text(letter, style: ts(34, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -304,4 +305,13 @@ class _PulseBoxState extends State<PulseBox> with SingleTickerProviderStateMixin
       ),
     );
   }
+}
+
+/// Tamil letters are wider than English ones: shrink the text a little on food screens when the app is in Tamil.
+Widget foodScale(BuildContext context, Widget child) {
+  final base = MediaQuery.textScalerOf(context).scale(1.0);
+  return MediaQuery(
+    data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(base * (app.lang == 'ta' ? 0.86 : 1.0))),
+    child: child,
+  );
 }

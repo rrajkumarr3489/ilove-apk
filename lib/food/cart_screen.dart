@@ -52,7 +52,7 @@ class _CartScreenState extends State<CartScreen> {
                 cart.fulfil == 'Delivery'
                     ? app.tr('Arrives in ${h.prepMinutes + 10}-${h.prepMinutes + 20} min', '${h.prepMinutes + 10}-${h.prepMinutes + 20} நிமிடத்தில் வரும்')
                     : app.tr('Ready in ${h.prepMinutes}-${h.prepMinutes + 10} min', '${h.prepMinutes}-${h.prepMinutes + 10} நிமிடத்தில் தயார்'),
-                style: ts(15, weight: FontWeight.w800, color: kChipText),
+                style: ts(15, weight: FontWeight.w700, color: kChipText),
               ),
               Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kMuted)),
             ]),
@@ -78,7 +78,7 @@ class _CartScreenState extends State<CartScreen> {
                 reached
                     ? app.tr('Yay! You got FREE delivery', 'சூப்பர்! இலவச டெலிவரி கிடைத்தது')
                     : app.tr('Add ${rupee(left)} more for FREE delivery', 'இலவச டெலிவரிக்கு இன்னும் ${rupee(left)} சேர்க்கவும்'),
-                style: ts(12.5, weight: FontWeight.w800, color: reached ? kGreen : kChipText),
+                style: ts(12.5, weight: FontWeight.w700, color: reached ? kGreen : kChipText),
               ),
             ),
           ]),
@@ -102,7 +102,7 @@ class _CartScreenState extends State<CartScreen> {
           ]),
         ),
         QtyStepper(qty: l.qty, compact: true, onMinus: () => cart.dec(l), onPlus: () => cart.inc(l)),
-        SizedBox(width: 62, child: Text(rupee(l.total), textAlign: TextAlign.right, style: ts(14.5, weight: FontWeight.w800))),
+        SizedBox(width: 62, child: Text(rupee(l.total), textAlign: TextAlign.right, style: ts(14.5, weight: FontWeight.w700))),
       ]),
     );
   }
@@ -134,7 +134,7 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(children: [
             Icon(icon, color: on ? kBrand : kMuted, size: 26),
             const SizedBox(height: 6),
-            Text(label, style: ts(13.5, weight: FontWeight.w800, color: on ? kBrandDark : kInk)),
+            Text(label, style: ts(13.5, weight: FontWeight.w700, color: on ? kBrandDark : kInk)),
             const SizedBox(height: 2),
             Text(sub, style: ts(11.5, color: kMuted)),
           ]),
@@ -146,8 +146,8 @@ class _CartScreenState extends State<CartScreen> {
   Widget _billRow(String l, String v, {bool bold = false, Color? color}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(children: [
-          Expanded(child: Text(l, style: ts(bold ? 16 : 14, weight: bold ? FontWeight.w800 : FontWeight.w500, color: bold ? kInk : kMuted))),
-          Text(v, style: ts(bold ? 17 : 14, weight: bold ? FontWeight.w800 : FontWeight.w600, color: color ?? kInk)),
+          Expanded(child: Text(l, style: ts(bold ? 16 : 14, weight: bold ? FontWeight.w700 : FontWeight.w500, color: bold ? kInk : kMuted))),
+          Text(v, style: ts(bold ? 17 : 14, weight: bold ? FontWeight.w700 : FontWeight.w600, color: color ?? kInk)),
         ]),
       );
 
@@ -162,7 +162,7 @@ class _CartScreenState extends State<CartScreen> {
               child: const Icon(Icons.shopping_bag_outlined, size: 44, color: kBrand),
             ),
             const SizedBox(height: 16),
-            Text(app.tr('Your cart is empty', 'உங்கள் கார்ட் காலி'), style: ts(18, weight: FontWeight.w800)),
+            Text(app.tr('Your cart is empty', 'உங்கள் கார்ட் காலி'), style: ts(18, weight: FontWeight.w700)),
             const SizedBox(height: 6),
             Text(app.tr('Add some tasty food from a hotel.', 'ஹோட்டலில் இருந்து சுவையான உணவை சேர்க்கவும்.'), style: ts(13.5, color: kMuted)),
             const SizedBox(height: 18),
@@ -180,7 +180,7 @@ class _CartScreenState extends State<CartScreen> {
         final empty = cart.isEmpty || h == null;
         final hh = h;
         final belowMin = hh != null && !cart.isEmpty && hh.minOrder > 0 && cart.itemsTotal < hh.minOrder;
-        return Scaffold(
+        return foodScale(context, Scaffold(
           backgroundColor: kBg,
           body: Column(children: [
             AppHeader(
@@ -191,7 +191,7 @@ class _CartScreenState extends State<CartScreen> {
                 IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white)),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(app.tr('Your cart', 'உங்கள் கார்ட்'), style: ts(20, weight: FontWeight.w800, color: Colors.white)),
+                    Text(app.tr('Your cart', 'உங்கள் கார்ட்'), style: ts(20, weight: FontWeight.w700, color: Colors.white)),
                     if (hh != null) Text(hh.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kOnBrandSoft)),
                   ]),
                 ),
@@ -203,7 +203,7 @@ class _CartScreenState extends State<CartScreen> {
                         builder: (c) => AlertDialog(
                           backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: Text(app.tr('Clear cart?', 'கார்ட்டை காலி செய்யவா?'), style: ts(17, weight: FontWeight.w800)),
+                          title: Text(app.tr('Clear cart?', 'கார்ட்டை காலி செய்யவா?'), style: ts(17, weight: FontWeight.w700)),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(c, false), child: Text(app.tr('No', 'வேண்டாம்'))),
                             TextButton(onPressed: () => Navigator.pop(c, true), child: Text(app.tr('Clear', 'காலி செய்'))),
@@ -231,7 +231,7 @@ class _CartScreenState extends State<CartScreen> {
                         ])),
                         if (hh != null && hh.canDeliver && hh.canPickup)
                           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(app.tr('How do you want it?', 'எப்படி வேண்டும்?'), style: ts(15, weight: FontWeight.w800)),
+                            Text(app.tr('How do you want it?', 'எப்படி வேண்டும்?'), style: ts(15, weight: FontWeight.w700)),
                             const SizedBox(height: 12),
                             Row(children: [
                               _choice('Delivery', Icons.delivery_dining_rounded, app.tr('Delivery', 'டெலிவரி'), app.tr('To your door', 'வீட்டுக்கு')),
@@ -306,7 +306,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                 ),
-        );
+        ));
       },
     );
   }
