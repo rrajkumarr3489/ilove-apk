@@ -4,6 +4,7 @@ import '../app_state.dart';
 import '../theme.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
+import 'bus_scene.dart';
 
 Color hexColor(String? hex, [Color fallback = kBlue]) {
   if (hex == null || hex.length != 7 || !hex.startsWith('#')) return fallback;
@@ -431,7 +432,8 @@ void showMsg(BuildContext context, String text) {
 Listenable get busListen => Listenable.merge([app, repo]);
 
 
-/// Blue header used on every bus screen: back button, a clear bus icon, title, optional actions and extra rows below.
+/// Header used on every bus screen: a small bus-town picture (sky, city, road, bus) with the back button and title on it.
+/// Extra rows ([child], e.g. date and filters) sit on the blue band under the picture.
 class BusHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -441,74 +443,74 @@ class BusHeader extends StatelessWidget {
 
   const BusHeader({super.key, required this.title, this.subtitle, this.actions = const [], this.child, this.big = false});
 
+  /// Height of the picture part (without the status bar), also used by screens that put this in an app bar.
+  static const double sceneHeight = 124;
+  static const double bigSceneHeight = 164;
+
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    final circle = big ? 58.0 : 44.0;
+    final scene = (big ? bigSceneHeight : sceneHeight) + top;
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(
-        gradient: kHeaderGradient,
+        color: kBusBand,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned(
-            right: -26,
-            top: top - 6,
-            child: Transform.rotate(angle: -0.22, child: Icon(Icons.directions_bus_rounded, size: big ? 190 : 140, color: Colors.white.withAlpha(26))),
-          ),
-          Positioned(
-            right: big ? 104 : 90,
-            bottom: -18,
-            child: Transform.rotate(angle: 0.18, child: Icon(Icons.directions_bus_rounded, size: big ? 84 : 64, color: Colors.white.withAlpha(18))),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(12, top + 8, 14, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          SizedBox(
+            height: scene,
+            child: Stack(
               children: [
-                Row(
-                  children: [
-                    InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => Navigator.maybePop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(color: Colors.white.withAlpha(46), shape: BoxShape.circle),
-                        child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                const Positioned.fill(child: CustomPaint(painter: BusScenePainter())),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(12, top + 8, 14, 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => Navigator.maybePop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(color: Colors.white.withAlpha(60), shape: BoxShape.circle),
+                          child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: circle,
-                      height: circle,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: Icon(Icons.directions_bus_rounded, color: kBrand, size: circle * 0.58),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(big ? 20 : 17.5, weight: FontWeight.w900, color: Colors.white)),
-                          if (subtitle != null && subtitle!.isNotEmpty)
-                            Text(subtitle!, maxLines: big ? 2 : 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w600, color: Colors.white.withAlpha(225), height: 1.3)),
-                        ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(big ? 21 : 18, weight: FontWeight.w900, color: Colors.white, height: 1.2)),
+                              if (subtitle != null && subtitle!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(subtitle!, maxLines: big ? 2 : 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w600, color: Colors.white.withAlpha(235), height: 1.3)),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    ...actions,
-                  ],
+                      ...actions,
+                    ],
+                  ),
                 ),
-                if (child != null) ...[
-                  const SizedBox(height: 12),
-                  child!,
-                ],
               ],
             ),
           ),
+          if (child != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 2, 14, 16),
+              child: child!,
+            ),
         ],
       ),
     );
