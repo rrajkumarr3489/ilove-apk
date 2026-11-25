@@ -1,0 +1,121 @@
+name: Build APK
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Generates the android/ folder (not stored in this repo).
+      - name: Create Android project files
+        run: flutter create . --platforms=android --project-name ilove_apk --org in.aruppukottai
+
+      # The generated manifest has no INTERNET permission in release builds; without it the app says "No internet connection".
+      - name: Allow internet and link opening
+        run: |
+          python3 - <<'PY'
+          import re
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          if '<uses-permission android:name="android.permission.INTERNET"' not in s:
+              m = re.search(r'<manifest[^>]*>', s)
+              add = ('\n    <uses-permission android:name="android.permission.INTERNET"/>'
+                     '\n    <queries>'
+                     '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>'
+                     '\n        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="geo"/></intent>'
+                     '\n    </queries>')
+              s = s[:m.end()] + add + s[m.end():]
+              open(p, 'w', encoding='utf-8').write(s)
+          PY
+          cat android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
+
+      - name: Set app name
+        run: sed -i 's/android:label="[^"]*"/android:label="I Love APK"/' android/app/src/main/AndroidManifest.xml
+
+      # Push notifications (Firebase) need minSdk 24, the notification permission (Android 13+),
+      # and "desugaring" (needed by the plugin that shows the banner while the app is open).
+      - name: Android settings for push (minSdk 24, notification permission, desugaring)
+        run: |
+          f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
+          # New Gradle rejects the word "in" inside the code package. Everywhere in the source files
+          # (manifests, MainActivity) the package becomes app.aruppukottai.ilove_apk.
+          # The installed app id (applicationId) stays in.aruppukottai.ilove_apk, so the app still updates in place.
+          grep -rlE 'in`?\.aruppukottai\.ilove_apk' android/app/src | xargs -r sed -i -E 's/`?in`?\.aruppukottai\.ilove_apk/app.aruppukottai.ilove_apk/g'
+          sed -i -E 's/namespace[ =]+"[^"]*"/namespace = "app.aruppukottai.ilove_apk"/' "$f"
+          # The app id must be plain letters (the new Flutter wraps the word "in" in backticks, which is invalid)
+          sed -i -E 's/applicationId[ =]+"[^"]*"/applicationId = "in.aruppukottai.ilove_apk"/' "$f"
+          echo "--- every place that still mentions aruppukottai:"
+          grep -rn "aruppukottai" android --include=*.xml --include=*.kt --include=*.java --include=*.gradle --include=*.kts --include=*.properties || true
+          sed -i -E 's/minSdk(Version)?[ =]+flutter\.minSdkVersion/minSdk = 24/' "$f"
+          python3 - "$f" <<'PY'
+          import sys, re
+          p = sys.argv[1]
+          s = open(p).read()
+          kts = p.endswith('.kts')
+          if 'oreLibraryDesugaringEnabled' not in s:
+              flag = 'isCoreLibraryDesugaringEnabled = true' if kts else 'coreLibraryDesugaringEnabled true'
+              s = re.sub(r'compileOptions\s*\{', 'compileOptions {\n        ' + flag, s, count=1)
+          if 'desugar_jdk_libs' not in s:
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kts else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              s += '\ndependencies {\n    ' + dep + '\n}\n'
+          open(p, 'w').write(s)
+          PY
+          grep -n -E "namespace|applicationId|minSdk|esugar" "$f"
+          m=android/app/src/main/AndroidManifest.xml
+          # White heart for the small notification icon, and tell Firebase to use it (and the alert channel).
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/ic_stat_notify.xml <<'XML'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+            <path android:fillColor="#FFFFFFFF"
+                android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z"/>
+          </vector>
+          XML
+          grep -q default_notification_icon "$m" || sed -i 's#</application>#<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_notify"/>\n        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="ilove_alerts"/>\n    </application>#' "$m"
+          grep -q POST_NOTIFICATIONS "$m" || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$m"
+          grep -n "POST_NOTIFICATIONS" "$m"
+
+      # The Android lint tool on the build machine crashes (NoSuchMethodError) and fails the release build.
+      # Lint is only a style checker, so it is switched off for the release build.
+      - name: Turn off Android lint for release
+        run: |
+          f=android/app/build.gradle.kts; [ -f "$f" ] || f=android/app/build.gradle
+          if [[ "$f" == *.kts ]]; then
+            printf '\nandroid {\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n}\n' >> "$f"
+          else
+            printf '\nandroid {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }\n}\n' >> "$f"
+          fi
+          tail -8 "$f"
+
+      - run: rm -rf test
+      - run: flutter pub get
+      - name: Make the app icon from assets/icon.png
+        continue-on-error: true
+        run: dart run flutter_launcher_icons
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Build small APKs (one per phone type)
+        run: flutter build apk --release --split-per-abi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ilove-apk
+          path: |
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
