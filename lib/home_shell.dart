@@ -918,7 +918,7 @@ class _AppDrawer extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 44, child: _HeaderLogo(alignLeft: true, onDark: true)),
+                Image.asset('assets/logo_white.png', height: 62, alignment: Alignment.centerLeft, fit: BoxFit.contain),
                 const SizedBox(height: 10),
                 Text(
                   name.isNotEmpty ? app.tr('Hello, $name', 'வணக்கம், $name') : app.tr('Welcome', 'வணக்கம்'),
@@ -1006,36 +1006,6 @@ class _AppDrawer extends StatelessWidget {
   }
 }
 
-/// "I ♥ APK" on one line: dark text on white pages, white text with [onDark].
-class _HeaderLogo extends StatelessWidget {
-  final bool alignLeft;
-  final bool onDark;
-
-  const _HeaderLogo({this.alignLeft = false, this.onDark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = onDark ? Colors.white : kInk;
-    final style = TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: color, height: 1.0, letterSpacing: 0.5);
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: alignLeft ? Alignment.centerLeft : Alignment.center,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text('I', style: style),
-          const SizedBox(width: 4),
-          const Icon(Icons.favorite_rounded, color: kRose, size: 30),
-          const SizedBox(width: 4),
-          Text('APK', style: style),
-        ],
-      ),
-    );
-  }
-}
-
-/// Search page: type to filter the services (Tamil or English).
 class ServiceSearchScreen extends StatefulWidget {
   const ServiceSearchScreen({super.key});
 
