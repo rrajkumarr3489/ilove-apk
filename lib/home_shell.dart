@@ -237,12 +237,7 @@ class HomeTab extends StatelessWidget {
               child: _roundButton(const Icon(Icons.menu_rounded, color: kInk, size: 22)),
             ),
           ),
-          Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(color: Colors.white.withAlpha(235), borderRadius: BorderRadius.circular(22)),
-            child: const _HeaderLogo(),
-          ),
+          Image.asset('assets/logo.png', height: 44, fit: BoxFit.contain),
           Align(
             alignment: Alignment.centerRight,
             child: ListenableBuilder(
@@ -290,40 +285,25 @@ class HomeTab extends StatelessWidget {
     // Home shows 8 services as 4 + 4; "Report an issue" and "AI Assistant" live in All services only.
     final home = all.where((t) => t.key != 'report' && t.key != 'ai').take(8).toList();
     final top = MediaQuery.of(context).padding.top;
-    final sceneH = top + 270;
+    const bannerH = 200.0;
     return Container(
       color: kBg,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
-          SizedBox(
-            height: sceneH,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: banners.isEmpty
-                      ? const CustomPaint(painter: HomeScenePainter())
-                      : BannerCarousel(key: ValueKey(banners.map((e) => e.url).join(',')), items: banners, height: sceneH, radius: 0),
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: top + 130,
-                  child: const IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x73000000), Color(0x00000000)])),
-                    ),
-                  ),
-                ),
-                Positioned(top: top + 6, left: 0, right: 0, child: _topBar(context, noticeCount)),
-                Positioned(
-                  top: top + 64,
-                  left: 16,
-                  right: 16,
-                  child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen()))),
-                ),
-              ],
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.only(top: top + 6, bottom: 8),
+            child: _topBar(context, noticeCount),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              height: bannerH,
+              child: banners.isEmpty
+                  ? ClipRRect(borderRadius: BorderRadius.circular(18), child: const CustomPaint(painter: HomeScenePainter(), size: Size.infinite))
+                  : BannerCarousel(key: ValueKey(banners.map((e) => e.url).join(',')), items: banners, height: bannerH, radius: 18),
             ),
           ),
           const SizedBox(height: 14),
