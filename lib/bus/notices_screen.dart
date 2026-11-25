@@ -14,8 +14,12 @@ class NoticesScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: busListen,
       builder: (context, _) => Scaffold(
-        appBar: AppBar(title: Text(app.tr('Bus notices', 'பேருந்து அறிவிப்புகள்'))),
-        body: const NoticeList(),
+        body: Column(
+          children: [
+            BusHeader(title: app.tr('Bus notices', 'பேருந்து அறிவிப்புகள்')),
+            const Expanded(child: NoticeList()),
+          ],
+        ),
       ),
     );
   }

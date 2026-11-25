@@ -57,75 +57,53 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
         return Scaffold(
           body: Column(
             children: [
-              AppHeader(
-                radius: 30,
-                padding: const EdgeInsets.fromLTRB(4, 2, 10, 16),
+              BusHeader(
+                title: app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'),
+                subtitle: app.tr('Buses leaving from one place', 'ஒரு இடத்திலிருந்து புறப்படும் பேருந்துகள்'),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                        Expanded(
-                          child: Text(app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'), style: ts(19, weight: FontWeight.w900, color: Colors.white)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: InkWell(
-                        onTap: _pickPlace,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 14, offset: Offset(0, 5))],
-                          ),
-                          child: Row(
-                            children: [
-                              const IconBubble(Icons.departure_board_rounded, size: 42),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(app.tr('Buses leaving from', 'புறப்படும் இடம்'), style: ts(12, color: kMuted, weight: FontWeight.w700)),
-                                    Text(repo.placeName(_placeId), style: ts(18.5, weight: FontWeight.w900)),
-                                  ],
-                                ),
+                    InkWell(
+                      onTap: _pickPlace,
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+                        child: Row(
+                          children: [
+                            const IconBubble(Icons.departure_board_rounded, size: 40),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(app.tr('Buses leaving from', 'புறப்படும் இடம்'), style: ts(11.5, color: kMuted, weight: FontWeight.w600)),
+                                  Text(repo.placeName(_placeId), style: ts(16.5, weight: FontWeight.w800)),
+                                ],
                               ),
-                              const Icon(Icons.expand_more_rounded, color: kBrand),
-                            ],
-                          ),
+                            ),
+                            const Icon(Icons.expand_more_rounded, color: kBrand),
+                          ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: DateStrip(
-                        date: _date,
-                        isToday: isToday,
-                        canPrev: canPrev,
-                        canNext: canNext,
-                        onPrev: () => _shift(-1),
-                        onNext: () => _shift(1),
-                      ),
+                    DateStrip(
+                      date: _date,
+                      isToday: isToday,
+                      canPrev: canPrev,
+                      canNext: canNext,
+                      onPrev: () => _shift(-1),
+                      onNext: () => _shift(1),
                     ),
                     if (isToday) ...[
                       const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 6),
-                        child: Wrap(
-                          spacing: 8,
-                          children: [
-                            HeaderChip(app.tr('From now', 'இப்போதிலிருந்து'), on: _fromNow, onTap: () => setState(() => _fromNow = true)),
-                            HeaderChip(app.tr('Whole day', 'நாள் முழுவதும்'), on: !_fromNow, onTap: () => setState(() => _fromNow = false)),
-                          ],
-                        ),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          HeaderChip(app.tr('From now', 'இப்போதிலிருந்து'), on: _fromNow, onTap: () => setState(() => _fromNow = true)),
+                          HeaderChip(app.tr('Whole day', 'நாள் முழுவதும்'), on: !_fromNow, onTap: () => setState(() => _fromNow = false)),
+                        ],
                       ),
                     ],
                   ],

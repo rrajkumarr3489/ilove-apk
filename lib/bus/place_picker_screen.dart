@@ -180,65 +180,47 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
         return Scaffold(
           body: Column(
             children: [
-              AppHeader(
-                radius: 28,
-                padding: const EdgeInsets.fromLTRB(4, 2, 10, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
+              BusHeader(
+                title: widget.title,
+                actions: [
+                  Container(
+                    decoration: BoxDecoration(color: Colors.white.withAlpha(46), borderRadius: BorderRadius.circular(20)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                        Expanded(child: Text(widget.title, style: ts(19, weight: FontWeight.w900, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        Container(
-                          decoration: BoxDecoration(color: Colors.white.withAlpha(46), borderRadius: BorderRadius.circular(20)),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _modeBtn(Icons.list_rounded, !_map, () => setState(() {
-                                    _map = false;
-                                    _sel = null;
-                                  })),
-                              _modeBtn(Icons.map_rounded, _map, () => setState(() {
-                                    _map = true;
-                                    _sel = null;
-                                  })),
-                            ],
-                          ),
-                        ),
+                        _modeBtn(Icons.list_rounded, !_map, () => setState(() {
+                              _map = false;
+                              _sel = null;
+                            })),
+                        _modeBtn(Icons.map_rounded, _map, () => setState(() {
+                              _map = true;
+                              _sel = null;
+                            })),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 14, offset: Offset(0, 5))],
-                        ),
-                        child: TextField(
-                          controller: _q,
-                          autofocus: !_map,
-                          onChanged: (_) => setState(() {}),
-                          style: ts(16, weight: FontWeight.w700),
-                          decoration: InputDecoration(
-                            hintText: app.tr('Search place', 'இடத்தைத் தேடுங்கள்'),
-                            hintStyle: ts(15, color: kMuted),
-                            prefixIcon: const Icon(Icons.search_rounded, color: kBrand),
-                            suffixIcon: _q.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    icon: const Icon(Icons.close_rounded, size: 20, color: kMuted),
-                                    onPressed: () => setState(() => _q.clear()),
-                                  ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                        ),
-                      ),
+                  ),
+                ],
+                child: Container(
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                  child: TextField(
+                    controller: _q,
+                    autofocus: !_map,
+                    onChanged: (_) => setState(() {}),
+                    style: ts(15, weight: FontWeight.w700),
+                    decoration: InputDecoration(
+                      hintText: app.tr('Search place', 'இடத்தைத் தேடுங்கள்'),
+                      hintStyle: ts(14, color: kMuted),
+                      prefixIcon: const Icon(Icons.search_rounded, color: kBrand),
+                      suffixIcon: _q.text.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 20, color: kMuted),
+                              onPressed: () => setState(() => _q.clear()),
+                            ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 13),
                     ),
-                  ],
+                  ),
                 ),
               ),
               Expanded(child: _map ? _mapView(places) : _list(places)),

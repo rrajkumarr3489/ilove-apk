@@ -71,10 +71,16 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
         final r = repo.routes[widget.routeId];
         if (r == null) {
           return Scaffold(
-            appBar: AppBar(),
-            body: EmptyState(
-              icon: Icons.directions_bus_outlined,
-              title: app.tr('This route is not available any more', 'இந்தப் பாதை இப்போது இல்லை'),
+            body: Column(
+              children: [
+                BusHeader(title: app.tr('Bus details', 'பேருந்து விவரம்')),
+                Expanded(
+                  child: EmptyState(
+                    icon: Icons.directions_bus_outlined,
+                    title: app.tr('This route is not available any more', 'இந்தப் பாதை இப்போது இல்லை'),
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -101,25 +107,28 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(app.tr('Bus details', 'பேருந்து விவரம்')),
-            actions: [
-              IconButton(
-                tooltip: app.tr('Copy', 'நகலெடு'),
-                icon: const Icon(Icons.share_rounded),
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: _copyText(r, stops, sel)));
-                  if (context.mounted) showMsg(context, app.tr('Copied. You can paste it in WhatsApp.', 'நகலெடுக்கப்பட்டது. WhatsApp-ல் ஒட்டலாம்.'));
-                },
+          body: Column(
+            children: [
+              BusHeader(
+                title: app.tr('Bus details', 'பேருந்து விவரம்'),
+                actions: [
+                  IconButton(
+                    tooltip: app.tr('Copy', 'நகலெடு'),
+                    icon: const Icon(Icons.share_rounded, color: Colors.white),
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: _copyText(r, stops, sel)));
+                      if (context.mounted) showMsg(context, app.tr('Copied. You can paste it in WhatsApp.', 'நகலெடுக்கப்பட்டது. WhatsApp-ல் ஒட்டலாம்.'));
+                    },
+                  ),
+                  IconButton(
+                    tooltip: app.tr('Save', 'சேமி'),
+                    icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? const Color(0xFFFFD0D0) : Colors.white),
+                    onPressed: () => repo.toggleFavRoute(r.id),
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: app.tr('Save', 'சேமி'),
-                icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? kRed : null),
-                onPressed: () => repo.toggleFavRoute(r.id),
-              ),
-            ],
-          ),
-          body: ListView(
+              Expanded(
+                child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
             children: [
               _header(r),
@@ -162,6 +171,9 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
                     ),
                   ),
                 ),
+            ],
+                ),
+              ),
             ],
           ),
         );

@@ -375,7 +375,7 @@ class _AddBusScreenState extends State<AddBusScreen> {
   Widget build(BuildContext context) {
     final types = repo.types.values.where((t) => t.active).toList()..sort((a, b) => a.sort.compareTo(b.sort));
     return Scaffold(
-      appBar: AppBar(title: Text(app.tr('Add a new bus', 'புதிய பேருந்தைச் சேர்'))),
+      appBar: PreferredSize(preferredSize: Size.fromHeight(MediaQuery.of(context).padding.top + 68), child: BusHeader(title: app.tr('Add a new bus', 'புதிய பேருந்தைச் சேர்'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
         children: [
@@ -593,7 +593,7 @@ class _AddTimingScreenState extends State<AddTimingScreen> {
     final existing = [...(repo.tripsByRoute[widget.routeId] ?? const <Trip>[])]
       ..sort((a, b) => a.departMin.compareTo(b.departMin));
     return Scaffold(
-      appBar: AppBar(title: Text(app.tr('Add a timing', 'நேரத்தைச் சேர்'))),
+      appBar: PreferredSize(preferredSize: Size.fromHeight(MediaQuery.of(context).padding.top + 68), child: BusHeader(title: app.tr('Add a timing', 'நேரத்தைச் சேர்'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
         children: [
@@ -753,7 +753,7 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: Text(app.tr('My entries', 'என் பதிவுகள்'))),
+      appBar: PreferredSize(preferredSize: Size.fromHeight(MediaQuery.of(context).padding.top + 68), child: BusHeader(title: app.tr('My entries', 'என் பதிவுகள்'))),
       body: body,
     );
   }

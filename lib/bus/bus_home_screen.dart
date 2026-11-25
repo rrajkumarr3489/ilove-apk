@@ -150,13 +150,13 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: ts(12, color: kMuted, weight: FontWeight.w700)),
-            const SizedBox(height: 2),
+            Text(label, style: ts(11.5, color: kMuted, weight: FontWeight.w600)),
+            const SizedBox(height: 1),
             Text(
               name.isEmpty ? hint : name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ts(18, weight: FontWeight.w900, color: name.isEmpty ? kMuted : kInk),
+              style: ts(16.5, weight: FontWeight.w800, color: name.isEmpty ? kMuted : kInk),
             ),
           ],
         ),
@@ -239,7 +239,7 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
               child: TextButton.icon(
                 onPressed: _pickVia,
                 icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
+                label: Text(app.tr('Add a via stop (optional)', 'வழியில் உள்ள இடம் சேர் (விருப்பம்)'), style: ts(13, weight: FontWeight.w700, color: kBrand)),
               ),
             )
           else
@@ -391,18 +391,16 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
         final recents = repo.recents.where((s) => repo.places[s.fromId] != null && repo.places[s.toId] != null).toList();
         final popular = _popular();
         return Scaffold(
-          body: SafeArea(
-            bottom: false,
-            child: ListView(
+          body: ListView(
             padding: EdgeInsets.zero,
             children: [
-              const ServiceTopBar(trailing: [LangToggle()]),
-              ServiceHero(
-                icon: Icons.directions_bus_rounded,
-                color: kBrand,
+              BusHeader(
+                big: true,
                 title: app.tr('Bus Timings', 'பேருந்து நேரங்கள்'),
                 subtitle: app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
+                actions: const [LangToggle(onDark: true)],
               ),
+              const SizedBox(height: 16),
               Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _searchCard()),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -530,7 +528,6 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
               ),
             ],
           ),
-          ),
         );
       },
     );
@@ -554,7 +551,7 @@ class _QuickTile extends StatelessWidget {
         children: [
           IconBubble(icon, color: color, size: 54),
           const SizedBox(height: 10),
-          Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: FontWeight.w800, height: 1.25)),
+          Text(label, textAlign: TextAlign.center, style: ts(13, weight: FontWeight.w700, height: 1.25)),
         ],
       ),
     );

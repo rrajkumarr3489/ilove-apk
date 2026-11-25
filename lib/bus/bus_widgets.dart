@@ -429,3 +429,88 @@ void showMsg(BuildContext context, String text) {
 
 /// Rebuilds a screen when the language or the bus data changes.
 Listenable get busListen => Listenable.merge([app, repo]);
+
+
+/// Blue header used on every bus screen: back button, a clear bus icon, title, optional actions and extra rows below.
+class BusHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final List<Widget> actions;
+  final Widget? child;
+  final bool big;
+
+  const BusHeader({super.key, required this.title, this.subtitle, this.actions = const [], this.child, this.big = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    final circle = big ? 58.0 : 44.0;
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(
+        gradient: kHeaderGradient,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -26,
+            top: top - 6,
+            child: Transform.rotate(angle: -0.22, child: Icon(Icons.directions_bus_rounded, size: big ? 190 : 140, color: Colors.white.withAlpha(26))),
+          ),
+          Positioned(
+            right: big ? 104 : 90,
+            bottom: -18,
+            child: Transform.rotate(angle: 0.18, child: Icon(Icons.directions_bus_rounded, size: big ? 84 : 64, color: Colors.white.withAlpha(18))),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, top + 8, 14, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.maybePop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(color: Colors.white.withAlpha(46), shape: BoxShape.circle),
+                        child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: circle,
+                      height: circle,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: Icon(Icons.directions_bus_rounded, color: kBrand, size: circle * 0.58),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(big ? 20 : 17.5, weight: FontWeight.w900, color: Colors.white)),
+                          if (subtitle != null && subtitle!.isNotEmpty)
+                            Text(subtitle!, maxLines: big ? 2 : 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w600, color: Colors.white.withAlpha(225), height: 1.3)),
+                        ],
+                      ),
+                    ),
+                    ...actions,
+                  ],
+                ),
+                if (child != null) ...[
+                  const SizedBox(height: 12),
+                  child!,
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
