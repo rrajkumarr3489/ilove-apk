@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_state.dart';
 import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 
 const Color _kCream = kBg;
@@ -397,7 +398,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: ts(14.5, weight: FontWeight.w800, color: on ? Colors.white : kMuted)),
+                    style: ts(app.lang == 'ta' ? 12.5 : 14.5, weight: FontWeight.w800, color: on ? Colors.white : kMuted)),
               ),
               const SizedBox(width: 8),
               AnimatedContainer(
@@ -423,13 +424,15 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kCream,
-      appBar: AppBar(
-        backgroundColor: _kCream,
-        title: Text(app.tr('Approvals', 'ஒப்புதல்கள்'), style: ts(19, weight: FontWeight.w900)),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(80),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(14, 4, 14, 12),
+      body: Column(
+        children: [
+          ScreenHeader(
+            kind: HeaderKind.myReports,
+            title: app.tr('Approvals', 'ஒப்புதல்கள்'),
+            subtitle: app.tr('News and jobs waiting for you', 'உங்கள் ஒப்புதலுக்கு காத்திருப்பவை'),
+          ),
+          Container(
+            margin: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -441,17 +444,19 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> with SingleTickerProv
               children: [
                 _pill(0, Icons.newspaper_rounded, app.tr('News', 'செய்திகள்'), _news.length),
                 const SizedBox(width: 4),
-                _pill(1, Icons.work_outline_rounded, app.tr('Jobs', 'வேலை வாய்ப்புகள்'), _jobs.length),
+                _pill(1, Icons.work_outline_rounded, app.tr('Jobs', 'வேலைகள்'), _jobs.length),
               ],
             ),
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabs,
-        children: [
-          _tabBody(_news, _newsCard),
-          _tabBody(_jobs, _jobCard),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [
+                _tabBody(_news, _newsCard),
+                _tabBody(_jobs, _jobCard),
+              ],
+            ),
+          ),
         ],
       ),
     );

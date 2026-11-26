@@ -74,6 +74,13 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     );
   }
 
+  /// Saved routes + searches + trips (kept on this phone, same rule as the Favorites tab).
+  int _favCount() {
+    final routes = repo.favRoutes.where((id) => repo.routes[id] != null).length;
+    final trips = repo.favTrips.where((id) => repo.tripById(id) != null && repo.routes[repo.tripById(id)!.routeId] != null).length;
+    return routes + repo.favSearches.length + trips;
+  }
+
   Widget _navItem(int i, IconData icon, IconData selIcon, String label) {
     final on = _tab == i;
     return Expanded(
@@ -86,7 +93,25 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               decoration: BoxDecoration(color: on ? kTint : Colors.transparent, borderRadius: BorderRadius.circular(16)),
-              child: Icon(on ? selIcon : icon, size: 24, color: on ? kBrandDark : kMuted),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Icon(on ? selIcon : icon, size: 24, color: on ? kBrandDark : kMuted),
+                  if (i == 1 && _favCount() > 0)
+                    Positioned(
+                      top: -6,
+                      right: -12,
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(9), border: Border.all(color: Colors.white, width: 1.5)),
+                        child: Text(_favCount() > 99 ? '99+' : '${_favCount()}', style: ts(10.5, weight: FontWeight.w800, color: Colors.white, height: 1.1)),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 2),
             Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: on ? FontWeight.w700 : FontWeight.w500, color: on ? kInk : kMuted)),

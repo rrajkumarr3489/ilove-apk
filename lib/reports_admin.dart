@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_state.dart';
 import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 
 const Color _cream = kBg;
@@ -411,11 +412,7 @@ class _ReportsAdminScreenState extends State<ReportsAdminScreen> {
     final list = _shown;
     return Scaffold(
       backgroundColor: _cream,
-      appBar: AppBar(
-        backgroundColor: _cream,
-        surfaceTintColor: _cream,
-        title: Text(app.tr('Reports', 'புகார்கள்'), style: ts(19, weight: FontWeight.w900)),
-      ),
+      appBar: ScreenAppBar(kind: HeaderKind.report, title: app.tr('Reports', 'புகார்கள்'), subtitle: app.tr('Issues sent by people', 'மக்கள் அனுப்பிய புகார்கள்')),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
