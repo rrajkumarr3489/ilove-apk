@@ -55,20 +55,24 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
         final canPrev = _date.isAfter(today);
         final canNext = _date.isBefore(today.add(Duration(days: _maxDays)));
         return Scaffold(
+          backgroundColor: kBusBg,
           body: Column(
             children: [
               BusHeader(
                 title: app.tr('Bus stand board', 'பேருந்து நிலைய பலகை'),
                 subtitle: app.tr('Buses leaving from one place', 'ஒரு இடத்திலிருந்து புறப்படும் பேருந்துகள்'),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     InkWell(
                       onTap: _pickPlace,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       child: Container(
-                        padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE3EAF6))),
                         child: Row(
                           children: [
                             const IconBubble(Icons.departure_board_rounded, size: 40),
@@ -77,8 +81,8 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(app.tr('Buses leaving from', 'புறப்படும் இடம்'), style: ts(11.5, color: kMuted, weight: FontWeight.w600)),
-                                  Text(repo.placeName(_placeId), style: ts(16.5, weight: FontWeight.w800)),
+                                  Text(app.tr('Buses leaving from', 'புறப்படும் இடம்'), style: ts(bs(12), color: kMuted, weight: FontWeight.w600)),
+                                  Text(repo.placeName(_placeId), style: ts(bs(17), weight: FontWeight.w800)),
                                 ],
                               ),
                             ),
@@ -87,8 +91,8 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    DateStrip(
+                    const SizedBox(height: 12),
+                    LightDateStrip(
                       date: _date,
                       isToday: isToday,
                       canPrev: canPrev,
@@ -97,13 +101,11 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
                       onNext: () => _shift(1),
                     ),
                     if (isToday) ...[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          HeaderChip(app.tr('From now', 'இப்போதிலிருந்து'), on: _fromNow, onTap: () => setState(() => _fromNow = true)),
-                          HeaderChip(app.tr('Whole day', 'நாள் முழுவதும்'), on: !_fromNow, onTap: () => setState(() => _fromNow = false)),
-                        ],
+                      const SizedBox(height: 12),
+                      SegTabs(
+                        labels: [app.tr('From now', 'இப்போதிலிருந்து'), app.tr('Whole day', 'நாள் முழுவதும்')],
+                        selected: _fromNow ? 0 : 1,
+                        onSelect: (i) => setState(() => _fromNow = i == 0),
                       ),
                     ],
                   ],
@@ -117,7 +119,7 @@ class _DeparturesScreenState extends State<DeparturesScreen> {
                         message: app.tr('No bus leaves from here at this time.', 'இந்த நேரத்தில் இங்கிருந்து பேருந்து புறப்படவில்லை.'),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                         itemCount: list.length,
                         itemBuilder: (context, i) => _Row(result: list[i], placeId: _placeId),
                       ),
@@ -144,9 +146,13 @@ class _Row extends StatelessWidget {
     final via = viaText(b.viaIds, max: 3);
     return Opacity(
       opacity: cancelled ? 0.6 : 1,
-      child: SoftCard(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE3EAF6))),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -158,7 +164,9 @@ class _Row extends StatelessWidget {
             ),
           ),
         ),
-        child: Row(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
+          child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -185,11 +193,11 @@ class _Row extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(repo.placeName(b.toPlaceId), style: ts(16, weight: FontWeight.w900)),
+                  Text(repo.placeName(b.toPlaceId), style: ts(bs(16), weight: FontWeight.w900)),
                   if (via.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text('${app.tr('via', 'வழி')} $via', style: ts(12.5, color: kMuted)),
+                      child: Text('${app.tr('via', 'வழி')} $via', style: ts(bs(12.5), color: kMuted)),
                     ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -206,6 +214,9 @@ class _Row extends StatelessWidget {
             ),
             const Padding(padding: EdgeInsets.only(top: 10), child: Icon(Icons.chevron_right_rounded, color: kMuted)),
           ],
+        ),
+        ),
+          ),
         ),
       ),
     );
