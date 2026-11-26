@@ -133,7 +133,7 @@ class _AuthScreenState extends State<AuthScreen> {
         OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
       hintText: hint,
-      hintStyle: ts(15, color: kMuted),
+      hintStyle: ts(_s(15), color: kMuted),
       prefixIcon: prefix,
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
@@ -184,7 +184,7 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               Icon(icon, size: 20, color: on ? Colors.white : kBrand),
               const SizedBox(width: 8),
-              Text(label, style: ts(15.5, weight: FontWeight.w800, color: on ? Colors.white : kBrand)),
+              Text(label, style: ts(_s(15.5), weight: FontWeight.w800, color: on ? Colors.white : kBrand)),
             ],
           ),
         ),
@@ -213,7 +213,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     children: [
                       Icon(icon, color: Colors.white, size: 21),
                       const SizedBox(width: 10),
-                      Text(label, style: ts(16.5, weight: FontWeight.w800, color: Colors.white)),
+                      Text(label, style: ts(_s(16.5), weight: FontWeight.w800, color: Colors.white)),
                     ],
                   ),
           ),
@@ -236,7 +236,7 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               const Icon(Icons.explore_rounded, size: 20, color: kBrandDark),
               const SizedBox(width: 10),
-              Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க'), style: ts(15, weight: FontWeight.w800, color: kBrandDark)),
+              Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க'), style: ts(_s(15), weight: FontWeight.w800, color: kBrandDark)),
             ],
           ),
         ),
@@ -254,7 +254,7 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Icon(icon, size: 22, color: fg),
         ),
         const SizedBox(height: 6),
-        Text(label, style: ts(12, color: kInk)),
+        Text(label, style: ts(_s(12), color: kInk)),
       ],
     );
   }
@@ -267,8 +267,16 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
+  /// Font size for this screen: Tamil letters look bigger, so they get a smaller size.
+  double _s(double v) => app.lang == 'ta' ? v - 3 : v - 0.5;
+
   @override
   Widget build(BuildContext context) {
+    // rebuild when the language changes (the toggle at the top)
+    return ListenableBuilder(listenable: app, builder: (context, _) => _page(context));
+  }
+
+  Widget _page(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -299,7 +307,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 2),
                 Center(child: Image.asset('assets/logo.png', height: 62)),
                 const SizedBox(height: 8),
-                Center(child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(13.5, color: kInk))),
+                Center(child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(_s(13.5), color: kInk))),
                 const SizedBox(height: 18),
                 AnimatedSize(
                   duration: const Duration(milliseconds: 220),
@@ -320,7 +328,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 22),
                       Text(
                         _register ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்') : app.tr('Welcome back', 'மீண்டும் வருக'),
-                        style: ts(24, weight: FontWeight.w800),
+                        style: ts(_s(24), weight: FontWeight.w800),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -328,7 +336,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ? app.tr('Register once. You stay logged in on this phone.',
                                 'ஒரு முறை பதிவு செய்யுங்கள். இந்த போனில் தொடர்ந்து உள்நுழைந்தபடியே இருப்பீர்கள்.')
                             : app.tr('Login with your mobile number.', 'மொபைல் எண்ணுடன் உள்நுழையுங்கள்.'),
-                        style: ts(13.5, color: kMuted, height: 1.4),
+                        style: ts(_s(13.5), color: kMuted, height: 1.4),
                       ),
                       const SizedBox(height: 18),
                       if (_register) ...[
@@ -352,7 +360,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               children: [
                                 const Icon(Icons.smartphone_rounded, size: 21, color: kMuted),
                                 const SizedBox(width: 12),
-                                Text('+91', style: ts(15, weight: FontWeight.w800)),
+                                Text('+91', style: ts(_s(15), weight: FontWeight.w800)),
                                 const SizedBox(width: 10),
                                 Container(width: 1, height: 22, color: kLine),
                               ],
@@ -399,7 +407,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             children: [
                               const Icon(Icons.error_rounded, color: kRed, size: 20),
                               const SizedBox(width: 8),
-                              Expanded(child: Text(_error!, style: ts(13.5, color: kRed, height: 1.35))),
+                              Expanded(child: Text(_error!, style: ts(_s(13.5), color: kRed, height: 1.35))),
                             ],
                           ),
                         ),
@@ -414,21 +422,21 @@ class _AuthScreenState extends State<AuthScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: _forgot,
-                            child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?'), style: ts(13.5, weight: FontWeight.w800, color: kBrandDark)),
+                            child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?'), style: ts(_s(13.5), weight: FontWeight.w800, color: kBrandDark)),
                           ),
                         )
                       else
                         const SizedBox(height: 8),
                       Row(children: [
                         const Expanded(child: Divider(color: kLine)),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(app.tr('or', 'அல்லது'), style: ts(12.5, color: kMuted))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(app.tr('or', 'அல்லது'), style: ts(_s(12.5), color: kMuted))),
                         const Expanded(child: Divider(color: kLine)),
                       ]),
                       const SizedBox(height: 12),
                       _guest(),
                       if (!_register) ...[
                         const SizedBox(height: 16),
-                        Center(child: Text(app.tr('Everything in Aruppukottai, in one app', 'அருப்புக்கோட்டை முழுவதும் ஒரே ஆப்பில்'), style: ts(12.5, color: kMuted))),
+                        Center(child: Text(app.tr('Everything in Aruppukottai, in one app', 'அருப்புக்கோட்டை முழுவதும் ஒரே ஆப்பில்'), style: ts(_s(12.5), color: kMuted))),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -446,7 +454,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: TextButton.icon(
                           onPressed: _serverDialog,
                           icon: const Icon(Icons.settings_ethernet_rounded, size: 16, color: kMuted),
-                          label: Text(app.tr('Server address', 'சர்வர் முகவரி'), style: ts(12, color: kMuted)),
+                          label: Text(app.tr('Server address', 'சர்வர் முகவரி'), style: ts(_s(12), color: kMuted)),
                         ),
                       ),
                     ],
