@@ -395,10 +395,9 @@ class _BusHomeScreenState extends State<BusHomeScreen> {
             padding: EdgeInsets.zero,
             children: [
               BusHeader(
-                big: true,
                 title: app.tr('Bus Timings', 'பேருந்து நேரங்கள்'),
                 subtitle: app.tr('Find the next bus from and to Aruppukottai', 'அருப்புக்கோட்டைக்கு வரும், செல்லும் பேருந்துகளைத் தேடுங்கள்'),
-                actions: const [LangToggle(onDark: true)],
+                actions: const [LangToggle()],
               ),
               const SizedBox(height: 16),
               Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _searchCard()),

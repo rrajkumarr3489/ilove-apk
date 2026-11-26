@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../screen_header.dart';
 import '../theme.dart';
 import 'bus_models.dart';
 import 'bus_repo.dart';
@@ -68,10 +69,11 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
                 title: '${repo.placeName(widget.fromId)} → ${repo.placeName(widget.toId)}',
                 subtitle: app.tr('${results.length} bus(es) found', '${results.length} பேருந்து(கள்) கிடைத்தன'),
                 actions: [
-                  IconButton(
+                  HeaderButton(
                     tooltip: app.tr('Save this search', 'இந்தத் தேடலைச் சேமி'),
-                    icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? const Color(0xFFFFD0D0) : Colors.white),
-                    onPressed: () => repo.toggleFavSearch(_saved),
+                    icon: fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    color: fav ? kRed : kInk,
+                    onTap: () => repo.toggleFavSearch(_saved),
                   ),
                 ],
                 child: Column(

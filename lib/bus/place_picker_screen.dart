@@ -184,7 +184,7 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                 title: widget.title,
                 actions: [
                   Container(
-                    decoration: BoxDecoration(color: Colors.white.withAlpha(46), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: [BoxShadow(color: Colors.black.withAlpha(24), blurRadius: 8, offset: const Offset(0, 2))]),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -237,8 +237,8 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: on ? Colors.white : Colors.transparent, borderRadius: BorderRadius.circular(20)),
-        child: Icon(icon, size: 21, color: on ? kBrand : Colors.white),
+        decoration: BoxDecoration(color: on ? kBrand : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+        child: Icon(icon, size: 21, color: on ? Colors.white : kMuted),
       ),
     );
   }

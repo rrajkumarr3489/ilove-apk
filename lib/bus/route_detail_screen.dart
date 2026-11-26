@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../app_state.dart';
+import '../screen_header.dart';
 import '../theme.dart';
 import '../ui.dart';
 import 'bus_models.dart';
@@ -112,18 +113,19 @@ class _RouteDetailScreenState extends State<RouteDetailScreen> {
               BusHeader(
                 title: app.tr('Bus details', 'பேருந்து விவரம்'),
                 actions: [
-                  IconButton(
+                  HeaderButton(
                     tooltip: app.tr('Copy', 'நகலெடு'),
-                    icon: const Icon(Icons.share_rounded, color: Colors.white),
-                    onPressed: () async {
+                    icon: Icons.share_rounded,
+                    onTap: () async {
                       await Clipboard.setData(ClipboardData(text: _copyText(r, stops, sel)));
                       if (context.mounted) showMsg(context, app.tr('Copied. You can paste it in WhatsApp.', 'நகலெடுக்கப்பட்டது. WhatsApp-ல் ஒட்டலாம்.'));
                     },
                   ),
-                  IconButton(
+                  HeaderButton(
                     tooltip: app.tr('Save', 'சேமி'),
-                    icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? const Color(0xFFFFD0D0) : Colors.white),
-                    onPressed: () => repo.toggleFavRoute(r.id),
+                    icon: fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    color: fav ? kRed : kInk,
+                    onTap: () => repo.toggleFavRoute(r.id),
                   ),
                 ],
               ),
