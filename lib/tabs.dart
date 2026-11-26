@@ -208,8 +208,8 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _row(IconData icon, String title, {String? sub, VoidCallback? onTap, Color? color, Widget? trailing}) {
     return ListTile(
       leading: Icon(icon, color: color ?? kBlue),
-      title: Text(title, style: ts(15.5, weight: FontWeight.w700, color: color ?? kInk)),
-      subtitle: sub == null ? null : Text(sub, style: ts(12.5, color: kMuted)),
+      title: Text(title, style: ts(bs(15.5), weight: FontWeight.w700, color: color ?? kInk)),
+      subtitle: sub == null ? null : Text(sub, style: ts(bs(12.5), color: kMuted)),
       trailing: trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right_rounded, color: kMuted)),
       onTap: onTap,
     );
@@ -332,9 +332,9 @@ class _SettingsTabState extends State<SettingsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(app.tr('Guest', 'விருந்தினர்'), style: ts(17, weight: FontWeight.w800)),
+                      Text(app.tr('Guest', 'விருந்தினர்'), style: ts(bs(17), weight: FontWeight.w800)),
                       Text(app.tr('You can view all bus timings.', 'அனைத்து பேருந்து நேரங்களையும் பார்க்கலாம்.'),
-                          style: ts(12.5, color: kMuted)),
+                          style: ts(bs(12.5), color: kMuted)),
                     ],
                   ),
                 ),
@@ -343,7 +343,7 @@ class _SettingsTabState extends State<SettingsTab> {
             const SizedBox(height: 10),
             Text(
               app.tr('Register to add new buses and timings.', 'புதிய பேருந்து, நேரங்களைச் சேர்க்க பதிவு செய்யுங்கள்.'),
-              style: ts(13.5, height: 1.4),
+              style: ts(bs(13.5), height: 1.4),
             ),
             const SizedBox(height: 10),
             FilledButton(
@@ -365,7 +365,7 @@ class _SettingsTabState extends State<SettingsTab> {
             backgroundColor: kBrand,
             child: Text(
               auth.name.isEmpty ? '?' : auth.name.characters.first.toUpperCase(),
-              style: ts(20, weight: FontWeight.w800, color: Colors.white),
+              style: ts(bs(20), weight: FontWeight.w800, color: Colors.white),
             ),
           ),
           const SizedBox(width: 12),
@@ -373,8 +373,8 @@ class _SettingsTabState extends State<SettingsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(auth.name, style: ts(17, weight: FontWeight.w800)),
-                Text('+91 ${auth.mobile}', style: ts(13, color: kMuted)),
+                Text(auth.name, style: ts(bs(17), weight: FontWeight.w800)),
+                Text('+91 ${auth.mobile}', style: ts(bs(13), color: kMuted)),
               ],
             ),
           ),
@@ -413,7 +413,7 @@ class _SettingsTabState extends State<SettingsTab> {
             _group([
               ListTile(
                 leading: const Icon(Icons.translate_rounded, color: kBlue),
-                title: Text(app.tr('Language', 'மொழி'), style: ts(15.5, weight: FontWeight.w700)),
+                title: Text(app.tr('Language', 'மொழி'), style: ts(bs(15.5), weight: FontWeight.w700)),
                 trailing: const LangToggle(),
               ),
               _row(Icons.sync, app.tr('Bus timetable', 'பேருந்து நேரங்கள்'),
@@ -433,7 +433,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 app.tr(
                     'Timings always come from our server. This phone only keeps the last copy it downloaded, so you can still see timings when there is no internet.',
                     'நேரங்கள் எப்போதும் எங்கள் சர்வரிலிருந்தே வருகின்றன. இணையம் இல்லாதபோதும் பார்க்க, கடைசியாக பதிவிறக்கிய நகலை மட்டும் இந்த போன் வைத்திருக்கும்.'),
-                style: ts(12, color: kMuted, height: 1.4),
+                style: ts(bs(12), color: kMuted, height: 1.4),
               ),
             ),
             _group([
@@ -449,7 +449,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           title: const Text('I Love Aruppukottai'),
                           content: Text(
                             disc.isEmpty ? app.tr('Our town, our people, our app.', 'நம் ஊர், நம் மக்கள், நம் ஆப்.') : disc,
-                            style: ts(14, height: 1.4),
+                            style: ts(bs(14), height: 1.4),
                           ),
                           actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(app.tr('OK', 'சரி')))],
                         ),

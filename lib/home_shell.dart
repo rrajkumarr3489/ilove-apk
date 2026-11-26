@@ -239,10 +239,24 @@ class HomeTab extends StatelessWidget {
                 final count = loggedIn ? inbox.unread : noticeCount;
                 return GestureDetector(
                   onTap: loggedIn ? () => openNotifications(context) : onOpenUpdates,
-                  child: _roundButton(Badge(
-                    isLabelVisible: count > 0,
-                    label: Text('$count'),
-                    child: const Icon(Icons.notifications_none_rounded, color: kInk, size: 24),
+                  child: _roundButton(Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(Icons.notifications_none_rounded, color: kInk, size: 24),
+                      if (count > 0)
+                        Positioned(
+                          top: -3,
+                          right: -3,
+                          child: Container(
+                            constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: kRed, borderRadius: BorderRadius.circular(9), border: Border.all(color: Colors.white, width: 1.5)),
+                            child: Text(count > 99 ? '99+' : '$count', style: ts(10.5, weight: FontWeight.w800, color: Colors.white, height: 1.1)),
+                          ),
+                        ),
+                    ],
                   )),
                 );
               },
@@ -698,7 +712,14 @@ class _ServiceTile extends StatelessWidget {
           children: [
             _icon(),
             const SizedBox(height: 7),
-            Text(primary, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w500, height: 1.2)),
+            // one long word (for example Tamil "உணவகங்கள்") shrinks instead of breaking in the middle
+            if (!primary.contains(' '))
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text(primary, maxLines: 1, style: ts(app.lang == 'ta' ? 11.5 : 12, weight: FontWeight.w500, height: 1.2))),
+              )
+            else
+              Text(primary, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: ts(app.lang == 'ta' ? 11.5 : 12, weight: FontWeight.w500, height: 1.2)),
           ],
         ),
       ),
