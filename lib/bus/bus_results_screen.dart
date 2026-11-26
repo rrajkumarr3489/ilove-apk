@@ -63,6 +63,7 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
         final canPrev = _date.isAfter(today);
         final canNext = _date.isBefore(today.add(Duration(days: _maxDays)));
         return Scaffold(
+          backgroundColor: kBusBg,
           body: Column(
             children: [
               BusHeader(
@@ -76,10 +77,13 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
                     onTap: () => repo.toggleFavSearch(_saved),
                   ),
                 ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    DateStrip(
+                    LightDateStrip(
                       date: _date,
                       isToday: isToday,
                       canPrev: canPrev,
@@ -87,26 +91,27 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
                       onPrev: () => _shift(-1),
                       onNext: () => _shift(1),
                     ),
-                    if (isToday || widget.viaId != null) ...[
+                    if (isToday) ...[
+                      const SizedBox(height: 12),
+                      SegTabs(
+                        labels: [app.tr('From now', 'இப்போதிலிருந்து'), app.tr('Whole day', 'நாள் முழுவதும்')],
+                        selected: _fromNow ? 0 : 1,
+                        onSelect: (i) => setState(() => _fromNow = i == 0),
+                      ),
+                    ],
+                    if (widget.viaId != null) ...[
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (isToday) HeaderChip(app.tr('From now', 'இப்போதிலிருந்து'), on: _fromNow, onTap: () => setState(() => _fromNow = true)),
-                          if (isToday) HeaderChip(app.tr('Whole day', 'நாள் முழுவதும்'), on: !_fromNow, onTap: () => setState(() => _fromNow = false)),
-                          if (widget.viaId != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(color: Colors.white.withAlpha(40), borderRadius: BorderRadius.circular(30)),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.alt_route, size: 15, color: Colors.white),
-                                const SizedBox(width: 5),
-                                Text('${app.tr('Via', 'வழி')}: ${repo.placeName(widget.viaId!)}', style: ts(12.5, weight: FontWeight.w800, color: Colors.white)),
-                              ]),
-                            ),
-                        ],
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(color: kBrand.withAlpha(22), borderRadius: BorderRadius.circular(30)),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.alt_route, size: 15, color: kBrand),
+                            const SizedBox(width: 5),
+                            Text('${app.tr('Via', 'வழி')}: ${repo.placeName(widget.viaId!)}', style: ts(bs(12.5), weight: FontWeight.w800, color: kBrand)),
+                          ]),
+                        ),
                       ),
                     ],
                   ],
@@ -116,7 +121,7 @@ class _BusResultsScreenState extends State<BusResultsScreen> {
                 child: results.isEmpty
                     ? _empty(isToday, canNext)
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                         itemCount: results.length + 1,
                         itemBuilder: (context, i) {
                           if (i == results.length) return _footer();
@@ -177,13 +182,21 @@ class _ResultCard extends StatelessWidget {
 
   const _ResultCard({required this.result});
 
-  Widget _stopRow(IconData icon, Color color, String name) {
-    return Row(
-      children: [
-        Icon(icon, size: 17, color: color),
-        const SizedBox(width: 8),
-        Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(15, weight: FontWeight.w700))),
-      ],
+  /// "10:30 AM" -> big "10:30" with a small "AM".
+  Widget _time(String clock, Color color, {bool strike = false, String extra = ''}) {
+    final i = clock.lastIndexOf(' ');
+    final main = i < 0 ? clock : clock.substring(0, i);
+    final ap = i < 0 ? '' : clock.substring(i + 1);
+    final deco = strike ? TextDecoration.lineThrough : null;
+    return RichText(
+      text: TextSpan(
+        style: ts(25, weight: FontWeight.w800, color: color).copyWith(decoration: deco),
+        children: [
+          TextSpan(text: main),
+          TextSpan(text: ' $ap', style: ts(12.5, weight: FontWeight.w700, color: color).copyWith(decoration: deco)),
+          if (extra.isNotEmpty) TextSpan(text: ' $extra', style: ts(12, weight: FontWeight.w700, color: kMuted)),
+        ],
+      ),
     );
   }
 
@@ -198,6 +211,9 @@ class _ResultCard extends StatelessWidget {
     final fav = repo.isFavTrip(b.trip.id);
     final accent = r.typeId != null ? typeColor(r.typeId) : kBrand;
     final typeLabel = r.typeId != null ? typeName(r.typeId) : '';
+    final now = DateTime.now();
+    final mins = b.departsMin - (now.hour * 60 + now.minute);
+    final soon = !cancelled && sameDay(b.serviceDate, dayOnly(now)) && mins >= 0 && mins <= 120;
     return Opacity(
       opacity: cancelled ? 0.6 : 1,
       child: Container(
@@ -205,7 +221,7 @@ class _ResultCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Color.alphaBlend(accent.withAlpha(12), Colors.white),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: accent.withAlpha(70)),
+          border: Border.all(color: Color.alphaBlend(accent.withAlpha(60), const Color(0xFFE3EAF6))),
         ),
         clipBehavior: Clip.antiAlias,
         child: Material(
@@ -224,75 +240,102 @@ class _ResultCard extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+              padding: const EdgeInsets.fromLTRB(14, 12, 6, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(color: accent.withAlpha(30), shape: BoxShape.circle),
-                        child: Icon(Icons.directions_bus_rounded, color: accent, size: 30),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (typeLabel.isNotEmpty) Text(typeLabel, style: ts(13, weight: FontWeight.w800, color: accent)),
-                            const SizedBox(height: 3),
-                            _stopRow(Icons.trip_origin, kGreen, repo.placeName(b.fromPlaceId)),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 7),
-                              child: Container(width: 2, height: 9, margin: const EdgeInsets.symmetric(vertical: 1), color: kLine),
-                            ),
-                            _stopRow(Icons.location_on, kRed, repo.placeName(b.toPlaceId)),
-                            if (r.routeNo.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(r.routeNo, style: ts(12.5, weight: FontWeight.w800, color: accent)),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            fmtClock(b.departsMin),
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              color: kBrand,
-                              decoration: cancelled ? TextDecoration.lineThrough : null,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            arriveDay > 0 ? '${fmtClock(b.arrivesMin)} +$arriveDay' : fmtClock(b.arrivesMin),
-                            style: ts(14, weight: FontWeight.w600, color: kMuted),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
+                      if (typeLabel.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(color: accent.withAlpha(26), borderRadius: BorderRadius.circular(10)),
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.schedule_rounded, size: 13, color: kMuted),
-                              const SizedBox(width: 3),
-                              Text(fmtDur(b.durationMin), style: ts(11.5, color: kMuted, weight: FontWeight.w600)),
+                              Icon(Icons.directions_bus_outlined, size: 15, color: accent),
+                              const SizedBox(width: 6),
+                              Text(typeLabel, style: ts(bs(13), weight: FontWeight.w800, color: accent)),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      if (r.routeNo.isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        Flexible(child: Text(r.routeNo, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(bs(13), weight: FontWeight.w800, color: accent))),
+                      ],
+                      const Spacer(),
+                      if (soon)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(color: kGreen.withAlpha(26), borderRadius: BorderRadius.circular(20)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(width: 7, height: 7, decoration: const BoxDecoration(color: kGreen, shape: BoxShape.circle)),
+                              const SizedBox(width: 6),
+                              Text(
+                                mins == 0 ? app.tr('Now', 'இப்போது') : app.tr('in $mins min', '$mins நிமிடத்தில்'),
+                                style: ts(bs(12), weight: FontWeight.w800, color: kGreen),
+                              ),
+                            ],
+                          ),
+                        ),
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? kRed : kMuted, size: 23),
+                        icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: fav ? kRed : kMuted, size: 24),
                         onPressed: () => repo.toggleFavTrip(b.trip.id),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _time(fmtClock(b.departsMin), kBrand, strike: cancelled),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Column(
+                            children: [
+                              Text(fmtDur(b.durationMin), style: ts(bs(12), color: kMuted, weight: FontWeight.w600)),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(width: 10, height: 10, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: kGreen, width: 2))),
+                                  Expanded(
+                                    child: Container(
+                                      height: 3,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(2),
+                                        gradient: LinearGradient(colors: [kGreen.withAlpha(150), kRed.withAlpha(170)]),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: kRed)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _time(fmtClock(b.arrivesMin), kInk, extra: arriveDay > 0 ? '+$arriveDay' : ''),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(repo.placeName(b.fromPlaceId), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(bs(15), weight: FontWeight.w600))),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(repo.placeName(b.toPlaceId), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right, style: ts(bs(15), weight: FontWeight.w600))),
+                      ],
+                    ),
                   ),
                   if (b.trip.platform.isNotEmpty || b.fare != null || const ['Cancelled', 'Delayed', 'Diverted', 'Info'].contains(b.status))
                     Padding(
@@ -311,17 +354,17 @@ class _ResultCard extends StatelessWidget {
                   if (via.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 6, right: 8),
-                      child: Text('${app.tr('via', 'வழி')} $via', style: ts(12.5, color: kMuted, height: 1.35)),
+                      child: Text('${app.tr('via', 'வழி')} $via', style: ts(bs(12.5), color: kMuted, height: 1.35)),
                     ),
                   if (tag.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4, right: 8),
-                      child: Text(tag, style: ts(12.5, color: kBlue, weight: FontWeight.w700)),
+                      child: Text(tag, style: ts(bs(12.5), color: kBlue, weight: FontWeight.w700)),
                     ),
                   if (b.notice != null && b.notice!.msg(app.lang).isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4, right: 8),
-                      child: Text(b.notice!.msg(app.lang), style: ts(12.5, color: const Color(0xFFB26A00), height: 1.35)),
+                      child: Text(b.notice!.msg(app.lang), style: ts(bs(12.5), color: const Color(0xFFB26A00), height: 1.35)),
                     ),
                 ],
               ),

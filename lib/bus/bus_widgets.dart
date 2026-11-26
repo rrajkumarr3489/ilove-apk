@@ -310,7 +310,7 @@ class SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
       child: Row(
         children: [
-          Expanded(child: Text(text, style: ts(16, weight: FontWeight.w800))),
+          Expanded(child: Text(text, style: ts(bs(16.5), weight: FontWeight.w800))),
           if (trailing != null) trailing!,
         ],
       ),
@@ -431,6 +431,190 @@ void showMsg(BuildContext context, String text) {
 /// Rebuilds a screen when the language or the bus data changes.
 Listenable get busListen => Listenable.merge([app, repo]);
 
+
+/// Soft page background used on the bus screens.
+const Color kBusBg = Color(0xFFF5F8FE);
+
+/// Tamil letters look bigger than English ones, so on bus screens they get a smaller size.
+double bs(double v) => app.lang == 'ta' ? v - 2 : v;
+
+/// White date card with arrows (results page).
+class LightDateStrip extends StatelessWidget {
+  final DateTime date;
+  final bool isToday;
+  final bool canPrev;
+  final bool canNext;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  const LightDateStrip({
+    super.key,
+    required this.date,
+    required this.isToday,
+    required this.canPrev,
+    required this.canNext,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE3EAF6))),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 28),
+            color: kBrand,
+            disabledColor: const Color(0xFFC4CAD4),
+            onPressed: canPrev ? onPrev : null,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 17, color: kBrand),
+                    const SizedBox(width: 8),
+                    Text(fmtDate(date), style: ts(bs(17), weight: FontWeight.w800)),
+                  ],
+                ),
+                if (isToday) Text(app.tr('Today', 'இன்று'), style: ts(bs(12.5), weight: FontWeight.w700, color: kBrand)),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded, size: 28),
+            color: kBrand,
+            disabledColor: const Color(0xFFC4CAD4),
+            onPressed: canNext ? onNext : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Two or three tabs in a soft grey bar; the chosen one is a white raised pill.
+class SegTabs extends StatelessWidget {
+  final List<String> labels;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  const SegTabs({super.key, required this.labels, required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: const Color(0xFFE8EDF6), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onSelect(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: i == selected ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: i == selected ? [BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 6, offset: const Offset(0, 2))] : const [],
+                  ),
+                  child: Text(labels[i], style: ts(bs(14.5), weight: i == selected ? FontWeight.w800 : FontWeight.w600, color: i == selected ? kBrandDark : kMuted)),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Big blue button with a soft shadow.
+class BusPrimaryButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const BusPrimaryButton({super.key, required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: kBrand,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: kBrand.withAlpha(80), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              const SizedBox(width: 10),
+              Text(label, style: ts(bs(17), weight: FontWeight.w800, color: Colors.white)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded box with a dashed border.
+class DashedBox extends StatelessWidget {
+  final Widget child;
+  final Color color;
+  final double radius;
+  final VoidCallback? onTap;
+
+  const DashedBox({super.key, required this.child, this.color = kBrand, this.radius = 14, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DashPainter(color, radius),
+      child: InkWell(borderRadius: BorderRadius.circular(radius), onTap: onTap, child: child),
+    );
+  }
+}
+
+class _DashPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+
+  _DashPainter(this.color, this.radius);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    final p = Paint()
+      ..color = color.withAlpha(150)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3;
+    for (final m in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < m.length) {
+        canvas.drawPath(m.extractPath(d, d + 5), p);
+        d += 9;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashPainter old) => old.color != color || old.radius != radius;
+}
 
 /// Bus screens header: the common animated [ScreenHeader] plus an optional blue panel below it for filters/search.
 class BusHeader extends StatelessWidget {
