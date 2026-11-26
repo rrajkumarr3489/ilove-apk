@@ -82,17 +82,23 @@ class _ScreenHeaderState extends State<ScreenHeader> with SingleTickerProviderSt
     super.dispose();
   }
 
-  /// Biggest font size (from [max] down to [min]) that keeps [text] inside [lines] lines of [width].
-  double _fit(String text, double width, double max, double min, int lines, FontWeight w) {
-    for (var s = max; s > min; s -= 1) {
-      final tp = TextPainter(
-        text: TextSpan(text: text, style: ts(s, weight: w, height: 1.15)),
-        maxLines: lines,
-        textDirection: TextDirection.ltr,
-      )..layout(maxWidth: width);
-      if (!tp.didExceedMaxLines) return s;
+  /// Picks font sizes so the title + subtitle always fit in [avail] height and never reach the back button.
+  (double, double) _fit(String title, String sub, double width, double avail) {
+    double h(String t, double size, FontWeight w, int lines) {
+      if (t.isEmpty) return 0;
+      final tp = TextPainter(text: TextSpan(text: t, style: ts(size, weight: w, height: 1.3)), maxLines: lines, textDirection: TextDirection.ltr)..layout(maxWidth: width);
+      return tp.didExceedMaxLines ? 9999 : tp.height;
     }
-    return min;
+
+    for (var t = 20.0; t >= 13; t -= 1) {
+      final th = h(title, t, FontWeight.w700, 2);
+      if (th > avail) continue;
+      for (var s = 12.0; s >= 10; s -= 0.5) {
+        final sh = sub.isEmpty ? 0 : h(sub, s, FontWeight.w500, 2);
+        if (th + (sub.isEmpty ? 0 : 3) + sh <= avail) return (t, s);
+      }
+    }
+    return (13, 10);
   }
 
   @override
@@ -102,9 +108,11 @@ class _ScreenHeaderState extends State<ScreenHeader> with SingleTickerProviderSt
     final look = _look(widget.kind);
     final w = MediaQuery.of(context).size.width;
     final textW = widget.kind == HeaderKind.bus ? w * 0.56 : w * 0.54;
-    final titleSize = _fit(widget.title, textW, 27, 15, 2, FontWeight.w800);
+    final bottom = widget.kind == HeaderKind.bus ? 32.0 : 16.0;
+    // back button occupies the top 56px; the text block lives strictly below it
+    final avail = kScreenHeaderH - 58 - bottom;
     final sub = widget.subtitle ?? '';
-    final subSize = sub.isEmpty ? 12.0 : _fit(sub, textW, 13, 10, 2, FontWeight.w500);
+    final (titleSize, subSize) = _fit(widget.title, sub, textW, avail);
     return SizedBox(
       width: double.infinity,
       height: h,
@@ -139,16 +147,16 @@ class _ScreenHeaderState extends State<ScreenHeader> with SingleTickerProviderSt
           ),
           Positioned(
             left: 20,
-            bottom: widget.kind == HeaderKind.bus ? 40 : 20,
+            bottom: bottom,
             width: textW,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(titleSize, weight: FontWeight.w800, color: look.title, height: 1.15)),
+                Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(titleSize, weight: FontWeight.w700, color: look.title, height: 1.3)),
                 if (sub.isNotEmpty) ...[
                   const SizedBox(height: 3),
-                  Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(subSize, color: look.sub, height: 1.25)),
+                  Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(subSize, color: look.sub, height: 1.3)),
                 ],
               ],
             ),
