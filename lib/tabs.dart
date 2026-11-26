@@ -43,7 +43,7 @@ class FavoritesTab extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ScreenHeader(kind: HeaderKind.services, showBack: false, title: app.tr('Favorites', 'பிடித்தவை'), subtitle: app.tr('Your saved buses and searches', 'நீங்கள் சேமித்த பேருந்துகள், தேடல்கள்')),
+            ScreenHeader(kind: HeaderKind.favorites, showBack: false, title: app.tr('Favorites', 'பிடித்தவை'), subtitle: app.tr('Your saved buses and searches', 'நீங்கள் சேமித்த பேருந்துகள், தேடல்கள்')),
             Expanded(
               child: (routes.isEmpty && searches.isEmpty && trips.isEmpty)
                   ? EmptyState(
@@ -391,7 +391,7 @@ class _SettingsTabState extends State<SettingsTab> {
         final disc = app.tr(repo.settings['Bus.DisclaimerEn'] ?? '', repo.settings['Bus.DisclaimerTa'] ?? '');
         return Column(
           children: [
-            ScreenHeader(kind: HeaderKind.services, showBack: false, title: app.tr('Settings', 'அமைப்புகள்'), subtitle: app.tr('Language, account and about', 'மொழி, கணக்கு, தகவல்கள்')),
+            ScreenHeader(kind: HeaderKind.settings, showBack: false, title: app.tr('Settings', 'அமைப்புகள்'), subtitle: app.tr('Language, account and about', 'மொழி, கணக்கு, தகவல்கள்')),
             Expanded(
               child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),

@@ -8,7 +8,7 @@ import 'theme.dart';
 const double kScreenHeaderH = 148;
 
 /// One entry per kind of screen. To add a new screen: add a value here, a colour set in [_look] and a painter in [_art].
-enum HeaderKind { bus, news, jobs, inbox, report, services }
+enum HeaderKind { bus, news, jobs, inbox, report, services, favorites, settings, myReports }
 
 class _Look {
   final Color top;
@@ -32,6 +32,12 @@ _Look _look(HeaderKind k) {
       return const _Look(Color(0xFFFCDDD3), Color(0xFFFFF1EC), Color(0xFF9A2A12), Color(0xFFA23A22));
     case HeaderKind.services:
       return const _Look(Color(0xFFD2E2FB), Color(0xFFEBF3FF), Color(0xFF173F94), Color(0xFF28509F));
+    case HeaderKind.favorites:
+      return const _Look(Color(0xFFFBD9E5), Color(0xFFFFF1F5), Color(0xFF8E1B4A), Color(0xFF9C2C5A));
+    case HeaderKind.settings:
+      return const _Look(Color(0xFFD5EEEB), Color(0xFFF0FAF9), Color(0xFF0B5F5A), Color(0xFF14706A));
+    case HeaderKind.myReports:
+      return const _Look(Color(0xFFE3DAF8), Color(0xFFF5F1FD), Color(0xFF3E2A8C), Color(0xFF4A3A98));
   }
 }
 
@@ -208,6 +214,18 @@ class _ArtPainter extends CustomPainter {
       case HeaderKind.services:
         _ground(canvas, size);
         _services(canvas, size, t);
+        break;
+      case HeaderKind.favorites:
+        _ground(canvas, size);
+        _favorites(canvas, size, t);
+        break;
+      case HeaderKind.settings:
+        _ground(canvas, size);
+        _settings(canvas, size, t);
+        break;
+      case HeaderKind.myReports:
+        _ground(canvas, size);
+        _myReports(canvas, size, t);
         break;
     }
   }
@@ -509,6 +527,134 @@ class _ArtPainter extends CustomPainter {
       canvas.drawRRect(_rr(x, y + bob, 50, 50, 14), Paint()..color = cols[i]);
       canvas.drawCircle(Offset(x + 25, y + 25 + bob), 10, Paint()..color = Colors.white.withAlpha(230));
     }
+    canvas.restore();
+  }
+
+  Path _heart(double sc) => Path()
+    ..moveTo(0, 0.9 * sc)
+    ..cubicTo(-1.1 * sc, 0.1 * sc, -1.0 * sc, -0.9 * sc, 0, -0.4 * sc)
+    ..cubicTo(1.0 * sc, -0.9 * sc, 1.1 * sc, 0.1 * sc, 0, 0.9 * sc)
+    ..close();
+
+  // ---------------------------------------------------------------- beating heart (favourites)
+  void _favorites(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    final bob = math.sin(t * 2 * math.pi * 12) * 3;
+    canvas.save();
+    canvas.translate(ox, oy);
+    // saved ticket behind
+    canvas.save();
+    canvas.translate(56, 82 + bob * 0.5);
+    canvas.rotate(-0.12);
+    canvas.drawRRect(_rr(-38, -46, 76, 92, 8), Paint()..color = Colors.white);
+    canvas.drawRRect(_rr(-26, -32, 36, 26, 5), Paint()..color = const Color(0xFFBBD2F5));
+    final line = Paint()..color = const Color(0xFFF4C6D6);
+    for (var i = 0; i < 3; i++) {
+      canvas.drawRRect(_rr(-26, 4 + i * 12, i == 2 ? 34 : 52, 5, 2.5), line);
+    }
+    canvas.restore();
+    // big heart (beats)
+    final beat = 1 + math.max(0.0, math.sin(t * 2 * math.pi * 24)) * 0.08;
+    canvas.save();
+    canvas.translate(126, 76 + bob);
+    canvas.scale(beat);
+    canvas.drawPath(_heart(46).shift(const Offset(2, 5)), Paint()..color = Colors.black.withAlpha(20));
+    canvas.drawPath(
+      _heart(46),
+      Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFF8A80), Color(0xFFE53935)]).createShader(const Rect.fromLTWH(-46, -42, 92, 84)),
+    );
+    canvas.drawCircle(const Offset(-16, -14), 5, Paint()..color = Colors.white.withAlpha(110));
+    canvas.restore();
+    // little hearts floating up
+    for (var i = 0; i < 3; i++) {
+      final ph = ((t * 12) + i / 3) % 1;
+      canvas.save();
+      canvas.translate(150 + (i - 1) * 16 + math.sin(ph * 6) * 4, 46 - ph * 38);
+      canvas.drawPath(_heart(6 + i * 2.0), Paint()..color = const Color(0xFFE53935).withAlpha((200 * (1 - ph)).round()));
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
+  // ---------------------------------------------------------------- profile + gear (me / settings)
+  void _settings(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    final bob = math.sin(t * 2 * math.pi * 12) * 3;
+    canvas.save();
+    canvas.translate(ox, oy);
+    // avatar
+    canvas.save();
+    canvas.translate(94, 76 + bob);
+    final disc = Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: 46));
+    canvas.drawCircle(const Offset(2, 5), 46, Paint()..color = Colors.black.withAlpha(20));
+    canvas.drawPath(disc, Paint()..color = const Color(0xFF26A69A));
+    canvas.save();
+    canvas.clipPath(disc);
+    canvas.drawCircle(const Offset(0, -10), 15, Paint()..color = Colors.white);
+    canvas.drawOval(const Rect.fromLTWH(-28, 10, 56, 50), Paint()..color = Colors.white);
+    canvas.restore();
+    canvas.restore();
+    // turning gear
+    canvas.save();
+    canvas.translate(162, 44 - bob * 0.5);
+    canvas.rotate(t * 2 * math.pi * 3);
+    final gp = Paint()..color = const Color(0xFF0B7A75);
+    for (var i = 0; i < 8; i++) {
+      canvas.save();
+      canvas.rotate(i * math.pi / 4);
+      canvas.drawRRect(_rr(-4.5, -22, 9, 12, 2), gp);
+      canvas.restore();
+    }
+    canvas.drawCircle(Offset.zero, 17, gp);
+    canvas.drawCircle(Offset.zero, 7, Paint()..color = const Color(0xFFE3F4F2));
+    canvas.restore();
+    // toggle switch (slides)
+    final k = (math.sin(t * 2 * math.pi * 6) + 1) / 2;
+    canvas.drawRRect(_rr(140, 100, 46, 24, 12), Paint()..color = Color.lerp(const Color(0xFFB0BEC5), const Color(0xFF26A69A), k)!);
+    canvas.drawCircle(Offset(152 + 22 * k, 112), 9, Paint()..color = Colors.white);
+    canvas.restore();
+  }
+
+  // ---------------------------------------------------------------- clipboard with ticks (my reports)
+  void _myReports(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    final bob = math.sin(t * 2 * math.pi * 12) * 3;
+    canvas.save();
+    canvas.translate(ox, oy + bob);
+    canvas.drawRRect(_rr(54, 24, 100, 108, 10), Paint()..color = Colors.black.withAlpha(18));
+    canvas.drawRRect(_rr(52, 20, 100, 108, 10), Paint()..color = Colors.white);
+    canvas.drawRRect(_rr(86, 12, 32, 16, 6), Paint()..color = const Color(0xFF5E35B1));
+    final n = (((t * 12) % 1) * 4).floor(); // 0..3 ticks shown, then starts again
+    for (var i = 0; i < 3; i++) {
+      final y = 52.0 + i * 28;
+      final on = i < n;
+      canvas.drawCircle(Offset(72, y), 9, Paint()..color = on ? const Color(0xFF43A047) : const Color(0xFFE3DAF8));
+      if (on) {
+        final p = Path()
+          ..moveTo(67.5, y)
+          ..lineTo(71, y + 3.5)
+          ..lineTo(77, y - 3.5);
+        canvas.drawPath(p, Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round);
+      }
+      canvas.drawRRect(_rr(90, y - 6, i == 1 ? 44 : 52, 6, 3), Paint()..color = const Color(0xFFD7CDEE));
+      canvas.drawRRect(_rr(90, y + 3, 34, 4, 2), Paint()..color = const Color(0xFFEAE4F8));
+    }
+    // red dot with ripple
+    final ph = (t * 24) % 1;
+    const dot = Offset(160, 30);
+    canvas.drawCircle(dot, 7 + 11 * ph, Paint()
+      ..color = const Color(0xFFE53935).withAlpha((110 * (1 - ph)).round())
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2);
+    canvas.drawCircle(dot, 6, Paint()..color = const Color(0xFFE53935));
     canvas.restore();
   }
 

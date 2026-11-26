@@ -11,7 +11,7 @@ import 'share_util.dart';
 import 'theme.dart';
 
 const Color _kCream = kBg;
-const Color _kJobBlue = Color(0xFFE8710A);
+const Color _kJobBlue = Color(0xFF3F4FB0);
 
 /// Picks the Tamil or English text of a field (falls back to the other language when empty).
 String _pick(Map<String, dynamic> m, String base) {
@@ -194,7 +194,7 @@ class _ClassifiedsScreenState extends State<ClassifiedsScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: kBrand,
+            backgroundColor: _kJobBlue,
             foregroundColor: Colors.white,
             onPressed: () => openAddJob(context),
             icon: const Icon(Icons.add),
@@ -389,7 +389,7 @@ class JobDetailScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: kBrand),
+          Icon(icon, size: 20, color: _kJobBlue),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -482,7 +482,7 @@ class JobDetailScreen extends StatelessWidget {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () => _open(context, 'tel:${phone.replaceAll(' ', '')}'),
-                        style: FilledButton.styleFrom(backgroundColor: kBrand, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        style: FilledButton.styleFrom(backgroundColor: _kJobBlue, padding: const EdgeInsets.symmetric(vertical: 14)),
                         icon: const Icon(Icons.call),
                         label: Text(app.tr('Call', 'அழை'), style: ts(15, weight: FontWeight.w800, color: Colors.white)),
                       ),
@@ -740,7 +740,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
                   label: Text(_empLabel(e), style: ts(13, weight: FontWeight.w700, color: _emp == e ? Colors.white : kInk)),
                   selected: _emp == e,
                   showCheckmark: false,
-                  selectedColor: kBrand,
+                  selectedColor: _kJobBlue,
                   onSelected: (_) => setState(() => _emp = e),
                 ),
             ],
@@ -771,7 +771,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _saving ? null : _save,
-            style: FilledButton.styleFrom(backgroundColor: kBrand, padding: const EdgeInsets.symmetric(vertical: 15)),
+            style: FilledButton.styleFrom(backgroundColor: _kJobBlue, padding: const EdgeInsets.symmetric(vertical: 15)),
             child: _saving
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
                 : Text(app.tr('Save', 'சேமி'), style: ts(16, weight: FontWeight.w800, color: Colors.white)),
@@ -858,7 +858,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       backgroundColor: _kCream,
       appBar: ScreenAppBar(kind: HeaderKind.jobs, title: app.tr('My jobs', 'நான் அனுப்பிய வேலைகள்')),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: kBrand,
+        backgroundColor: _kJobBlue,
         foregroundColor: Colors.white,
         onPressed: () async {
           await openAddJob(context);

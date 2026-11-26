@@ -565,7 +565,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _cream,
-      appBar: ScreenAppBar(kind: HeaderKind.report, title: app.tr('My reports', 'என் புகார்கள்')),
+      appBar: ScreenAppBar(kind: HeaderKind.myReports, title: app.tr('My reports', 'என் புகார்கள்')),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: kBrand,
         foregroundColor: Colors.white,
