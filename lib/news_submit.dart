@@ -6,6 +6,7 @@ import 'app_state.dart';
 import 'auth/auth_guard.dart';
 import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -158,10 +159,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kBg,
-        title: Text(_id == null ? app.tr('Add news', 'செய்தி சேர்க்க') : app.tr('Change news', 'செய்தியை மாற்று'),
-            style: ts(19, weight: FontWeight.w900)),
+      appBar: ScreenAppBar(
+        kind: HeaderKind.news,
+        title: _id == null ? app.tr('Add news', 'செய்தி சேர்க்க') : app.tr('Change news', 'செய்தியை மாற்று'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
@@ -299,10 +299,7 @@ class _MyNewsScreenState extends State<MyNewsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kBg,
-        title: Text(app.tr('My news', 'நான் அனுப்பிய செய்திகள்'), style: ts(19, weight: FontWeight.w900)),
-      ),
+      appBar: ScreenAppBar(kind: HeaderKind.news, title: app.tr('My news', 'நான் அனுப்பிய செய்திகள்')),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: kBrand,
         foregroundColor: Colors.white,

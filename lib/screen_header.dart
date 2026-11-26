@@ -8,7 +8,7 @@ import 'theme.dart';
 const double kScreenHeaderH = 148;
 
 /// One entry per kind of screen. To add a new screen: add a value here, a colour set in [_look] and a painter in [_art].
-enum HeaderKind { bus, news, jobs }
+enum HeaderKind { bus, news, jobs, inbox, report, services }
 
 class _Look {
   final Color top;
@@ -26,6 +26,12 @@ _Look _look(HeaderKind k) {
       return const _Look(Color(0xFFD3EDDA), Color(0xFFEFF9F1), Color(0xFF166A2E), Color(0xFF1D5B2E));
     case HeaderKind.jobs:
       return const _Look(Color(0xFFD7DAF8), Color(0xFFEFF0FE), Color(0xFF2E3A94), Color(0xFF2E3A94));
+    case HeaderKind.inbox:
+      return const _Look(Color(0xFFFBE7B8), Color(0xFFFFF7E3), Color(0xFF7A4B00), Color(0xFF8A5A0A));
+    case HeaderKind.report:
+      return const _Look(Color(0xFFFCDDD3), Color(0xFFFFF1EC), Color(0xFF9A2A12), Color(0xFFA23A22));
+    case HeaderKind.services:
+      return const _Look(Color(0xFFD2E2FB), Color(0xFFEBF3FF), Color(0xFF173F94), Color(0xFF28509F));
   }
 }
 
@@ -66,8 +72,9 @@ class ScreenHeader extends StatefulWidget {
   final String title;
   final String? subtitle;
   final List<Widget> trailing;
+  final bool showBack;
 
-  const ScreenHeader({super.key, required this.kind, required this.title, this.subtitle, this.trailing = const []});
+  const ScreenHeader({super.key, required this.kind, required this.title, this.subtitle, this.trailing = const [], this.showBack = true});
 
   @override
   State<ScreenHeader> createState() => _ScreenHeaderState();
@@ -128,11 +135,12 @@ class _ScreenHeaderState extends State<ScreenHeader> with SingleTickerProviderSt
               child: CustomPaint(painter: _ArtPainter(widget.kind, _c, top)),
             ),
           ),
-          Positioned(
-            left: 16,
-            top: top + 10,
-            child: HeaderButton(icon: Icons.arrow_back_rounded, onTap: () => Navigator.maybePop(context)),
-          ),
+          if (widget.showBack)
+            Positioned(
+              left: 16,
+              top: top + 10,
+              child: HeaderButton(icon: Icons.arrow_back_rounded, onTap: () => Navigator.maybePop(context)),
+            ),
           Positioned(
             right: 16,
             top: top + 10,
@@ -188,6 +196,18 @@ class _ArtPainter extends CustomPainter {
       case HeaderKind.jobs:
         _ground(canvas, size);
         _jobs(canvas, size, t);
+        break;
+      case HeaderKind.inbox:
+        _ground(canvas, size);
+        _inbox(canvas, size, t);
+        break;
+      case HeaderKind.report:
+        _ground(canvas, size);
+        _report(canvas, size, t);
+        break;
+      case HeaderKind.services:
+        _ground(canvas, size);
+        _services(canvas, size, t);
         break;
     }
   }
@@ -383,6 +403,168 @@ class _ArtPainter extends CustomPainter {
     canvas.restore();
   }
 
+  // ---------------------------------------------------------------- bell (notifications)
+  void _inbox(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    canvas.save();
+    canvas.translate(ox + 96, oy + 22);
+    final swing = math.sin(t * 2 * math.pi * 12) * 0.16;
+    canvas.save();
+    canvas.rotate(swing);
+    canvas.translate(0, 40);
+    final body = Path()
+      ..moveTo(-34, 38)
+      ..cubicTo(-34, 22, -28, -32, 0, -32)
+      ..cubicTo(28, -32, 34, 22, 34, 38)
+      ..close();
+    canvas.drawCircle(const Offset(0, -38), 5, Paint()..color = const Color(0xFFE09A0B));
+    canvas.drawPath(body, Paint()..color = const Color(0xFFFBBC04));
+    canvas.drawRRect(_rr(-40, 34, 80, 11, 5.5), Paint()..color = const Color(0xFFE09A0B));
+    canvas.drawCircle(Offset(math.sin(t * 2 * math.pi * 12 + 1.2) * 4, 52), 7, Paint()..color = const Color(0xFF8A5A0A));
+    canvas.drawRRect(_rr(-18, -14, 8, 30, 4), Paint()..color = Colors.white.withAlpha(110));
+    canvas.restore();
+    // sound arcs
+    for (var i = 0; i < 2; i++) {
+      final ph = ((t * 12) + i * 0.5) % 1;
+      final p = Paint()
+        ..color = const Color(0xFFE09A0B).withAlpha((150 * (1 - ph)).round())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round;
+      final r = 52 + 16 * ph;
+      canvas.drawArc(Rect.fromCircle(center: const Offset(0, 60), radius: r), -math.pi * 0.2 - 0.5, 0.5, false, p);
+      canvas.drawArc(Rect.fromCircle(center: const Offset(0, 60), radius: r), -math.pi * 0.8, 0.5, false, p);
+    }
+    // red badge with ripple
+    final ph = (t * 24) % 1;
+    const dot = Offset(40, 22);
+    canvas.drawCircle(dot, 8 + 12 * ph, Paint()
+      ..color = const Color(0xFFE53935).withAlpha((120 * (1 - ph)).round())
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2);
+    canvas.drawCircle(dot, 8, Paint()..color = const Color(0xFFE53935));
+    canvas.restore();
+  }
+
+  // ---------------------------------------------------------------- warning sign (report an issue)
+  void _report(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    final bob = math.sin(t * 2 * math.pi * 12) * 3;
+    canvas.save();
+    canvas.translate(ox, oy);
+    // paper behind
+    canvas.save();
+    canvas.translate(52, 78 + bob * 0.5);
+    canvas.rotate(-0.12);
+    canvas.drawRRect(_rr(-40, -48, 80, 96, 8), Paint()..color = Colors.white);
+    final line = Paint()..color = const Color(0xFFF2D2C8);
+    for (var i = 0; i < 4; i++) {
+      canvas.drawRRect(_rr(-28, -34 + i * 14, i.isEven ? 56 : 40, 5, 2.5), line);
+    }
+    canvas.restore();
+    // triangle
+    final pulse = 1 + math.sin(t * 2 * math.pi * 24) * 0.04;
+    canvas.save();
+    canvas.translate(116, 76 + bob);
+    canvas.scale(pulse);
+    final tri = Path()
+      ..moveTo(0, -40)
+      ..lineTo(44, 34)
+      ..lineTo(-44, 34)
+      ..close();
+    canvas.drawPath(tri, Paint()
+      ..color = const Color(0xFFE8710A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 14
+      ..strokeJoin = StrokeJoin.round);
+    canvas.drawPath(tri, Paint()..color = const Color(0xFFE8710A));
+    canvas.drawRRect(_rr(-4, -12, 8, 28, 4), Paint()..color = Colors.white);
+    canvas.drawCircle(const Offset(0, 24), 4.5, Paint()..color = Colors.white);
+    canvas.restore();
+    // red dot with ripple
+    final ph = (t * 24) % 1;
+    const dot = Offset(172, 40);
+    canvas.drawCircle(dot, 7 + 12 * ph, Paint()
+      ..color = const Color(0xFFE53935).withAlpha((120 * (1 - ph)).round())
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2);
+    canvas.drawCircle(dot, 6, Paint()..color = const Color(0xFFE53935));
+    canvas.restore();
+  }
+
+  // ---------------------------------------------------------------- service tiles (all services, misc)
+  void _services(Canvas canvas, Size s, double t) {
+    final ox = s.width - 196;
+    final oy = s.height - 148;
+    canvas.save();
+    canvas.translate(ox + 44, oy + 24);
+    const cols = [Color(0xFF1A73E8), Color(0xFF34A853), Color(0xFFFBBC04), Color(0xFFEA4335)];
+    for (var i = 0; i < 4; i++) {
+      final x = (i % 2) * 58.0;
+      final y = (i ~/ 2) * 58.0;
+      final bob = math.sin(t * 2 * math.pi * 12 + i * 1.3) * 4;
+      canvas.drawRRect(_rr(x + 2, y + 4 + bob, 50, 50, 14), Paint()..color = Colors.black.withAlpha(16));
+      canvas.drawRRect(_rr(x, y + bob, 50, 50, 14), Paint()..color = cols[i]);
+      canvas.drawCircle(Offset(x + 25, y + 25 + bob), 10, Paint()..color = Colors.white.withAlpha(230));
+    }
+    canvas.restore();
+  }
+
   @override
   bool shouldRepaint(covariant _ArtPainter old) => old.kind != kind || old.top != top;
+}
+
+/// Use as `appBar:` of a Scaffold to get the common header on a screen: `appBar: ScreenAppBar(kind: HeaderKind.news, title: ...)`.
+class ScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final HeaderKind kind;
+  final String title;
+  final String? subtitle;
+  final List<Widget> trailing;
+
+  const ScreenAppBar({super.key, required this.kind, required this.title, this.subtitle, this.trailing = const []});
+
+  @override
+  Size get preferredSize {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    return Size.fromHeight(kScreenHeaderH + view.padding.top / view.devicePixelRatio);
+  }
+
+  @override
+  Widget build(BuildContext context) => ScreenHeader(kind: kind, title: title, subtitle: subtitle, trailing: trailing);
+}
+
+/// Small white pill button (icon + text) for the header, e.g. "Mark all read".
+class HeaderPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const HeaderPill({super.key, required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(24), blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: kBrand),
+            const SizedBox(width: 6),
+            Text(label, style: ts(12.5, weight: FontWeight.w700, color: kBrand)),
+          ],
+        ),
+      ),
+    );
+  }
 }

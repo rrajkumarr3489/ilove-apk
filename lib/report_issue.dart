@@ -10,6 +10,7 @@ import 'auth/auth_guard.dart';
 import 'bus/bus_api.dart';
 import 'bus/bus_repo.dart';
 import 'config.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 
 const Color _cream = kBg;
@@ -283,10 +284,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     final hasRef = (widget.refText ?? '').isNotEmpty;
     return Scaffold(
       backgroundColor: _cream,
-      appBar: AppBar(
-        backgroundColor: _cream,
-        surfaceTintColor: _cream,
-        title: Text(app.tr('Report an issue', 'சிக்கலைத் தெரிவி'), style: ts(19, weight: FontWeight.w900)),
+      appBar: ScreenAppBar(
+        kind: HeaderKind.report,
+        title: app.tr('Report an issue', 'சிக்கலைத் தெரிவி'),
+        subtitle: app.tr('Tell us what went wrong', 'என்ன சிக்கல் என்று சொல்லுங்கள்'),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -564,11 +565,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _cream,
-      appBar: AppBar(
-        backgroundColor: _cream,
-        surfaceTintColor: _cream,
-        title: Text(app.tr('My reports', 'என் புகார்கள்'), style: ts(19, weight: FontWeight.w900)),
-      ),
+      appBar: ScreenAppBar(kind: HeaderKind.report, title: app.tr('My reports', 'என் புகார்கள்')),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: kBrand,
         foregroundColor: Colors.white,

@@ -418,14 +418,14 @@ class JobDetailScreen extends StatelessWidget {
         final cname = _s(job, 'contactName');
         return Scaffold(
           backgroundColor: _kCream,
-          appBar: AppBar(
-            backgroundColor: _kCream,
-            title: Text(app.tr('Job details', 'வேலை விவரம்'), style: ts(19, weight: FontWeight.w900)),
-            actions: [
-              IconButton(
+          appBar: ScreenAppBar(
+            kind: HeaderKind.jobs,
+            title: app.tr('Job details', 'வேலை விவரம்'),
+            trailing: [
+              HeaderButton(
                 tooltip: app.tr('Share', 'பகிர்'),
-                icon: const Icon(Icons.share_rounded),
-                onPressed: () => showShareSheet(context, text: jobShareText(job), link: link),
+                icon: Icons.share_rounded,
+                onTap: () => showShareSheet(context, text: jobShareText(job), link: link),
               ),
             ],
           ),
@@ -672,9 +672,9 @@ class _AddJobScreenState extends State<AddJobScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kCream,
-      appBar: AppBar(
-        backgroundColor: _kCream,
-        title: Text(_id == null ? app.tr('Add job', 'வேலை சேர்க்க') : app.tr('Change job', 'வேலையை மாற்று'), style: ts(19, weight: FontWeight.w900)),
+      appBar: ScreenAppBar(
+        kind: HeaderKind.jobs,
+        title: _id == null ? app.tr('Add job', 'வேலை சேர்க்க') : app.tr('Change job', 'வேலையை மாற்று'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
@@ -856,10 +856,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kCream,
-      appBar: AppBar(
-        backgroundColor: _kCream,
-        title: Text(app.tr('My jobs', 'நான் அனுப்பிய வேலைகள்'), style: ts(19, weight: FontWeight.w900)),
-      ),
+      appBar: ScreenAppBar(kind: HeaderKind.jobs, title: app.tr('My jobs', 'நான் அனுப்பிய வேலைகள்')),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: kBrand,
         foregroundColor: Colors.white,

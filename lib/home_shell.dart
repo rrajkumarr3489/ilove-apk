@@ -24,7 +24,6 @@ import 'share_util.dart';
 import 'tabs.dart';
 import 'theme.dart';
 import 'tiles.dart';
-import 'ui.dart';
 
 const Color kCream = kBg;
 
@@ -64,20 +63,12 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       context,
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          body: SafeArea(
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                const Expanded(child: UpdatesTab()),
-              ],
-            ),
+          appBar: ScreenAppBar(
+            kind: HeaderKind.services,
+            title: app.tr('Updates', 'அறிவிப்புகள்'),
+            subtitle: app.tr('Latest bus timing changes', 'பேருந்து நேர மாற்றங்கள்'),
           ),
+          body: const UpdatesTab(),
         ),
       ),
     );
@@ -139,9 +130,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
               index: _tab,
               children: [
                 HomeTab(onOpenUpdates: _openUpdates, onAllServices: () => setState(() => _tab = 2)),
-                SafeArea(bottom: false, child: FavoritesTab()),
-                SafeArea(bottom: false, child: AllServicesTab()),
-                SafeArea(bottom: false, child: SettingsTab()),
+                SafeArea(top: false, bottom: false, child: FavoritesTab()),
+                SafeArea(top: false, bottom: false, child: AllServicesTab()),
+                SafeArea(top: false, bottom: false, child: SettingsTab()),
               ],
             ),
           ),
@@ -744,13 +735,13 @@ class AllServicesTab extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.only(bottom: 24),
             children: [
-              const SizedBox(height: 14),
-              ServiceHero(
-                icon: Icons.apps_rounded,
-                color: kBrand,
+              ScreenHeader(
+                kind: HeaderKind.services,
+                showBack: false,
                 title: app.tr('All services', 'அனைத்து சேவைகள்'),
                 subtitle: app.tr('Everything in Aruppukottai, one place', 'அருப்புக்கோட்டை முழுவதும் ஒரே இடத்தில்'),
               ),
+              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _SearchBar(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceSearchScreen()))),
@@ -877,7 +868,7 @@ class UnderConstructionScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: app,
       builder: (context, _) => Scaffold(
-        appBar: AppBar(title: Text(app.lang == 'ta' ? tile.titleTa : tile.title)),
+        appBar: ScreenAppBar(kind: HeaderKind.services, title: app.lang == 'ta' ? tile.titleTa : tile.title),
         body: EmptyState(
           icon: Icons.construction,
           title: app.tr('Under construction', 'கட்டுமானத்தில் உள்ளது'),

@@ -6,6 +6,7 @@ import 'auth/auth_guard.dart';
 import 'bus/bus_api.dart';
 import 'push_service.dart';
 import 'reports_admin.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 
 const Color _cream = kBg;
@@ -365,17 +366,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final hasUnread = _items.any((e) => e['isRead'] != true);
     return Scaffold(
       backgroundColor: _cream,
-      appBar: AppBar(
-        backgroundColor: _cream,
-        surfaceTintColor: _cream,
-        title: Text(app.tr('Notifications', 'அறிவிப்புகள்'), style: ts(19, weight: FontWeight.w900)),
-        actions: [
-          if (hasUnread)
-            TextButton.icon(
-              onPressed: _readAll,
-              icon: const Icon(Icons.done_all_rounded, size: 19, color: kBrand),
-              label: Text(app.tr('Mark all read', 'அனைத்தும் படிக்கப்பட்டது'), style: ts(12.5, weight: FontWeight.w800, color: kBrand)),
-            ),
+      appBar: ScreenAppBar(
+        kind: HeaderKind.inbox,
+        title: app.tr('Notifications', 'அறிவிப்புகள்'),
+        trailing: [
+          if (hasUnread) HeaderPill(icon: Icons.done_all_rounded, label: app.tr('Read all', 'அனைத்தும்'), onTap: _readAll),
         ],
       ),
       body: RefreshIndicator(

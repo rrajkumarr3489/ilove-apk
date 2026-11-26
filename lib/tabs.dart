@@ -13,6 +13,7 @@ import 'bus/notices_screen.dart';
 import 'bus/route_detail_screen.dart';
 import 'config.dart';
 import 'report_issue.dart';
+import 'screen_header.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -42,7 +43,7 @@ class FavoritesTab extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _pageTitle(app.tr('Favorites', 'பிடித்தவை')),
+            ScreenHeader(kind: HeaderKind.services, showBack: false, title: app.tr('Favorites', 'பிடித்தவை'), subtitle: app.tr('Your saved buses and searches', 'நீங்கள் சேமித்த பேருந்துகள், தேடல்கள்')),
             Expanded(
               child: (routes.isEmpty && searches.isEmpty && trips.isEmpty)
                   ? EmptyState(
@@ -170,7 +171,7 @@ class UpdatesTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pageTitle(
-              app.tr('Updates', 'அறிவிப்புகள்'),
+              app.tr('Bus timing updates', 'பேருந்து நேர மாற்றங்கள்'),
               trailing: IconButton(
                 tooltip: app.tr('Refresh', 'புதுப்பி'),
                 icon: repo.syncing
@@ -388,10 +389,13 @@ class _SettingsTabState extends State<SettingsTab> {
       listenable: Listenable.merge([app, auth, repo]),
       builder: (context, _) {
         final disc = app.tr(repo.settings['Bus.DisclaimerEn'] ?? '', repo.settings['Bus.DisclaimerTa'] ?? '');
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+        return Column(
           children: [
-            _pageTitle(app.tr('Settings', 'அமைப்புகள்')),
+            ScreenHeader(kind: HeaderKind.services, showBack: false, title: app.tr('Settings', 'அமைப்புகள்'), subtitle: app.tr('Language, account and about', 'மொழி, கணக்கு, தகவல்கள்')),
+            Expanded(
+              child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+          children: [
             _account(),
             const SizedBox(height: 14),
             if (auth.loggedIn)
@@ -456,6 +460,9 @@ class _SettingsTabState extends State<SettingsTab> {
                 _row(Icons.logout, app.tr('Logout', 'வெளியேறு'), onTap: _logout),
                 _row(Icons.delete_outline, app.tr('Delete my account', 'என் கணக்கை நீக்கு'), color: kRed, onTap: _deleteAccount),
               ]),
+          ],
+              ),
+            ),
           ],
         );
       },
