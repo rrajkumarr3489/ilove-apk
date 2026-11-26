@@ -19,6 +19,7 @@ import 'home_scene.dart';
 import 'inbox.dart';
 import 'news_submit.dart';
 import 'report_issue.dart';
+import 'screen_header.dart';
 import 'share_util.dart';
 import 'tabs.dart';
 import 'theme.dart';
@@ -1151,31 +1152,20 @@ class _NewsListScreenState extends State<NewsListScreen> {
         icon: const Icon(Icons.add),
         label: Text(app.tr('Add news', 'செய்தி சேர்க்க')),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
+      body: Column(
+        children: [
+          ScreenHeader(
+            kind: HeaderKind.news,
+            title: app.tr('News', 'செய்திகள்'),
+            subtitle: app.tr('Aruppukottai and around, today', 'அருப்புக்கோட்டை மற்றும் சுற்றுவட்டாரம், இன்று'),
+            trailing: [HeaderButton(icon: Icons.list_alt_rounded, onTap: () => openMyNews(context))],
+          ),
+          Expanded(
+            child: RefreshIndicator(
           onRefresh: _load,
           child: ListView(
-            padding: const EdgeInsets.only(bottom: 90),
+            padding: const EdgeInsets.only(top: 8, bottom: 90),
             children: [
-              ServiceTopBar(trailing: [
-                InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => openMyNews(context),
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(color: kTintSoft, shape: BoxShape.circle),
-                    child: const Icon(Icons.list_alt_rounded, color: kInk, size: 22),
-                  ),
-                ),
-              ]),
-              ServiceHero(
-                icon: Icons.newspaper_rounded,
-                color: kGreen,
-                title: app.tr('News', 'செய்திகள்'),
-                subtitle: app.tr('Aruppukottai and around, today', 'அருப்புக்கோட்டை மற்றும் சுற்றுவட்டாரம், இன்று'),
-              ),
               if (_items.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 80),
@@ -1200,6 +1190,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
             ],
           ),
         ),
+          ),
+        ],
       ),
     );
   }

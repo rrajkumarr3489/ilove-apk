@@ -6,9 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_state.dart';
 import 'auth/auth_guard.dart';
 import 'bus/bus_api.dart';
+import 'screen_header.dart';
 import 'share_util.dart';
 import 'theme.dart';
-import 'ui.dart';
 
 const Color _kCream = kBg;
 const Color _kJobBlue = Color(0xFFE8710A);
@@ -201,27 +201,17 @@ class _ClassifiedsScreenState extends State<ClassifiedsScreen> {
             label: Text(app.tr('Add job', 'வேலை சேர்க்க')),
           ),
           body: SafeArea(
+            top: false,
             bottom: false,
             child: Column(
             children: [
-              ServiceTopBar(trailing: [
-                InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => openMyJobs(context),
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(color: kTintSoft, shape: BoxShape.circle),
-                    child: const Icon(Icons.list_alt_rounded, color: kInk, size: 22),
-                  ),
-                ),
-              ]),
-              ServiceHero(
-                icon: Icons.work_rounded,
-                color: const Color(0xFFE8710A),
+              ScreenHeader(
+                kind: HeaderKind.jobs,
                 title: app.tr('Jobs', 'வேலை வாய்ப்புகள்'),
                 subtitle: app.tr('Local jobs, shops and walk-ins', 'உள்ளூர் வேலைகள், கடைகள், நேரடி நேர்காணல்கள்'),
+                trailing: [HeaderButton(icon: Icons.list_alt_rounded, onTap: () => openMyJobs(context))],
               ),
+              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
