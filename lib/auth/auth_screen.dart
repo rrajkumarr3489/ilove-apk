@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../bus/bus_api.dart';
+import '../screen_header.dart';
 import '../theme.dart';
-import '../ui.dart';
 import '../widgets.dart';
 import 'auth_service.dart';
 
@@ -128,47 +128,134 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  InputDecoration _dec(String label, IconData icon, {Widget? suffix, String? prefix}) {
+  InputDecoration _dec(String hint, {Widget? prefix, Widget? suffix}) {
     OutlineInputBorder b(Color c, double w) =>
         OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
-      labelText: label,
-      labelStyle: ts(14, color: kMuted),
-      floatingLabelStyle: ts(13, color: kBrand, weight: FontWeight.w800),
-      prefixIcon: Icon(icon, size: 21, color: kMuted),
-      prefixText: prefix,
-      prefixStyle: ts(15, weight: FontWeight.w800),
+      hintText: hint,
+      hintStyle: ts(15, color: kMuted),
+      prefixIcon: prefix,
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
       border: b(Colors.transparent, 0),
       enabledBorder: b(Colors.transparent, 0),
       focusedBorder: b(kBrand, 1.6),
       filled: true,
-      fillColor: kTintSoft,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      fillColor: const Color(0xFFF1F3F7),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
       counterText: '',
     );
   }
 
-  /// Plain text tab with an underline: no boxes.
-  Widget _tab(String label, bool on, VoidCallback onTap) {
+  Widget _icon(IconData i) => Padding(padding: const EdgeInsets.only(left: 16, right: 14), child: Icon(i, size: 21, color: kMuted));
+
+  /// Text field with a soft blue glow while it is focused.
+  Widget _glow(Widget field) {
+    return Focus(
+      child: Builder(builder: (ctx) {
+        final on = Focus.of(ctx).hasFocus;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(46), blurRadius: 10)] : const [],
+          ),
+          child: field,
+        );
+      }),
+    );
+  }
+
+  Widget _seg(String label, IconData icon, bool on, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _busy ? null : onTap,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(label, style: ts(16, weight: FontWeight.w900, color: on ? kBrand : kMuted)),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 3,
-              decoration: BoxDecoration(color: on ? kBrand : Colors.transparent, borderRadius: BorderRadius.circular(3)),
-            ),
-          ],
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 48,
+          decoration: BoxDecoration(
+            color: on ? kBrand : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: on ? [BoxShadow(color: kBrand.withAlpha(70), blurRadius: 10, offset: const Offset(0, 4))] : const [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: on ? Colors.white : kBrand),
+              const SizedBox(width: 8),
+              Text(label, style: ts(15.5, weight: FontWeight.w800, color: on ? Colors.white : kBrand)),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _primary(String label, IconData icon) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: kBrand,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: kBrand.withAlpha(80), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _busy ? null : _submit,
+          child: Center(
+            child: _busy
+                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, color: Colors.white, size: 21),
+                      const SizedBox(width: 10),
+                      Text(label, style: ts(16.5, weight: FontWeight.w800, color: Colors.white)),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _guest() {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFBBD2F5), width: 1.4)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _busy ? null : () => Navigator.pop(context, false),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.explore_rounded, size: 20, color: kBrandDark),
+              const SizedBox(width: 10),
+              Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க'), style: ts(15, weight: FontWeight.w800, color: kBrandDark)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _svc(IconData icon, Color bg, Color fg, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+          child: Icon(icon, size: 22, color: fg),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: ts(12, color: kInk)),
+      ],
     );
   }
 
@@ -184,71 +271,56 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: Stack(
         children: [
-          AppHeader(
-            bubbles: false,
-            radius: 26,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 320,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFEAF1FE), Colors.white]),
+              ),
+              child: CustomPaint(painter: _DotsPainter()),
+            ),
+          ),
+          SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               children: [
                 Row(
                   children: [
-                    IconButton(
-                      tooltip: app.tr('Close', 'மூடு'),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
-                      onPressed: () => Navigator.pop(context, false),
-                    ),
+                    HeaderButton(icon: Icons.close_rounded, tooltip: app.tr('Close', 'மூடு'), onTap: () => Navigator.pop(context, false)),
                     const Spacer(),
-                    const LangToggle(onDark: true),
+                    const LangToggle(),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                  child: Row(
-                    children: [
-                      const BrandMark(size: 17, onDark: true),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('I Love Aruppukottai', style: ts(16.5, weight: FontWeight.w900, color: Colors.white)),
-                            const SizedBox(height: 2),
-                            Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(12.5, color: kOnBrandSoft)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: AnimatedSize(
+                Center(child: Image.asset('assets/logo.png', height: 62)),
+                const SizedBox(height: 8),
+                Center(child: Text('நம் ஊர் • நம் மக்கள் • நம் ஆப்', style: ts(13.5, color: kInk))),
+                const SizedBox(height: 18),
+                AnimatedSize(
                   duration: const Duration(milliseconds: 220),
                   alignment: Alignment.topCenter,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          _tab(app.tr('Login', 'உள்நுழை'), !_register, () => _setRegister(false)),
-                          _tab(app.tr('Register', 'பதிவு'), _register, () => _setRegister(true)),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(color: const Color(0xFFEEF3FC), borderRadius: BorderRadius.circular(18)),
+                        child: Row(
+                          children: [
+                            _seg(app.tr('Login', 'உள்நுழை'), Icons.login_rounded, !_register, () => _setRegister(false)),
+                            _seg(app.tr('Register', 'பதிவு'), Icons.person_add_alt_1_rounded, _register, () => _setRegister(true)),
+                          ],
+                        ),
                       ),
-                      const Divider(height: 1, color: kLine),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       Text(
-                        _register
-                            ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்')
-                            : app.tr('Welcome back', 'மீண்டும் வருக'),
-                        style: ts(22, weight: FontWeight.w900),
+                        _register ? app.tr('Create your account', 'புதிய கணக்கை உருவாக்குங்கள்') : app.tr('Welcome back', 'மீண்டும் வருக'),
+                        style: ts(24, weight: FontWeight.w800),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -260,47 +332,62 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 18),
                       if (_register) ...[
-                        TextField(
+                        _glow(TextField(
                           controller: _name,
                           textCapitalization: TextCapitalization.words,
-                          decoration: _dec(app.tr('Your name', 'உங்கள் பெயர்'), Icons.person_rounded),
-                        ),
+                          decoration: _dec(app.tr('Your name', 'உங்கள் பெயர்'), prefix: _icon(Icons.person_outline_rounded)),
+                        )),
                         const SizedBox(height: 12),
                       ],
-                      TextField(
+                      _glow(TextField(
                         controller: _mobile,
                         keyboardType: TextInputType.phone,
                         maxLength: 14,
-                        decoration: _dec(app.tr('Mobile number', 'மொபைல் எண்'), Icons.phone_android_rounded, prefix: '+91 '),
-                      ),
+                        decoration: _dec(
+                          app.tr('Mobile number', 'மொபைல் எண்'),
+                          prefix: Padding(
+                            padding: const EdgeInsets.only(left: 16, right: 12),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.smartphone_rounded, size: 21, color: kMuted),
+                                const SizedBox(width: 12),
+                                Text('+91', style: ts(15, weight: FontWeight.w800)),
+                                const SizedBox(width: 10),
+                                Container(width: 1, height: 22, color: kLine),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )),
                       const SizedBox(height: 12),
                       if (_register) ...[
-                        TextField(
+                        _glow(TextField(
                           controller: _email,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: _dec(app.tr('E-mail (optional)', 'மின்னஞ்சல் (விருப்பம்)'), Icons.mail_rounded),
-                        ),
+                          decoration: _dec(app.tr('E-mail (optional)', 'மின்னஞ்சல் (விருப்பம்)'), prefix: _icon(Icons.mail_outline_rounded)),
+                        )),
                         const SizedBox(height: 12),
                       ],
-                      TextField(
+                      _glow(TextField(
                         controller: _pass,
                         obscureText: _hide,
                         decoration: _dec(
                           app.tr('Password', 'கடவுச்சொல்'),
-                          Icons.lock_rounded,
+                          prefix: _icon(Icons.lock_outline_rounded),
                           suffix: IconButton(
-                            icon: Icon(_hide ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 21, color: kMuted),
+                            icon: Icon(_hide ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 21, color: kInk),
                             onPressed: () => setState(() => _hide = !_hide),
                           ),
                         ),
-                      ),
+                      )),
                       if (_register) ...[
                         const SizedBox(height: 12),
-                        TextField(
+                        _glow(TextField(
                           controller: _pass2,
                           obscureText: _hide,
-                          decoration: _dec(app.tr('Confirm password', 'கடவுச்சொல்லை உறுதிசெய்'), Icons.lock_reset_rounded),
-                        ),
+                          decoration: _dec(app.tr('Confirm password', 'கடவுச்சொல்லை உறுதிசெய்'), prefix: _icon(Icons.verified_user_outlined)),
+                        )),
                       ],
                       if (_error != null) ...[
                         const SizedBox(height: 14),
@@ -318,34 +405,43 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ],
                       const SizedBox(height: 18),
-                      GradButton(
-                        label: _register ? app.tr('Register', 'பதிவு செய்') : app.tr('Login', 'உள்நுழை'),
-                        icon: _register ? Icons.how_to_reg_rounded : Icons.login_rounded,
-                        busy: _busy,
-                        onTap: _submit,
+                      _primary(
+                        _register ? app.tr('Register', 'பதிவு செய்') : app.tr('Login', 'உள்நுழை'),
+                        _register ? Icons.how_to_reg_rounded : Icons.login_rounded,
                       ),
                       if (!_register)
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: _forgot,
-                            child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?'), style: ts(13.5, weight: FontWeight.w800, color: kBrand)),
+                            child: Text(app.tr('Forgot password?', 'கடவுச்சொல் மறந்துவிட்டதா?'), style: ts(13.5, weight: FontWeight.w800, color: kBrandDark)),
                           ),
                         )
                       else
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                       Row(children: [
                         const Expanded(child: Divider(color: kLine)),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(app.tr('or', 'அல்லது'), style: ts(12.5, color: kMuted))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(app.tr('or', 'அல்லது'), style: ts(12.5, color: kMuted))),
                         const Expanded(child: Divider(color: kLine)),
                       ]),
-                      const SizedBox(height: 4),
-                      TextButton.icon(
-                        onPressed: _busy ? null : () => Navigator.pop(context, false),
-                        icon: const Icon(Icons.explore_rounded, size: 20),
-                        label: Text(app.tr('Continue as guest', 'விருந்தினராகத் தொடர்க'), style: ts(15, weight: FontWeight.w800, color: kBrand)),
-                      ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 12),
+                      _guest(),
+                      if (!_register) ...[
+                        const SizedBox(height: 16),
+                        Center(child: Text(app.tr('Everything in Aruppukottai, in one app', 'அருப்புக்கோட்டை முழுவதும் ஒரே ஆப்பில்'), style: ts(12.5, color: kMuted))),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _svc(Icons.directions_bus_rounded, const Color(0xFFE8F0FE), kBrand, app.tr('Bus', 'பேருந்து')),
+                            _svc(Icons.article_outlined, const Color(0xFFE6F4EA), kGreen, app.tr('News', 'செய்தி')),
+                            _svc(Icons.restaurant_rounded, const Color(0xFFFEF0E0), const Color(0xFFF57C00), app.tr('Food', 'உணவு')),
+                            _svc(Icons.work_outline_rounded, const Color(0xFFE8EAF6), const Color(0xFF3F51B5), app.tr('Jobs', 'வேலை')),
+                            _svc(Icons.warning_amber_rounded, const Color(0xFFFCE8E6), kRed, app.tr('Report', 'புகார்')),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 6),
                       Center(
                         child: TextButton.icon(
                           onPressed: _serverDialog,
@@ -356,9 +452,28 @@ class _AuthScreenState extends State<AuthScreen> {
                     ],
                   ),
                 ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Very light dots in the top part of the screen (fade out downwards).
+class _DotsPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var y = 10.0; y < size.height; y += 16) {
+      final a = (40 * (1 - y / size.height)).round();
+      final p = Paint()..color = kBrand.withAlpha(a);
+      for (var x = 8.0; x < size.width; x += 16) {
+        canvas.drawCircle(Offset(x, y), 1, p);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
