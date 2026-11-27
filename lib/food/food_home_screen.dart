@@ -8,63 +8,34 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'cart_screen.dart';
 import 'food_cart.dart';
-import 'food_filters.dart';
 import 'food_models.dart';
 import 'food_repo.dart';
 import 'food_widgets.dart';
 import 'hotel_menu_screen.dart';
 
-class _Cuisine {
-  final String en;
-  final String ta;
-  final String emoji;
-  final Color tint;
-  final List<String> words;
-
-  const _Cuisine(this.en, this.ta, this.emoji, this.tint, this.words);
-}
-
-/// What one food circle shows. Comes from the admin panel (Food Categories); the fixed list below is used until the admin adds any.
-class _Circ {
+/// One chip in "Explore by Category". Made in the admin panel (Food Categories);
+/// the fixed list is only used until the admin adds the first category.
+class _Cat {
+  final String key;
   final String label;
   final String emoji;
-  final Color tint;
   final String? image;
-  final List<String> words;
   final int? catId;
+  final List<String> words;
 
-  const _Circ(this.label, this.emoji, this.tint, this.image, this.words, this.catId);
+  const _Cat(this.key, this.label, this.emoji, this.image, this.catId, this.words);
 }
 
-const List<_Cuisine> _kCuisines = [
-  _Cuisine('All', 'அனைத்து', '🍽️', Color(0xFFE6F0FF), <String>[]),
-  _Cuisine('Tiffin', 'டிபன்', '🥞', Color(0xFFFFF0D2), <String>['idli', 'dosa', 'இட்லி', 'தோசை', 'tiffin']),
-  _Cuisine('Meals', 'சாப்பாடு', '🍛', Color(0xFFE2F5E9), <String>['meals', 'சாப்பாடு']),
-  _Cuisine('Biriyani', 'பிரியாணி', '🍗', Color(0xFFFFE5DE), <String>['biriyani', 'biryani', 'பிரியாணி']),
-  _Cuisine('Snacks', 'ஸ்நாக்ஸ்', '🥪', Color(0xFFF1E7FF), <String>['snack', 'sandwich', 'ஸ்நாக்ஸ்']),
-  _Cuisine('Tea & Juice', 'டீ / ஜூஸ்', '🧃', Color(0xFFE3F4F6), <String>['tea', 'coffee', 'juice', 'டீ', 'ஜூஸ்']),
-  _Cuisine('Sweets', 'இனிப்பு', '🍰', Color(0xFFFFE4EF), <String>['sweet', 'cake', 'இனிப்பு']),
+const List<List<String>> _kFallbackCats = [
+  ['Tiffin', 'டிபன்', '🥞', 'tiffin,idli,dosa,dosai,pongal,vada,parotta'],
+  ['Meals', 'சாப்பாடு', '🍛', 'meals,sappadu,rice,thali'],
+  ['Biriyani', 'பிரியாணி', '🍗', 'biriyani,biryani,briyani'],
+  ['Snacks', 'ஸ்நாக்ஸ்', '🥪', 'snacks,bajji,bonda,samosa,sandwich,burger,puff'],
+  ['Juice', 'ஜூஸ்', '🥤', 'juice,shake,coffee,tea,kaapi,drinks'],
+  ['Sweets', 'இனிப்பு', '🍮', 'sweet,ice cream,cake,bakery'],
 ];
 
-/// One banner on top: a picture from the admin panel, or (when there is none) an offer made from our own data.
-class _Slide {
-  final String? image;
-  final Color bg;
-  final String title;
-  final String sub;
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  _Slide({this.image, required this.bg, this.title = '', this.sub = '', this.icon = Icons.restaurant_rounded, this.onTap});
-}
-
-Color _hex(String? s, Color fallback) {
-  if (s == null || s.length != 7 || !s.startsWith('#')) return fallback;
-  final v = int.tryParse(s.substring(1), radix: 16);
-  return v == null ? fallback : Color(0xFF000000 | v);
-}
-
-/// Food home: tinted top (header, search, banners), food circles, filters, big hotel cards, floating bottom bar.
+/// The Food home: sticky header, stories, categories, offer banner, quick drops, hotels.
 class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
 
@@ -74,61 +45,80 @@ class FoodHomeScreen extends StatefulWidget {
 
 class _FoodHomeScreenState extends State<FoodHomeScreen> {
   final TextEditingController _q = TextEditingController();
-  final PageController _pc = PageController();
-  Timer? _timer;
-  int _page = 0;
-  int _slideCount = 1;
-  int _tab = 0;
-  int _cuisine = 0;
-  FoodFilters _f = FoodFilters();
+  final PageController _promoPc = PageController();
+  final ValueNotifier<int> _dropSecs = ValueNotifier<int>(14 * 60 + 59);
+  Timer? _promoTimer;
+  Timer? _clock;
+  int _promoPage = 0;
+  int _promoCount = 1;
+  String _cat = 'all';
+  String _filter = 'all'; // all / veg / fast / protein / bestseller
 
   @override
   void initState() {
     super.initState();
     food.restore();
     food.loadHotels(force: true);
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted || !_pc.hasClients || _slideCount < 2) return;
-      _pc.animateToPage((_page + 1) % _slideCount, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+    _promoTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_promoPc.hasClients || _promoCount < 2) return;
+      _promoPc.animateToPage((_promoPage + 1) % _promoCount, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+    });
+    _clock = Timer.periodic(const Duration(seconds: 1), (_) {
+      _dropSecs.value = _dropSecs.value > 0 ? _dropSecs.value - 1 : 899;
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _pc.dispose();
+    _promoTimer?.cancel();
+    _clock?.cancel();
+    _promoPc.dispose();
+    _dropSecs.dispose();
     _q.dispose();
     super.dispose();
   }
 
-  void _openHotel(FoodHotel h) => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => HotelMenuScreen(hotel: h)));
+  // ---------- helpers ----------
+  bool get _pickup => cart.fulfil == 'Pickup';
 
-  void _openHotelId(int? id) {
-    if (id == null) return;
-    for (final h in food.hotels) {
-      if (h.id == id) {
-        _openHotel(h);
-        return;
-      }
-    }
+  void _toast(String m) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(behavior: SnackBarBehavior.floating, content: Text(m)));
   }
 
-  List<_Circ> _circs() {
-    final out = <_Circ>[_Circ(app.tr('All', 'அனைத்து'), '🍽️', const Color(0xFFE6F0FF), null, const <String>[], null)];
+  void _soon() => _toast(app.tr('Coming soon to Aruppukottai!', 'விரைவில் அருப்புக்கோட்டையில்!'));
+
+  void _openHotel(FoodHotel h) => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => HotelMenuScreen(hotel: h)));
+
+  FoodHotel? _hotelById(int? id) {
+    if (id == null) return null;
+    for (final h in food.hotels) {
+      if (h.id == id) return h;
+    }
+    return null;
+  }
+
+  void _openHotelId(int? id) {
+    final h = _hotelById(id);
+    if (h != null) _openHotel(h);
+  }
+
+  List<_Cat> _cats() {
+    final out = <_Cat>[_Cat('all', app.tr('All', 'அனைத்தும்'), '🍽️', null, null, const <String>[])];
     if (food.homeCats.isNotEmpty) {
       for (final c in food.homeCats) {
-        out.add(_Circ(c.name, '🍴', const Color(0xFFFFF0D2), c.image, const <String>[], c.id));
+        out.add(_Cat('c${c.id}', c.name, '🍴', c.image, c.id, const <String>[]));
       }
     } else {
-      for (var i = 1; i < _kCuisines.length; i++) {
-        final c = _kCuisines[i];
-        out.add(_Circ(app.tr(c.en, c.ta), c.emoji, c.tint, null, c.words, null));
+      for (var i = 0; i < _kFallbackCats.length; i++) {
+        final c = _kFallbackCats[i];
+        out.add(_Cat('w$i', app.tr(c[0], c[1]), c[2], null, null, c[3].split(',')));
       }
     }
     return out;
   }
 
-  // ---------- data ----------
   FoodItem? _featuredDish(FoodHotel h) {
     final m = food.cachedMenu(h.id);
     if (m == null) return null;
@@ -152,780 +142,826 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   }
 
   List<FoodHotel> _list() {
-    final cs = _circs();
-    final cu = cs[_cuisine < cs.length ? _cuisine : 0];
+    final cs = _cats();
+    final cu = cs.firstWhere((c) => c.key == _cat, orElse: () => cs.first);
     final q = _q.text.trim().toLowerCase();
-    final base = food.hotels.where((h) {
+    return food.hotels.where((h) {
+      if (_pickup ? !h.canPickup : !h.canDeliver) return false;
       if (cu.catId != null && !h.categoryIds.contains(cu.catId)) return false;
       if (cu.words.isNotEmpty && !cu.words.any((w) => h.searchText.contains(w))) return false;
       if (q.isNotEmpty && !_matchesQuery(h, q)) return false;
+      switch (_filter) {
+        case 'veg':
+          return h.pureVeg;
+        case 'fast':
+          return h.shownEta <= 20;
+        case 'protein':
+          return h.highProtein;
+        case 'bestseller':
+          return h.bestseller;
+      }
       return true;
     }).toList();
-    return _f.apply(base);
   }
 
-  List<_Slide> _slides() {
-    final out = <_Slide>[];
+  /// "Save ₹40": what the customer saves by picking up (average delivery fee + the platform fee difference).
+  int _pickupSave() {
+    final ds = food.hotels.where((h) => h.canDeliver && h.canPickup).toList();
+    if (ds.isEmpty) return 0;
+    final avg = ds.fold<double>(0, (s, h) => s + h.deliveryFee) / ds.length;
+    final plat = (double.tryParse(food.cfg('Food.PlatformFee', '0')) ?? 0) - (double.tryParse(food.cfg('Food.PlatformFeePickup', '0')) ?? 0);
+    return (avg + (plat > 0 ? plat : 0)).round();
+  }
+
+  /// Distance text: km when the phone sent a location, else nothing.
+  String? _km(FoodHotel h) => h.distanceKm == null ? null : '${h.distanceKm!.toStringAsFixed(1)} km';
+
+  // ---------- header ----------
+  Widget _box(IconData i, VoidCallback f, {double size = 36}) => GestureDetector(
+        onTap: f,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBrandMid.withAlpha(120)), boxShadow: kSoftShadow),
+          child: Icon(i, size: 18, color: kBrand),
+        ),
+      );
+
+  Widget _modeBtn(String mode, String emoji, String label, {String? badge}) {
+    final on = cart.fulfil == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => cart.setFulfil(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+          decoration: BoxDecoration(color: on ? kBrand : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 5),
+            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w800, color: on ? Colors.white : kMuted))),
+            if (badge != null) ...[
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: const Color(0xFFE6F4EA), borderRadius: BorderRadius.circular(10)),
+                child: Text(badge, style: ts(9.5, weight: FontWeight.w800, color: kGreen)),
+              ),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip(String key, String label, {Widget? lead}) {
+    final on = _filter == key;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = key),
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+        decoration: BoxDecoration(color: on ? kBrand : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: on ? kBrand : kLine)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (lead != null) ...[lead, const SizedBox(width: 5)],
+          Text(label, style: ts(12, weight: on ? FontWeight.w800 : FontWeight.w600, color: on ? Colors.white : kMuted)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _header() {
+    final pad = MediaQuery.of(context).padding.top;
+    final save = _pickupSave();
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, pad + 8, 16, 12),
+      decoration: BoxDecoration(color: kTint, border: Border(bottom: BorderSide(color: kBrandMid.withAlpha(90)))),
+      child: Column(children: [
+        Row(children: [
+          _box(Icons.arrow_back_rounded, () => Navigator.pop(context)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Flexible(child: Text(app.tr('Aruppukottai', 'அருப்புக்கோட்டை'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(15, weight: FontWeight.w800))),
+                const SizedBox(width: 4),
+                const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: kBrand),
+              ]),
+              Text(
+                _pickup ? app.tr('Self-Pickup • skip the delivery fee', 'நேரில் எடுக்க • டெலிவரி கட்டணம் இல்லை') : app.tr('Home delivery in your town', 'உங்கள் ஊரிலேயே டெலிவரி'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ts(11.5, color: kMuted),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: kBrandMid.withAlpha(120))),
+            child: const LangToggle(),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBrandMid.withAlpha(120))),
+          child: Row(children: [
+            _modeBtn('Delivery', '🛵', app.tr('Delivery', 'டெலிவரி')),
+            const SizedBox(width: 4),
+            _modeBtn('Pickup', '🛍️', app.tr('Self-Pickup', 'நேரில் எடுக்க'), badge: save > 0 ? app.tr('Save ₹$save', '₹$save சேமிப்பு') : null),
+          ]),
+        ),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(
+            child: Container(
+              height: 42,
+              padding: const EdgeInsets.only(left: 12, right: 6),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBrandMid.withAlpha(120)), boxShadow: kSoftShadow),
+              child: Row(children: [
+                const Icon(Icons.search_rounded, size: 19, color: kBrand),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _q,
+                    onChanged: (_) => setState(() {}),
+                    textInputAction: TextInputAction.search,
+                    style: ts(13),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      contentPadding: EdgeInsets.zero,
+                      hintText: app.tr('Search biryani, dosa, meals, or hotels...', 'பிரியாணி, தோசை, சாப்பாடு, ஹோட்டல் தேடுங்கள்...'),
+                      hintStyle: ts(12.5, color: kMuted),
+                    ),
+                  ),
+                ),
+                if (_q.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => setState(_q.clear),
+                    child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.close_rounded, size: 18, color: kMuted)),
+                  )
+                else
+                  GestureDetector(
+                    onTap: _soon,
+                    child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.mic_none_rounded, size: 20, color: kMuted)),
+                  ),
+              ]),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _box(Icons.photo_camera_outlined, _soon, size: 42),
+        ]),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 32,
+          child: ListView(scrollDirection: Axis.horizontal, children: [
+            _filterChip('all', app.tr('All Spots', 'அனைத்தும்')),
+            _filterChip('veg', app.tr('Pure Veg', 'சைவம்'), lead: const VegDot(veg: true, size: 12)),
+            _filterChip('fast', app.tr('Under 20m', '20 நிமிடத்துக்குள்'), lead: const Icon(Icons.bolt_rounded, size: 14, color: kAmber)),
+            _filterChip('protein', app.tr('High Protein', 'புரதம் அதிகம்'), lead: const Text('💪', style: TextStyle(fontSize: 12))),
+            _filterChip('bestseller', app.tr('Bestseller', 'அதிகம் விற்பனை'), lead: const Text('⭐', style: TextStyle(fontSize: 12))),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _pickupCallout() {
+    if (!_pickup) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(color: const Color(0xFFE6F4EA), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFB7E1C1))),
+      child: Row(children: [
+        Container(width: 8, height: 8, decoration: const BoxDecoration(color: kGreen, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(app.tr('Self-Pickup Active • Skip Queue at Counter', 'நேரில் எடுக்கும் முறை • கவுண்டரில் வரிசை இல்லை'), style: ts(12, weight: FontWeight.w800, color: const Color(0xFF0D652D)))),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFB7E1C1))),
+          child: Text(app.tr('₹0 Fee', '₹0 கட்டணம்'), style: ts(10.5, weight: FontWeight.w800, color: kGreen)),
+        ),
+      ]),
+    );
+  }
+
+  // ---------- section heading ----------
+  Widget _head(Widget left, Widget right) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: left), const SizedBox(width: 8), right]),
+      );
+
+  // ---------- stories ----------
+  Widget _stories() {
+    if (!food.flag('Food.ShowStories') || food.stories.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _head(
+          Row(children: [
+            Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFEA4335), shape: BoxShape.circle)),
+            const SizedBox(width: 6),
+            Flexible(child: Text(app.tr('Live Kitchen Stories', 'சமையலறை நேரலை'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w800))),
+          ]),
+          Text(app.tr('Tap to watch', 'தொட்டுப் பாருங்கள்'), style: ts(11.5, weight: FontWeight.w700, color: kBrand)),
+        ),
+        SizedBox(
+          height: 96,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: food.stories.length,
+            itemBuilder: (c, i) {
+              final st = food.stories[i];
+              return GestureDetector(
+                onTap: () => _openStory(st),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 14),
+                  child: SizedBox(
+                    width: 66,
+                    child: Column(children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [kBrandLight, kBrand, Color(0xFF7C4DFF)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
+                        child: Container(
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2), color: kTint),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(fit: StackFit.expand, children: [
+                            NetImg(file: st.image, cacheWidth: 200),
+                            if (i == 0)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: Container(color: const Color(0xB3000000), padding: const EdgeInsets.symmetric(vertical: 1), child: Text('LIVE', textAlign: TextAlign.center, style: ts(8, weight: FontWeight.w800, color: Colors.white))),
+                              ),
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(st.label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(11, weight: FontWeight.w600)),
+                    ]),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _openStory(FoodStory st) {
+    showDialog<void>(
+      context: context,
+      builder: (c) => foodScale(
+        c,
+        Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 40),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Stack(children: [
+              SizedBox(height: 260, width: double.infinity, child: Container(color: kTint, child: NetImg(file: st.image, cacheWidth: 900))),
+              Positioned(
+                left: 14,
+                top: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(20)),
+                  child: Text(st.hotelName.isEmpty ? st.label : st.hotelName, style: ts(12, weight: FontWeight.w700, color: Colors.white)),
+                ),
+              ),
+              Positioned(
+                right: 10,
+                top: 10,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(c),
+                  child: Container(width: 34, height: 34, decoration: const BoxDecoration(color: Color(0x99000000), shape: BoxShape.circle), child: const Icon(Icons.close_rounded, color: Colors.white, size: 19)),
+                ),
+              ),
+            ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(st.title, style: ts(19, weight: FontWeight.w800, height: 1.2)),
+                if (st.sub.isNotEmpty) ...[const SizedBox(height: 4), Text(st.sub, style: ts(13, color: kMuted, height: 1.35))],
+                const SizedBox(height: 12),
+                Row(children: [
+                  if (st.price != null && st.price! > 0) Text(rupee(st.price!), style: ts(19, weight: FontWeight.w800)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(c);
+                      _openHotelId(st.hotelId);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                      decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(14)),
+                      child: Text(app.tr('Order this dish', 'இதை ஆர்டர் செய்'), style: ts(13.5, weight: FontWeight.w800, color: Colors.white)),
+                    ),
+                  ),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---------- categories ----------
+  Widget _categories() {
+    final cs = _cats();
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _head(
+          Text(app.tr('Explore by Category', 'வகைகளை பாருங்கள்'), style: ts(13, weight: FontWeight.w800)),
+          Text(app.tr('Tap to filter', 'தொட்டு தேர்வு'), style: ts(11, weight: FontWeight.w600, color: kMuted)),
+        ),
+        SizedBox(
+          height: 46,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: cs.length,
+            itemBuilder: (c, i) {
+              final ct = cs[i];
+              final on = _cat == ct.key;
+              return GestureDetector(
+                onTap: () => setState(() => _cat = ct.key),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.fromLTRB(8, 5, 12, 5),
+                  decoration: BoxDecoration(color: on ? kBrand : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: on ? kBrand : kLine), boxShadow: on ? const [BoxShadow(color: kBrandShadow, blurRadius: 10, offset: Offset(0, 4))] : null),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(color: on ? Colors.white.withAlpha(60) : kTint, borderRadius: BorderRadius.circular(10)),
+                      clipBehavior: Clip.antiAlias,
+                      alignment: Alignment.center,
+                      child: (ct.image != null && ct.image!.isNotEmpty) ? NetImg(file: ct.image, cacheWidth: 120) : Text(ct.emoji, style: const TextStyle(fontSize: 16)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(ct.label, style: ts(12.5, weight: FontWeight.w800, color: on ? Colors.white : kInk)),
+                  ]),
+                ),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ---------- promo banner (from the offers / banners set in the admin panel) ----------
+  Widget _promo() {
+    final slides = <Widget>[];
+    for (final o in food.offers) {
+      slides.add(_promoOffer(o));
+    }
     for (final b in food.banners) {
       if (b.image.isEmpty) continue;
       VoidCallback? tap;
       if (b.linkType == 'Hotel') {
         final id = int.tryParse(b.linkValue ?? '');
-        FoodHotel? hit;
-        for (final h in food.hotels) {
-          if (h.id == id) hit = h;
-        }
-        if (hit != null) {
-          final h2 = hit;
-          tap = () => _openHotel(h2);
-        }
+        tap = () => _openHotelId(id);
       } else if (b.linkType == 'Filter') {
         final v = b.linkValue;
-        tap = () => setState(() {
-              _f.clear();
-              _cuisine = 0;
-              _q.clear();
-              if (v == 'veg') _f.veg = true;
-              if (v == 'open') _f.open = true;
-              if (v == 'free') _f.free = true;
-              if (v == 'fast') _f.fast = true;
-              if (v == 'top') _f.minRating = 4.0;
-              if (v == 'cheap') _f.maxPrice = 100;
-            });
+        tap = () => setState(() => _filter = (v == 'veg' || v == 'fast') ? v! : 'all');
       }
-      out.add(_Slide(image: b.image, bg: _hex(b.bgColor, kBrand), onTap: tap));
+      slides.add(GestureDetector(
+        onTap: tap,
+        child: Container(
+          decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: NetImg(file: b.image, cacheWidth: 1100),
+        ),
+      ));
     }
-    if (out.isNotEmpty) return out;
-    // no banner set in the admin panel yet: offers made from the hotels we have
-    final hs = food.hotels;
-    final free = hs.where((h) => h.canDeliver && h.deliveryFee <= 0).length;
-    final open = hs.where((h) => h.openNow && h.acceptsOrders).length;
-    if (free > 0) {
-      out.add(_Slide(bg: kBrand, title: app.tr('Free delivery', 'இலவச டெலிவரி'), sub: app.tr('$free hotels deliver free to you', '$free ஹோட்டல்கள் இலவசமாக கொண்டு வரும்'), icon: Icons.delivery_dining_rounded, onTap: () => setState(() {
-            _f.clear();
-            _f.free = true;
-          })));
-    }
-    if (open > 0) {
-      out.add(_Slide(bg: const Color(0xFF188038), title: app.tr('Hungry now?', 'இப்போது பசிக்கிறதா?'), sub: app.tr('$open hotels are open and taking orders', '$open ஹோட்டல்கள் திறந்துள்ளன'), icon: Icons.local_fire_department_rounded, onTap: () => setState(() {
-            _f.clear();
-            _f.open = true;
-          })));
-    }
-    if (out.isEmpty) {
-      out.add(_Slide(bg: kBrand, title: app.tr('Aruppukottai\'s own food app', 'அருப்புக்கோட்டையின் சொந்த உணவு ஆப்'), sub: app.tr('Order from local hotels, home delivered', 'உள்ளூர் ஹோட்டல்களில் ஆர்டர் செய்யுங்கள்'), icon: Icons.restaurant_rounded));
-    }
-    return out;
+    _promoCount = slides.isEmpty ? 1 : slides.length;
+    if (slides.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(children: [
+        SizedBox(
+          height: 150,
+          child: PageView(
+            controller: _promoPc,
+            onPageChanged: (i) => setState(() => _promoPage = i),
+            children: [for (final s in slides) Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: s)],
+          ),
+        ),
+        if (slides.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              for (var i = 0; i < slides.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _promoPage ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: i == _promoPage ? kBrand : kLine, borderRadius: BorderRadius.circular(3)),
+                ),
+            ]),
+          ),
+      ]),
+    );
   }
 
-  // ---------- top: banner picture with header + search on it ----------
-  Widget _round(IconData i, VoidCallback f) => GestureDetector(
-        onTap: f,
-        child: Container(width: 42, height: 42, decoration: const BoxDecoration(color: kTintSoft, shape: BoxShape.circle), child: Icon(i, size: 21, color: kInk)),
-      );
-
-  Widget _slideView(_Slide s, double h) {
-    if (s.image != null) {
-      return Stack(fit: StackFit.expand, children: [
-        Container(color: s.bg),
-        NetImg(file: s.image, cacheWidth: 1100),
-      ]);
+  Widget _promoOffer(FoodOffer o) {
+    String? photo;
+    for (final h in food.hotels) {
+      if (h.picture != null && h.picture!.isNotEmpty) {
+        photo = h.picture;
+        break;
+      }
     }
+    final tag = food.cfg('Food.PromoTag', '').isNotEmpty ? food.cfg('Food.PromoTag') : app.tr('Special Offer', 'சிறப்பு சலுகை');
     return Container(
-      color: s.bg,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(colors: [kBrandLight, kBrand, Color(0xFF1666D6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 22, offset: Offset(0, 10))],
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Stack(children: [
-        Positioned(right: -40, bottom: -50, child: Container(width: 200, height: 200, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withAlpha(22)))),
-        Positioned(right: 22, bottom: 20, child: Icon(s.icon, size: 70, color: Colors.white.withAlpha(110))),
-        Positioned(
-          left: 18,
-          right: 110,
-          top: 0,
-          bottom: 0,
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(21, weight: FontWeight.w700, color: Colors.white, height: 1.15)),
-            const SizedBox(height: 5),
-            Text(s.sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(13, color: Colors.white.withAlpha(230), height: 1.3)),
-          ]),
-        ),
-      ]),
-    );
-  }
-
-  Widget _topArea() {
-    final list = _slides();
-    _slideCount = list.length;
-    final pad = MediaQuery.of(context).padding.top;
-    final h = pad + 270;
-    return Column(children: [
-      SizedBox(
-        height: h,
-        child: Stack(children: [
-          Positioned.fill(
-            child: PageView.builder(
-              controller: _pc,
-              itemCount: list.length,
-              onPageChanged: (i) => setState(() => _page = i),
-              itemBuilder: (c, i) => GestureDetector(onTap: list[i].onTap, child: _slideView(list[i], h)),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: pad + 130,
-            child: const IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x73000000), Color(0x00000000)])),
-              ),
-            ),
-          ),
-          if (list.length > 1)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 10,
-              child: IgnorePointer(
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  for (var i = 0; i < list.length; i++)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: i == _page ? 16 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: i == _page ? Colors.white : Colors.white54, borderRadius: BorderRadius.circular(3)),
-                    ),
-                ]),
-              ),
-            ),
-          Positioned(
-            top: pad + 10,
-            left: 16,
-            right: 16,
-            child: Row(children: [
-          _round(Icons.arrow_back_rounded, () => Navigator.pop(context)),
-          const SizedBox(width: 12),
+        Positioned(right: -34, top: -34, child: Container(width: 120, height: 120, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withAlpha(36)))),
+        Row(children: [
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(app.tr('Delivering to', 'டெலிவரி இடம்'), style: ts(11.5, color: Colors.white)),
-              Row(children: [
-                const Icon(Icons.location_on_rounded, size: 17, color: Colors.white),
-                const SizedBox(width: 3),
-                Flexible(child: Text(app.tr('Aruppukottai', 'அருப்புக்கோட்டை'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(18, weight: FontWeight.w700, color: Colors.white))),
-              ]),
-            ]),
-          ),
-          Container(padding: const EdgeInsets.all(2), decoration: BoxDecoration(color: Colors.white.withAlpha(235), borderRadius: BorderRadius.circular(24)), child: const LangToggle()),
-            ]),
-          ),
-          Positioned(
-            top: pad + 70,
-            left: 16,
-            right: 16,
-            child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(color: kTintSoft, borderRadius: BorderRadius.circular(28), boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 8, offset: Offset(0, 3))]),
-              child: TextField(
-                controller: _q,
-                onChanged: (_) => setState(() {}),
-                textInputAction: TextInputAction.search,
-                style: ts(15),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  prefixIcon: const Icon(Icons.search_rounded, color: kMuted),
-                  suffixIcon: _q.text.isEmpty ? null : IconButton(icon: const Icon(Icons.close_rounded, size: 20, color: kMuted), onPressed: () => setState(_q.clear)),
-                  hintText: app.tr('Hotel name or a dish…', 'ஹோட்டல் பெயர் அல்லது உணவு…'),
-                  hintStyle: ts(14.5, color: kMuted),
-                ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: Colors.white.withAlpha(50), borderRadius: BorderRadius.circular(12)),
+                child: Text(tag.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(9.5, weight: FontWeight.w800, color: Colors.white)),
               ),
-            ),
-          ),
-            ]),
-          ),
-        ]),
-      ),
-    ]);
-  }
-
-  // ---------- circles + filters ----------
-  Widget _circles() {
-    // each circle gets its own dish photo (never the same photo twice)
-    final cs = _circs();
-    final used = <String>{};
-    final photos = <String?>[];
-    for (var i = 0; i < cs.length; i++) {
-      final p = i == 0 ? null : (cs[i].image ?? food.photoFor(cs[i].words, skip: used));
-      if (p != null) used.add(p);
-      photos.add(p);
-    }
-    return Container(
-      decoration: const BoxDecoration(color: Colors.white),
-      child: SizedBox(
-        height: 124,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          itemCount: cs.length,
-          itemBuilder: (c, i) {
-            final cu = cs[i];
-            final photo = photos[i];
-            final on = _cuisine == i;
-            return GestureDetector(
-              onTap: () => setState(() => _cuisine = i),
-              child: Container(
-                width: 82,
-                color: Colors.transparent,
-                child: Column(children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 66,
-                    height: 66,
-                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: on ? kBrand : Colors.transparent, width: 2)),
-                    child: ClipOval(
-                      child: Stack(fit: StackFit.expand, children: [
-                        Container(color: cu.tint, alignment: Alignment.center, child: Text(cu.emoji, style: const TextStyle(fontSize: 29))),
-                        if (photo != null) NetImg(file: photo, cacheWidth: 200),
-                      ]),
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(cu.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, weight: on ? FontWeight.w700 : FontWeight.w500)),
-                  const Spacer(),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: on ? 58 : 0,
-                    height: 3.5,
-                    decoration: const BoxDecoration(color: kBrand, borderRadius: BorderRadius.vertical(top: Radius.circular(4))),
-                  ),
-                ]),
+              const SizedBox(height: 5),
+              Text(o.desc, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(17, weight: FontWeight.w800, color: Colors.white, height: 1.15)),
+              const SizedBox(height: 3),
+              Text(
+                o.minOrder > 0 ? app.tr('Orders above ${rupee(o.minOrder)} • Auto-applied at checkout!', '${rupee(o.minOrder)}-க்கு மேல் • தானாக சேரும்!') : app.tr('Auto-applied at checkout!', 'செக்அவுட்டில் தானாக சேரும்!'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ts(11, color: kOnBrandSoft),
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String label, IconData? icon, bool on, VoidCallback tap, {Color? iconColor, bool dropdown = false, int badge = 0}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: GestureDetector(
-        onTap: () => setState(tap),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
-          decoration: BoxDecoration(
-            color: on ? kTint : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: on ? kBrand : kLine),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (icon != null) ...[Icon(icon, size: 17, color: iconColor ?? (on ? kBrand : kNavy)), const SizedBox(width: 7)],
-            Text(label, style: ts(14, weight: FontWeight.w600, color: on ? kBrand : kInk)),
-            if (badge > 0) ...[
-              const SizedBox(width: 6),
-              Container(width: 20, height: 20, alignment: Alignment.center, decoration: const BoxDecoration(color: kBrand, shape: BoxShape.circle), child: Text('$badge', style: ts(11, weight: FontWeight.w700, color: Colors.white))),
-            ],
-            if (dropdown) ...[const SizedBox(width: 4), const Icon(Icons.arrow_drop_down_rounded, size: 22, color: kNavy)],
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openFilters() async {
-    final r = await showFoodFilters(context, _f, food.hotels);
-    if (r != null && mounted) setState(() => _f = r);
-  }
-
-  Widget _filterRow() {
-    return SizedBox(
-      height: 62,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 12, 6, 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
-              onTap: _openFilters,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                decoration: BoxDecoration(
-                  gradient: _f.count > 0 ? kButtonGradient : null,
-                  color: _f.count > 0 ? null : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _f.count > 0 ? Colors.transparent : kLine),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.tune_rounded, size: 18, color: _f.count > 0 ? Colors.white : kNavy),
-                  const SizedBox(width: 8),
-                  Text(app.tr('Filters', 'Filters'), style: ts(14, weight: FontWeight.w700, color: _f.count > 0 ? Colors.white : kInk)),
-                  if (_f.count > 0) ...[
+              const SizedBox(height: 9),
+              GestureDetector(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: o.code));
+                  _toast(app.tr('Code ${o.code} copied', '${o.code} நகலெடுக்கப்பட்டது'));
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: kSoftShadow),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('${app.tr('Code', 'கோட்')}: ${o.code}', style: ts(12.5, weight: FontWeight.w800, color: kBrand)),
                     const SizedBox(width: 6),
-                    Container(width: 20, height: 20, alignment: Alignment.center, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: Text('${_f.count}', style: ts(11, weight: FontWeight.w800, color: kNavy))),
-                  ],
-                  Icon(Icons.arrow_drop_down_rounded, size: 22, color: _f.count > 0 ? Colors.white : kNavy),
-                ]),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
-              onTap: () => setState(() => _f.veg = !_f.veg),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                decoration: BoxDecoration(
-                  color: _f.veg ? const Color(0xFFE6F4EA) : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _f.veg ? kGreen : kLine),
+                    const Icon(Icons.copy_rounded, size: 14, color: kBrand),
+                  ]),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(border: Border.all(color: kGreen, width: 1.6), borderRadius: BorderRadius.circular(3)),
-                    child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: kGreen, shape: BoxShape.circle)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(app.tr('Veg only', 'சைவம் மட்டும்'), style: ts(14, weight: FontWeight.w700, color: _f.veg ? kGreen : kInk)),
-                ]),
               ),
-            ),
+            ]),
           ),
-          _chip(app.tr('Near & Fast', 'அருகில் & விரைவு'), Icons.bolt_rounded, _f.fast, () => _f.fast = !_f.fast, iconColor: kGreen),
-          _chip(app.tr('Open now', 'திறந்துள்ளது'), Icons.schedule_rounded, _f.open, () => _f.open = !_f.open),
-          _chip(app.tr('Rated 4.0+', '4.0+ மதிப்பீடு'), Icons.star_rounded, _f.minRating == 4.0, () => _f.minRating = _f.minRating == 4.0 ? 0 : 4.0, iconColor: kGreen),
-          _chip(app.tr('Free delivery', 'இலவச டெலிவரி'), Icons.local_offer_rounded, _f.free, () => _f.free = !_f.free),
-          _chip(app.tr('Under ₹100', '₹100-க்குள்'), Icons.currency_rupee_rounded, _f.maxPrice == 100, () => _f.maxPrice = _f.maxPrice == 100 ? null : 100),
-        ],
-      ),
-    );
-  }
-
-  Widget _heading(int n) {
-    final filtered = _f.count > 0 || _cuisine != 0 || _q.text.trim().isNotEmpty;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 4),
-      child: Row(children: [
-        Expanded(
-          child: Text(
-            app.lang == 'ta' ? '$n ஹோட்டல்கள் உங்களுக்கு டெலிவரி' : '$n ${n == 1 ? 'HOTEL' : 'HOTELS'} ${filtered ? 'FOUND' : 'DELIVERING TO YOU'}',
-            maxLines: 2,
-            style: ts(13, weight: FontWeight.w600, color: kMuted).copyWith(letterSpacing: app.lang == 'ta' ? 0.2 : 2.0),
+          const SizedBox(width: 10),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withAlpha(90), width: 4), color: kBrandMid),
+            clipBehavior: Clip.antiAlias,
+            child: photo != null ? NetImg(file: photo, cacheWidth: 260) : const Icon(Icons.restaurant_rounded, color: Colors.white, size: 34),
           ),
-        ),
-        if (filtered)
-          GestureDetector(
-            onTap: () => setState(() {
-              _f.clear();
-              _cuisine = 0;
-              _q.clear();
-            }),
-            child: Text(app.tr('Clear', 'அழி'), style: ts(13.5, weight: FontWeight.w700, color: kBrand)),
-          ),
+        ]),
       ]),
     );
   }
 
-  // ---------- "Recommended for you": small boxes, 2 rows ----------
-  String _offerOf(FoodHotel h) {
-    if (!h.canDeliver) return '';
-    if (h.deliveryFee <= 0) return app.tr('Free delivery', 'இலவச டெலிவரி');
-    final fa = h.freeAbove;
-    if (fa != null && fa > 0) return app.tr('Free delivery above ${rupee(fa)}', '${rupee(fa)}-க்கு மேல் இலவசம்');
-    return '';
-  }
-
-  Widget _mini(FoodHotel h, double w) {
-    final closed = !h.openNow || !h.acceptsOrders;
-    final offer = _offerOf(h);
-    final fast = h.shownEta <= 20;
-    return GestureDetector(
-      onTap: () => _openHotel(h),
-      child: SizedBox(
-        width: w,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-            height: w * 0.78 + 16,
-            child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                height: w * 0.78,
-                child: CustomPaint(
-                  foregroundPainter: const _NotchBorder(),
-                  child: ClipPath(
-                  clipper: const _NotchClipper(),
-                  child: Stack(fit: StackFit.expand, children: [
-                      HotelCover(hotel: h, gray: closed, scrim: false),
-                      if (offer.isNotEmpty && !closed)
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          right: 6,
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: const BoxDecoration(color: Color(0x99000000), borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
-                              child: Text(offer, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(9.5, weight: FontWeight.w700, color: Colors.white)),
-                            ),
-                          ),
-                        ),
-                      if (closed)
-                        Positioned.fill(child: Container(color: const Color(0x66000000), alignment: Alignment.center, child: Text(app.tr('CLOSED', 'மூடப்பட்டது'), style: ts(11, weight: FontWeight.w800, color: Colors.white)))),
-                  ]),
-                )),
-              ),
-              Positioned(left: 0, top: w * 0.78 - 9, child: RatingBadge(rating: h.rating, count: h.ratingCount, dense: true)),
-            ]),
-          ),
-          const SizedBox(height: 4),
-          Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(14, weight: FontWeight.w700)),
-          const SizedBox(height: 1),
-          Row(children: [
-            Icon(fast ? Icons.bolt_rounded : Icons.timer_outlined, size: 14, color: fast ? kGreen : kMuted),
-            const SizedBox(width: 2),
-            Flexible(child: Text('${h.shownEta}-${h.shownEta + 5} ${app.tr('mins', 'நிமி')}', maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w600, color: fast ? kGreen : kMuted))),
-          ]),
-        ]),
-      ),
-    );
-  }
-
-  Widget _recommended(List<FoodHotel> list) {
-    if (list.length < 2) return const SizedBox.shrink();
-    final sorted = List<FoodHotel>.from(list);
-    double rt(FoodHotel h) => h.ratingCount > 0 ? h.rating : 3.0;
-    sorted.sort((x, y) {
-      final c = rt(y).compareTo(rt(x));
-      return c != 0 ? c : y.ratingCount.compareTo(x.ratingCount);
-    });
-    final items = sorted.take(20).toList();
-    final w = (MediaQuery.of(context).size.width - 16 - 3 * 12) / 3.15;
-    final rowH = w * 0.78 + 16 + 4 + 20 + 17 + 12;
-    final cols = items.length > 10 ? 10 : items.length;
-    final rows = items.length > 10 ? 2 : 1;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
-        child: Text(app.tr('RECOMMENDED FOR YOU', 'உங்களுக்கான பரிந்துரை'), style: ts(13, weight: FontWeight.w600, color: kMuted).copyWith(letterSpacing: app.lang == 'ta' ? 0.2 : 2.0)),
-      ),
-      SizedBox(
-        height: rowH * rows,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(left: 16, right: 4),
-          itemCount: cols,
-          itemBuilder: (c, i) {
-            final a = items[i];
-            final b = i + 10 < items.length ? items[i + 10] : null;
-            return Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Column(children: [
-                SizedBox(height: rowH, child: _mini(a, w)),
-                if (rows == 2) SizedBox(height: rowH, child: b == null ? null : _mini(b, w)),
-              ]),
-            );
-          },
-        ),
-      ),
-    ]);
-  }
-
-  // ---------- stories, drops, offers (all from the server) ----------
-  Widget _sectionTitle(String en, String ta, {String? sub}) => Padding(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(app.tr(en, ta), style: ts(18, weight: FontWeight.w800)),
-          if (sub != null) ...[const SizedBox(width: 8), Flexible(child: Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kMuted)))],
-        ]),
-      );
-
-  Widget _stories() {
-    if (!food.flag('Food.ShowStories') || food.stories.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _sectionTitle('Today\'s picks', 'இன்றைய தேர்வுகள்'),
-      SizedBox(
-        height: 196,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(left: 16, right: 6),
-          itemCount: food.stories.length,
-          itemBuilder: (c, i) {
-            final st = food.stories[i];
-            return GestureDetector(
-              onTap: () => _openHotelId(st.hotelId),
-              child: Container(
-                width: 150,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: kTintSoft),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(fit: StackFit.expand, children: [
-                  if (st.image.isNotEmpty) NetImg(file: st.image, cacheWidth: 420),
-                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0xCC000000)], stops: [0.35, 1]))),
-                  if (st.label.isNotEmpty)
-                    Positioned(
-                      left: 10,
-                      top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(8)),
-                        child: Text(st.label, maxLines: 1, style: ts(10.5, weight: FontWeight.w800, color: Colors.white)),
-                      ),
-                    ),
-                  Positioned(
-                    left: 11,
-                    right: 11,
-                    bottom: 11,
-                    child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(st.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(14.5, weight: FontWeight.w800, color: Colors.white, height: 1.15)),
-                      if (st.sub.isNotEmpty || st.hotelName.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(st.sub.isNotEmpty ? st.sub : st.hotelName, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11.5, color: Colors.white.withAlpha(220))),
-                      ],
-                      if (st.price != null && st.price! > 0) ...[
-                        const SizedBox(height: 3),
-                        Text(rupee(st.price!), style: ts(13, weight: FontWeight.w800, color: Colors.white)),
-                      ],
-                    ]),
-                  ),
-                ]),
-              ),
-            );
-          },
-        ),
-      ),
-    ]);
-  }
+  // ---------- quick drops ----------
+  String _clockText(int s) => '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
 
   Widget _drops() {
     if (!food.flag('Food.ShowDrops') || food.drops.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _sectionTitle('Quick deals', 'விரைவு டீல்கள்', sub: app.tr('ready fast, price cut', 'சீக்கிரம் + விலை குறைவு')),
-      SizedBox(
-        height: 218,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(left: 16, right: 6),
-          itemCount: food.drops.length,
-          itemBuilder: (c, i) {
-            final d = food.drops[i];
-            return GestureDetector(
-              onTap: () => _openHotelId(d.hotelId),
-              child: Container(
-                width: 158,
-                margin: const EdgeInsets.only(right: 12, bottom: 6),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine), boxShadow: const [BoxShadow(color: Color(0x141A73E8), blurRadius: 12, offset: Offset(0, 5))]),
-                clipBehavior: Clip.antiAlias,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  SizedBox(
-                    height: 104,
-                    child: Stack(fit: StackFit.expand, children: [
-                      Container(color: kTintSoft, alignment: Alignment.center, child: const Icon(Icons.restaurant_rounded, color: kBrand, size: 30)),
-                      if (d.picture != null) NetImg(file: d.picture, cacheWidth: 360),
-                      Positioned(
-                        left: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(8)),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFFFC83D)),
-                            Text('${d.etaMin} ${app.tr('min', 'நிமி')}', style: ts(11, weight: FontWeight.w700, color: Colors.white)),
-                          ]),
-                        ),
-                      ),
-                      if (d.offPercent > 0)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: const BoxDecoration(color: kGreen, borderRadius: BorderRadius.only(topLeft: Radius.circular(10))),
-                            child: Text('${d.offPercent}% OFF', style: ts(10.5, weight: FontWeight.w800, color: Colors.white)),
-                          ),
-                        ),
-                    ]),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        VegDot(veg: d.veg, size: 13),
-                        const SizedBox(width: 5),
-                        Expanded(child: Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13.5, weight: FontWeight.w700))),
-                      ]),
-                      const SizedBox(height: 2),
-                      Text(d.hotelName, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11.5, color: kMuted)),
-                      const SizedBox(height: 5),
-                      Row(children: [
-                        Text(rupee(d.price), style: ts(14.5, weight: FontWeight.w800)),
-                        if (d.oldPrice != null && d.oldPrice! > d.price) ...[
-                          const SizedBox(width: 6),
-                          Text(rupee(d.oldPrice!), style: ts(11.5, color: kMuted).copyWith(decoration: TextDecoration.lineThrough)),
-                        ],
-                      ]),
-                    ]),
-                  ),
-                ]),
-              ),
-            );
-          },
+    final title = food.cfg('Food.DropsTitleEn').isNotEmpty ? app.tr(food.cfg('Food.DropsTitleEn'), food.cfg('Food.DropsTitleTa', food.cfg('Food.DropsTitleEn'))) : app.tr('15-Min Drops', '15 நிமிட டிராப்ஸ்');
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _head(
+          Row(children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(9)),
+              child: const Icon(Icons.bolt_rounded, size: 16, color: kBrand),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(14.5, weight: FontWeight.w800)),
+                Text(app.tr('Hot tiffin, snacks & kaapi in 15 mins', 'சூடான டிபன், ஸ்நாக்ஸ், காபி 15 நிமிடத்தில்'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, color: kMuted)),
+              ]),
+            ),
+          ]),
+          ValueListenableBuilder<int>(
+            valueListenable: _dropSecs,
+            builder: (c, s, _) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(8)),
+              child: Text(_clockText(s), style: const TextStyle(fontFamily: 'monospace', fontSize: 12, fontWeight: FontWeight.w800, color: kBrand)),
+            ),
+          ),
         ),
-      ),
-    ]);
+        SizedBox(
+          height: 222,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 2, 6, 4),
+            itemCount: food.drops.length,
+            itemBuilder: (c, i) => _dropCard(food.drops[i]),
+          ),
+        ),
+      ]),
+    );
   }
 
-  Widget _offersStrip() {
-    if (food.offers.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _sectionTitle('Offers for you', 'உங்களுக்கான ஆஃபர்கள்'),
-      SizedBox(
-        height: 74,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(left: 16, right: 6),
-          itemCount: food.offers.length,
-          itemBuilder: (c, i) {
-            final o = food.offers[i];
-            return Container(
-              width: 238,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(color: const Color(0xFFFFF7E0), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFF2D58A))),
+  Widget _dropCard(FoodDrop d) {
+    final qty = cart.qtyOfItem(d.itemId);
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine), boxShadow: kSoftShadow),
+      child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        GestureDetector(
+          onTap: () => _openHotelId(d.hotelId),
+          behavior: HitTestBehavior.opaque,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              height: 96,
+              decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(14)),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(fit: StackFit.expand, children: [
+                if (d.picture != null && d.picture!.isNotEmpty) NetImg(file: d.picture, cacheWidth: 380) else const Icon(Icons.restaurant_rounded, color: kBrand, size: 30),
+                Positioned(
+                  left: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(color: Colors.white.withAlpha(240), borderRadius: BorderRadius.circular(8)),
+                    child: Text('⚡ ${d.etaMin} ${app.tr('mins', 'நிமி')}', style: ts(9.5, weight: FontWeight.w800, color: kBrand)),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 7),
+            Row(children: [
+              VegDot(veg: d.veg, size: 11),
+              const SizedBox(width: 5),
+              Expanded(child: Text(d.hotelName, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, color: kMuted))),
+            ]),
+            const SizedBox(height: 2),
+            Text(d.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(12.5, weight: FontWeight.w800, height: 1.2)),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.only(top: 7),
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: kTintSoft))),
+          child: Row(children: [
+            Expanded(
               child: Row(children: [
-                const Icon(Icons.local_offer_rounded, color: kAmber, size: 24),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(o.desc, maxLines: 2, overflow: TextOverflow.ellipsis, style: ts(13, weight: FontWeight.w700, height: 1.2)),
-                    const SizedBox(height: 2),
-                    Text('${o.code}${o.minOrder > 0 ? '  ·  ${app.tr('Min', 'குறைந்தது')} ${rupee(o.minOrder)}' : ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11.5, color: kMuted)),
+                Text(rupee(d.price), style: ts(13, weight: FontWeight.w800)),
+                if (d.oldPrice != null && d.oldPrice! > d.price) ...[
+                  const SizedBox(width: 4),
+                  Flexible(child: Text(rupee(d.oldPrice!), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, color: kMuted).copyWith(decoration: TextDecoration.lineThrough))),
+                ],
+              ]),
+            ),
+            if (qty == 0)
+              GestureDetector(
+                onTap: () => _addDrop(d),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(10), border: Border.all(color: kBrandMid)),
+                  child: Text('+ ${app.tr('ADD', 'சேர்')}', style: ts(11, weight: FontWeight.w800, color: kBrand)),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(10)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  GestureDetector(onTap: () => cart.decItem(d.itemId), child: const Padding(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3), child: Icon(Icons.remove_rounded, size: 15, color: Colors.white))),
+                  Text('$qty', style: ts(12, weight: FontWeight.w800, color: Colors.white)),
+                  GestureDetector(onTap: () => _addDrop(d), child: const Padding(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3), child: Icon(Icons.add_rounded, size: 15, color: Colors.white))),
+                ]),
+              ),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  /// Quick "+ ADD" on a drop. Dishes with options open the hotel menu so the customer can choose.
+  Future<void> _addDrop(FoodDrop d) async {
+    final h = _hotelById(d.hotelId);
+    if (h == null) return;
+    if (!(h.openNow && h.acceptsOrders)) {
+      _toast(h.openNow ? app.tr('This hotel is not taking orders now.', 'இந்த ஹோட்டல் இப்போது ஆர்டர் எடுக்கவில்லை.') : app.tr('This hotel is closed now.', 'இந்த ஹோட்டல் இப்போது மூடப்பட்டுள்ளது.'));
+      return;
+    }
+    HotelMenu? m = food.cachedMenu(h.id);
+    if (m == null) {
+      try {
+        m = await food.loadMenu(h.id);
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    FoodItem? item;
+    if (m != null) {
+      for (final it in m.items) {
+        if (it.id == d.itemId) item = it;
+      }
+    }
+    if (item == null || !item.available || d.customizable || item.customizable) {
+      _openHotel(h);
+      return;
+    }
+    if (cart.hotel != null && cart.hotel!.id != h.id && !cart.isEmpty) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(app.tr('Start a new cart?', 'புதிய கார்ட் தொடங்கவா?'), style: ts(17, weight: FontWeight.w700)),
+          content: Text(app.tr('Your cart has food from ${cart.hotel!.name}. Adding from ${h.name} will clear it.', 'உங்கள் கார்ட்டில் ${cart.hotel!.name} உணவு உள்ளது. ${h.name} உணவை சேர்த்தால் அது நீக்கப்படும்.'), style: ts(14, color: kMuted, height: 1.4)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(app.tr('No', 'வேண்டாம்'))),
+            TextButton(onPressed: () => Navigator.pop(c, true), child: Text(app.tr('Yes, start new', 'ஆம், புதியது'))),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      cart.clear();
+    }
+    cart.add(h, item, null);
+  }
+
+  // ---------- hotels ----------
+  Widget _hotelsHead(int n) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(app.tr('Top Restaurants Near You', 'உங்களுக்கு அருகிலுள்ள ஹோட்டல்கள்'), style: ts(16, weight: FontWeight.w800)),
+              Text(app.tr('Tap any hotel for full item-wise menu & Half/Full options', 'ஹோட்டலை தொட்டால் முழு மெனு & Half/Full தேர்வுகள்'), style: ts(11, color: kMuted)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine), boxShadow: kSoftShadow),
+            child: Text(app.tr('$n Hotels', '$n ஹோட்டல்'), style: ts(11.5, weight: FontWeight.w800, color: kBrand)),
+          ),
+        ]),
+      );
+
+  Widget _hotelCard(FoodHotel h) {
+    final closed = !(h.openNow && h.acceptsOrders);
+    final pick = _pickup;
+    final area = (h.area != null && h.area!.isNotEmpty) ? h.area! : app.tr('Aruppukottai', 'அருப்புக்கோட்டை');
+    final km = _km(h);
+    final badge = pick ? '🛍️ ${km != null ? '$km ${app.tr('away', 'தொலைவு')} • ' : ''}${app.tr('Zero Delivery Fee', 'டெலிவரி கட்டணம் இல்லை')}' : '✨ $area${km != null ? ' • $km' : ''}';
+    String? tag;
+    if (pick) {
+      tag = app.tr('Skip the Queue • Counter Pickup', 'வரிசை இல்லை • கவுண்டர் பிக்கப்');
+    } else if (h.offerCode != null) {
+      tag = h.offerText;
+    } else if (h.canDeliver && h.deliveryFee <= 0) {
+      tag = app.tr('Free delivery', 'இலவச டெலிவரி');
+    }
+    final dish = _featuredDish(h);
+    final m = food.cachedMenu(h.id);
+    final dishCount = (m != null && m.items.isNotEmpty) ? m.items.length : h.itemCount;
+    final cuisine = h.cuisine.isNotEmpty ? h.cuisine : app.tr('Local hotel', 'உள்ளூர் ஹோட்டல்');
+    return GestureDetector(
+      onTap: () => _openHotel(h),
+      child: Opacity(
+        opacity: closed ? 0.78 : 1,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: kLine), boxShadow: kSoftShadow),
+          clipBehavior: Clip.antiAlias,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(
+              height: 176,
+              child: Stack(fit: StackFit.expand, children: [
+                Container(color: kTint),
+                NetImg(file: h.picture, cacheWidth: 900),
+                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x33000000), Color(0xD9000000)], stops: [0.3, 0.6, 1]))),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  top: 12,
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(color: Colors.white.withAlpha(242), borderRadius: BorderRadius.circular(20)),
+                        child: Text(badge, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, weight: FontWeight.w800, color: pick ? kGreen : kBrand)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(color: kGreen, borderRadius: BorderRadius.circular(20)),
+                      child: Text('${h.rating.toStringAsFixed(1)} ★', style: ts(11.5, weight: FontWeight.w800, color: Colors.white)),
+                    ),
+                  ]),
+                ),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                        if (closed)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: kRed, borderRadius: BorderRadius.circular(7)),
+                            child: Text(h.openNow ? app.tr('Not taking orders', 'ஆர்டர் இல்லை') : app.tr('Closed now', 'இப்போது மூடப்பட்டுள்ளது'), style: ts(10, weight: FontWeight.w800, color: Colors.white)),
+                          )
+                        else if (tag != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: pick ? kGreen : kBrand, borderRadius: BorderRadius.circular(7)),
+                            child: Text(tag, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10, weight: FontWeight.w800, color: Colors.white)),
+                          ),
+                        Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(17, weight: FontWeight.w800, color: Colors.white, height: 1.15)),
+                      ]),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                      child: Text(pick ? app.tr('Ready in ${h.prepMinutes} mins', '${h.prepMinutes} நிமிடத்தில் தயார்') : app.tr('${h.shownEta} mins', '${h.shownEta} நிமி'), style: ts(11.5, weight: FontWeight.w800)),
+                    ),
                   ]),
                 ),
               ]),
-            );
-          },
-        ),
-      ),
-    ]);
-  }
-
-  // ---------- hotel card ----------
-  Widget _card(FoodHotel h, int index) {
-    final dish = _featuredDish(h);
-    final closed = !h.openNow || !h.acceptsOrders;
-    final time = '${h.shownEta}-${h.shownEta + 10} ${app.tr('mins', 'நிமி')}';
-    return FadeSlide(
-      index: index,
-      child: GestureDetector(
-        onTap: () => _openHotel(h),
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: kLine),
-            boxShadow: const [BoxShadow(color: Color(0x141A73E8), blurRadius: 18, offset: Offset(0, 8))],
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-              child: SizedBox(
-                height: 232,
-                child: Stack(fit: StackFit.expand, children: [
-                  _HotelSlider(hotel: h, photos: food.photosOf(h), gray: closed),
-                  if (closed) Container(color: const Color(0x66000000)),
-                  if (dish != null)
-                    Positioned(
-                      left: 12,
-                      top: 12,
-                      right: 64,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                          decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(9), border: Border.all(color: Colors.white24)),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            VegDot(veg: dish.veg, size: 15),
-                            const SizedBox(width: 7),
-                            Flexible(child: Text('${dish.name} · ${dish.hasVariants ? rupee(dish.fromPrice) : rupee(dish.price)}', maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13.5, weight: FontWeight.w600, color: Colors.white))),
-                          ]),
-                        ),
-                      ),
-                    ),
-                  Positioned(
-                    right: 8,
-                    top: 6,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => food.toggleFav(h.id),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(food.isFav(h.id) ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, size: 34, color: Colors.white.withAlpha(245)),
-                      ),
-                    ),
-                  ),
-                  if (!closed && h.offerCode != null)
-                    Positioned(
-                      left: 0,
-                      bottom: 14,
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(12, 6, 14, 6),
-                        decoration: const BoxDecoration(color: kBrand, borderRadius: BorderRadius.only(topRight: Radius.circular(10), bottomRight: Radius.circular(10))),
-                        child: Text(h.offerText, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w800, color: Colors.white)),
-                      ),
-                    ),
-                  if (closed)
-                    Positioned(
-                      left: 12,
-                      bottom: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(color: kRed, borderRadius: BorderRadius.circular(9)),
-                        child: Text(h.openNow ? app.tr('NOT TAKING ORDERS', 'ஆர்டர் இல்லை') : app.tr('CLOSED NOW', 'மூடப்பட்டுள்ளது'), style: ts(10.5, weight: FontWeight.w700, color: Colors.white)),
-                      ),
-                    ),
-                ]),
-              ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 13, 16, 15),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(21, weight: FontWeight.w700)),
-                    if (h.areaLine.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(h.areaLine, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(13, color: kMuted)),
-                    ],
-                    const SizedBox(height: 5),
-                    Row(children: [
-                      const Icon(Icons.bolt_rounded, size: 18, color: kGreen),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          '$time  |  ${h.canDeliver ? (h.deliveryFee <= 0 ? app.tr('Free delivery', 'இலவச டெலிவரி') : '${rupee(h.deliveryFee)} ${app.tr('delivery', 'டெலிவரி')}') : app.tr('Pickup only', 'நேரில் மட்டும்')}',
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(children: [
+                Row(children: [
+                  Expanded(child: Text(cuisine, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, weight: FontWeight.w600, color: kMuted))),
+                  if (h.priceForTwo != null && h.priceForTwo! > 0) Text(app.tr('${rupee(h.priceForTwo!)} for two', '${rupee(h.priceForTwo!)} இருவருக்கு'), style: ts(11.5, weight: FontWeight.w700, color: kMuted)),
+                ]),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(12, 9, 9, 9),
+                  decoration: BoxDecoration(color: kTint.withAlpha(170), borderRadius: BorderRadius.circular(16)),
+                  child: Row(children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(
+                          dishCount > 0 ? app.tr('$dishCount DISHES • HALF / FULL OPTIONS', '$dishCount உணவுகள் • HALF / FULL') : app.tr('FULL MENU • HALF / FULL OPTIONS', 'முழு மெனு • HALF / FULL'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: ts(14, weight: FontWeight.w600, color: kGreen),
+                          style: ts(9, weight: FontWeight.w800, color: kBrand),
                         ),
-                      ),
-                    ]),
+                        const SizedBox(height: 2),
+                        Text(
+                          dish != null ? '${dish.name} • ${rupee(dish.fromPrice)}' : (h.priceFrom != null ? app.tr('Dishes from ${rupee(h.priceFrom!)}', '${rupee(h.priceFrom!)} முதல்') : app.tr('See what is cooking', 'என்ன சமைக்கிறார்கள் பாருங்கள்')),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: ts(12.5, weight: FontWeight.w700),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                      decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(12)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(app.tr('View Menu', 'மெனு'), style: ts(11.5, weight: FontWeight.w800, color: Colors.white)),
+                        const Icon(Icons.chevron_right_rounded, size: 15, color: Colors.white),
+                      ]),
+                    ),
                   ]),
                 ),
-                const SizedBox(width: 10),
-                RatingBadge(rating: h.rating, count: h.ratingCount),
               ]),
             ),
           ]),
@@ -936,52 +972,49 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   Widget _state(IconData icon, String title, String sub, {VoidCallback? retry, String? retryLabel}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 40, 32, 20),
+      padding: const EdgeInsets.fromLTRB(32, 30, 32, 20),
       child: Column(children: [
-        Container(width: 96, height: 96, decoration: const BoxDecoration(color: kTint, shape: BoxShape.circle), child: Icon(icon, size: 44, color: kBrand)),
-        const SizedBox(height: 16),
-        Text(title, textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        Text(sub, textAlign: TextAlign.center, style: ts(13.5, color: kMuted, height: 1.4)),
+        Container(width: 88, height: 88, decoration: const BoxDecoration(color: kTint, shape: BoxShape.circle), child: Icon(icon, size: 40, color: kBrand)),
+        const SizedBox(height: 14),
+        Text(title, textAlign: TextAlign.center, style: ts(17, weight: FontWeight.w800)),
+        const SizedBox(height: 5),
+        Text(sub, textAlign: TextAlign.center, style: ts(12.5, color: kMuted, height: 1.4)),
         if (retry != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           TextButton.icon(onPressed: retry, icon: const Icon(Icons.refresh_rounded), label: Text(retryLabel ?? app.tr('Try again', 'மீண்டும் முயற்சி'))),
         ],
       ]),
     );
   }
 
-  // ---------- tabs ----------
-  Widget _homeTab() {
+  Widget _body() {
     final list = _list();
     final slivers = <Widget>[
-      SliverToBoxAdapter(child: _topArea()),
-      SliverToBoxAdapter(child: _circles()),
+      SliverToBoxAdapter(child: _pickupCallout()),
       SliverToBoxAdapter(child: _stories()),
+      SliverToBoxAdapter(child: _categories()),
+      SliverToBoxAdapter(child: _promo()),
       SliverToBoxAdapter(child: _drops()),
-      SliverToBoxAdapter(child: _offersStrip()),
-      SliverToBoxAdapter(child: _filterRow()),
-      SliverToBoxAdapter(child: _recommended(list)),
     ];
     if (food.loading && !food.loadedOnce && food.hotels.isEmpty) {
-      slivers.add(const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.fromLTRB(16, 18, 16, 0), child: Column(children: [PulseBox(height: 300, radius: 26), SizedBox(height: 20), PulseBox(height: 300, radius: 26)]))));
+      slivers.add(const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.fromLTRB(16, 18, 16, 0), child: Column(children: [PulseBox(height: 260, radius: 24), SizedBox(height: 16), PulseBox(height: 260, radius: 24)]))));
     } else if (food.error != null && food.hotels.isEmpty) {
       slivers.add(SliverToBoxAdapter(child: _state(Icons.wifi_off_rounded, app.tr('Could not load hotels', 'ஹோட்டல்களை ஏற்ற முடியவில்லை'), food.error!, retry: () => food.loadHotels(force: true))));
     } else if (food.hotels.isEmpty) {
       slivers.add(SliverToBoxAdapter(child: _state(Icons.storefront_rounded, app.tr('Hotels are coming soon', 'ஹோட்டல்கள் விரைவில்'), app.tr('We are adding Aruppukottai hotels. Check back soon!', 'அருப்புக்கோட்டை ஹோட்டல்களை சேர்த்து வருகிறோம். விரைவில் வாருங்கள்!'))));
     } else if (list.isEmpty) {
       slivers.add(SliverToBoxAdapter(
-          child: _state(Icons.search_off_rounded, app.tr('No hotels match', 'எதுவும் கிடைக்கவில்லை'), app.tr('Try removing a filter or another word.', 'ஒரு filter-ஐ நீக்கி அல்லது வேறு வார்த்தை முயற்சிக்கவும்.'),
-              retry: () => setState(() {
-                    _f.clear();
-                    _cuisine = 0;
-                    _q.clear();
-                  }),
-              retryLabel: app.tr('Clear filters', 'filter நீக்கு'))));
+        child: _state(Icons.search_off_rounded, app.tr('No matching restaurants', 'பொருந்தும் ஹோட்டல் இல்லை'), app.tr('Try resetting your search, category, or dietary filter', 'தேடல், வகை அல்லது filter-ஐ மாற்றி முயற்சிக்கவும்'),
+            retry: () => setState(() {
+                  _filter = 'all';
+                  _cat = 'all';
+                  _q.clear();
+                }),
+            retryLabel: app.tr('Show all hotels', 'அனைத்து ஹோட்டல்களும்')),
+      ));
     } else {
-      slivers.add(SliverToBoxAdapter(child: _heading(list.length)));
-      slivers.add(SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(18, 6, 18, 14), child: Text(app.tr('Featured', 'சிறப்பு'), style: ts(15, weight: FontWeight.w500, color: kMuted)))));
-      slivers.add(SliverList(delegate: SliverChildBuilderDelegate((c, i) => _card(list[i], i), childCount: list.length)));
+      slivers.add(SliverToBoxAdapter(child: _hotelsHead(list.length)));
+      slivers.add(SliverList(delegate: SliverChildBuilderDelegate((c, i) => _hotelCard(list[i]), childCount: list.length)));
     }
     if (food.offline && food.hotels.isNotEmpty) {
       slivers.add(SliverToBoxAdapter(
@@ -997,82 +1030,58 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         ),
       ));
     }
-    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 24)));
+    slivers.add(SliverToBoxAdapter(child: SizedBox(height: cart.isEmpty ? 24 : 96)));
     return RefreshIndicator(
-      edgeOffset: 90,
       onRefresh: () => food.loadHotels(force: true),
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: slivers),
     );
   }
 
-  Widget _savedTab() {
-    final saved = food.hotels.where((h) => food.isFav(h.id)).toList();
-    return CustomScrollView(slivers: [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 18, 20, 16),
-          child: Text(app.tr('Saved hotels', 'சேமித்த ஹோட்டல்கள்'), style: ts(26, weight: FontWeight.w800)),
-        ),
-      ),
-      if (saved.isEmpty)
-        SliverToBoxAdapter(child: _state(Icons.bookmark_border_rounded, app.tr('Nothing saved yet', 'இன்னும் எதுவும் சேமிக்கவில்லை'), app.tr('Tap the bookmark on a hotel to keep it here.', 'ஹோட்டலில் bookmark தொட்டால் இங்கே சேமிக்கப்படும்.')))
-      else
-        SliverList(delegate: SliverChildBuilderDelegate((c, i) => _card(saved[i], i), childCount: saved.length)),
-      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-    ]);
-  }
-
-  // ---------- bottom bar ----------
-  Widget _navItem(int i, IconData icon, IconData iconOn, String label, VoidCallback tap, {int badge = 0}) {
-    final on = _tab == i;
+  // ---------- bottom navigation (Home / Explore / Bag / Dine-Out) ----------
+  Widget _navItem(IconData icon, String label, VoidCallback tap, {bool on = false, int badge = 0}) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: tap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: on ? 20 : 16, vertical: 12),
-        decoration: BoxDecoration(gradient: on ? kButtonGradient : null, borderRadius: BorderRadius.circular(26)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
+      child: SizedBox(
+        width: 74,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
           Stack(clipBehavior: Clip.none, children: [
-            Icon(on ? iconOn : icon, size: 24, color: on ? Colors.white : kNavy),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(color: on ? kTint : Colors.transparent, borderRadius: BorderRadius.circular(16)),
+              child: Icon(icon, size: 21, color: on ? kBrand : kMuted),
+            ),
             if (badge > 0)
               Positioned(
-                right: -8,
-                top: -6,
+                right: 6,
+                top: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: const Color(0xFFFF4D6D), borderRadius: BorderRadius.circular(9)),
-                  child: Text('$badge', style: ts(10, weight: FontWeight.w700, color: Colors.white)),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  height: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(8)),
+                  child: Text('$badge', style: ts(9, weight: FontWeight.w800, color: Colors.white)),
                 ),
               ),
           ]),
-          if (on) ...[const SizedBox(width: 8), Text(label, style: ts(14.5, weight: FontWeight.w700, color: Colors.white))],
+          const SizedBox(height: 2),
+          Text(label, style: ts(10.5, weight: on ? FontWeight.w800 : FontWeight.w500, color: on ? kBrand : kMuted)),
         ]),
       ),
     );
   }
 
   Widget _bottomBar() {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: kLine)),
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            _navItem(0, Icons.home_outlined, Icons.home_rounded, app.tr('Home', 'முகப்பு'), () => setState(() => _tab = 0)),
-            _navItem(1, Icons.bookmark_border_rounded, Icons.bookmark_rounded, app.tr('Saved', 'சேமித்தவை'), () => setState(() => _tab = 1), badge: food.favs.length),
-            _navItem(2, Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, app.tr('Cart', 'கார்ட்'),
-                () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const CartScreen())),
-                badge: cart.count),
-          ]),
-        ),
-      ),
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.of(context).padding.bottom),
+      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: kLine))),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        _navItem(Icons.home_rounded, app.tr('Home', 'முகப்பு'), () {}, on: true),
+        _navItem(Icons.explore_outlined, app.tr('Explore', 'ஆராய்க'), _soon),
+        _navItem(Icons.shopping_bag_outlined, app.tr('Bag', 'பை'), () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const CartScreen())), badge: cart.count),
+        _navItem(Icons.restaurant_rounded, app.tr('Dine-Out', 'டைன்-அவுட்'), _soon),
+      ]),
     );
   }
 
@@ -1086,8 +1095,14 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           AnnotatedRegion<SystemUiOverlayStyle>(
             value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
             child: Scaffold(
-              backgroundColor: Colors.white,
-              body: IndexedStack(index: _tab, children: [_homeTab(), _savedTab()]),
+              backgroundColor: const Color(0xFFF8FAFD),
+              body: Stack(children: [
+                Column(children: [
+                  _header(),
+                  Expanded(child: _body()),
+                ]),
+                if (!cart.isEmpty) const Positioned(left: 0, right: 0, bottom: 0, child: CartBar(safe: false)),
+              ]),
               bottomNavigationBar: _bottomBar(),
             ),
           ),
@@ -1097,185 +1112,69 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   }
 }
 
-/// Zomato's photo shape: the bottom edge on the left is higher (the rating badge sits under it);
-/// further right it steps down to the full photo height with one smooth S-curve.
-Path _zomatoPhotoPath(Size size) {
-  final w = size.width, h = size.height;
-  const R = 12.0; // photo corners
-  const rl = 6.0; // small corner at the end of the higher edge
-  const step = 13.0; // how much higher the left bottom edge is
-  const xs = 46.0; // where the S-curve starts (left)
-  const xe = 64.0; // where the S-curve ends (right)
-  const mid = (xs + xe) / 2;
-  return Path()
-    ..moveTo(R, 0)
-    ..lineTo(w - R, 0)
-    ..arcToPoint(Offset(w, R), radius: const Radius.circular(R))
-    ..lineTo(w, h - R)
-    ..arcToPoint(Offset(w - R, h), radius: const Radius.circular(R))
-    ..lineTo(xe, h)
-    ..cubicTo(mid, h, mid, h - step, xs, h - step)
-    ..lineTo(rl, h - step)
-    ..arcToPoint(const Offset(0, 0).translate(0, h - step - rl), radius: const Radius.circular(rl))
-    ..lineTo(0, R)
-    ..arcToPoint(const Offset(R, 0), radius: const Radius.circular(R))
-    ..close();
-}
-
-class _NotchClipper extends CustomClipper<Path> {
-  const _NotchClipper();
-
-  @override
-  Path getClip(Size size) => _zomatoPhotoPath(size);
-
-  @override
-  bool shouldReclip(covariant _NotchClipper old) => false;
-}
-
-/// The thin light outline around the photo (also follows the S-curve).
-class _NotchBorder extends CustomPainter {
-  const _NotchBorder();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawPath(_zomatoPhotoPath(size), Paint()..style = PaintingStyle.stroke..strokeWidth = 1..color = kLine);
-  }
-
-  @override
-  bool shouldRepaint(covariant _NotchBorder old) => false;
-}
-
-/// The pictures of one hotel sliding on its card (main picture first). One picture = just the picture.
-class _HotelSlider extends StatefulWidget {
-  final FoodHotel hotel;
-  final List<String> photos;
-  final bool gray;
-
-  const _HotelSlider({required this.hotel, required this.photos, this.gray = false});
-
-  @override
-  State<_HotelSlider> createState() => _HotelSliderState();
-}
-
-class _HotelSliderState extends State<_HotelSlider> {
-  final PageController _pc = PageController();
-  Timer? _timer;
-  int _i = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.photos.length > 1) {
-      // start a little differently for every hotel so the cards do not all move together
-      _timer = Timer.periodic(Duration(milliseconds: 3600 + (widget.hotel.id % 5) * 400), (_) {
-        if (!mounted || !_pc.hasClients || widget.photos.length < 2) return;
-        _pc.animateToPage((_i + 1) % widget.photos.length, duration: const Duration(milliseconds: 500), curve: Curves.easeInOutCubic);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pc.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final photos = widget.photos;
-    if (photos.length < 2) return HotelCover(hotel: widget.hotel, gray: widget.gray, scrim: false);
-    return Stack(fit: StackFit.expand, children: [
-      PageView.builder(
-        controller: _pc,
-        itemCount: photos.length,
-        onPageChanged: (v) => setState(() => _i = v),
-        itemBuilder: (c, i) => HotelCover(hotel: widget.hotel, gray: widget.gray, scrim: false, file: photos[i]),
-      ),
-      Positioned(
-        right: 14,
-        bottom: 12,
-        child: IgnorePointer(
-          child: Row(children: [
-            for (var i = 0; i < photos.length; i++)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(left: 5),
-                width: i == _i ? 20 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: i == _i ? Colors.white : Colors.white.withAlpha(60),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.white, width: 1.2),
-                ),
-              ),
-          ]),
-        ),
-      ),
-    ]);
-  }
-}
-
-/// Floating bar at the bottom: "2 items · ₹240  ·  View cart".
+/// Floating bar above the bottom navigation: "2 Items • ₹240  ·  View Cart".
 class CartBar extends StatelessWidget {
-  const CartBar({super.key});
+  final bool safe; // true when it sits at the very bottom of a screen (adds the phone's bottom inset)
+
+  const CartBar({super.key, this.safe = true});
 
   @override
   Widget build(BuildContext context) {
     final h = cart.hotel;
+    String? auto;
+    for (final o in food.offers) {
+      if (o.minOrder <= cart.itemsTotal) {
+        auto = o.code;
+        break;
+      }
+    }
+    final n = cart.count;
+    final sub = auto != null ? app.tr('$auto auto-applies in Cart!', 'கார்ட்டில் $auto தானாக சேரும்!') : (h == null ? '' : h.name);
     return SafeArea(
       top: false,
+      bottom: safe,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
-        child: GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartScreen())),
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.fromLTRB(14, 0, 8, 0),
-            decoration: BoxDecoration(
-              gradient: kButtonGradient,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [BoxShadow(color: Color(0x331A73E8), blurRadius: 20, offset: Offset(0, 8))],
-            ),
-            child: Row(children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: Colors.white.withAlpha(34), shape: BoxShape.circle),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
-                  child: Text('${cart.count}', key: ValueKey<int>(cart.count), style: ts(16, weight: FontWeight.w700, color: Colors.white)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(rupee(cart.itemsTotal), style: ts(17, weight: FontWeight.w700, color: Colors.white)),
-                    Text(
-                      h == null ? '' : '${h.name} · ${h.prepMinutes + 10}-${h.prepMinutes + 20} ${app.tr('min', 'நிமி')}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ts(11.5, color: Colors.white.withAlpha(200)),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(app.tr('View cart', 'கார்ட்'), style: ts(13.5, weight: FontWeight.w700, color: kBrand)),
-                  const Icon(Icons.chevron_right_rounded, size: 20, color: kBrand),
-                ]),
-              ),
-            ]),
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+      child: GestureDetector(
+        onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const CartScreen())),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [kBrand, Color(0xFF1666D6)]),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 20, offset: Offset(0, 8))],
           ),
+          child: Row(children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: Colors.white.withAlpha(50), borderRadius: BorderRadius.circular(12)),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+                child: Text('$n', key: ValueKey<int>(n), style: ts(15, weight: FontWeight.w800, color: Colors.white)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('$n ${n == 1 ? app.tr('Item', 'பொருள்') : app.tr('Items', 'பொருட்கள்')} • ${rupee(cart.itemsTotal)}', style: ts(13, weight: FontWeight.w800, color: Colors.white)),
+                if (sub.isNotEmpty) Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, color: kOnBrandSoft)),
+              ]),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(app.tr('View Cart', 'கார்ட்'), style: ts(12.5, weight: FontWeight.w800, color: kBrand)),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward_rounded, size: 14, color: kBrand),
+              ]),
+            ),
+          ]),
         ),
       ),
-    );
+    ));
   }
 }
