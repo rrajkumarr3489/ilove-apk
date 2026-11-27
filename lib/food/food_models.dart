@@ -41,6 +41,17 @@ class FoodHotel {
   final int itemCount;
   final double? lat;
   final double? lng;
+  final String? area;
+  final double? priceForTwo;
+  final bool highProtein;
+  final bool bestseller;
+  final double? distanceKm;
+  final int etaMin;
+  final List<int> categoryIds;
+  final String? offerCode;
+  final String? offerDescEn;
+  final String? offerDescTa;
+  final double offerMin;
 
   FoodHotel({
     required this.id,
@@ -70,6 +81,17 @@ class FoodHotel {
     this.itemCount = 0,
     this.lat,
     this.lng,
+    this.area,
+    this.priceForTwo,
+    this.highProtein = false,
+    this.bestseller = false,
+    this.distanceKm,
+    this.etaMin = 0,
+    this.categoryIds = const <int>[],
+    this.offerCode,
+    this.offerDescEn,
+    this.offerDescTa,
+    this.offerMin = 0,
   });
 
   factory FoodHotel.fromJson(Map<String, dynamic> j) => FoodHotel(
@@ -100,7 +122,34 @@ class FoodHotel {
         itemCount: _i(j['itemCount']),
         lat: j['latitude'] == null ? null : _d(j['latitude']),
         lng: j['longitude'] == null ? null : _d(j['longitude']),
+        area: _s(j['area']),
+        priceForTwo: j['priceForTwo'] == null ? null : _d(j['priceForTwo']),
+        highProtein: _b(j['isHighProtein']),
+        bestseller: _b(j['isBestseller']),
+        distanceKm: j['distanceKm'] == null ? null : _d(j['distanceKm']),
+        etaMin: _i(j['etaMin']),
+        categoryIds: [
+          for (final x in (_s(j['categoryIds']) ?? '').split(','))
+            if (int.tryParse(x.trim()) != null) int.parse(x.trim()),
+        ],
+        offerCode: _s(j['offerCode']),
+        offerDescEn: _s(j['offerDescEn']),
+        offerDescTa: _s(j['offerDescTa']),
+        offerMin: _d(j['offerMinOrder']),
       );
+
+  /// "Aruppukottai Main Rd" style line: area and price for two, when the admin filled them.
+  String get areaLine {
+    final parts = <String>[];
+    if (area != null) parts.add(area!);
+    if (priceForTwo != null && priceForTwo! > 0) parts.add(app.tr('${rupee(priceForTwo!)} for two', '${rupee(priceForTwo!)} இருவருக்கு'));
+    return parts.join(' · ');
+  }
+
+  String get offerText => _pick(offerDescEn ?? offerCode ?? '', offerDescTa);
+
+  /// Minutes shown on cards: the server's estimate (prep + travel), else the hotel's own prep time.
+  int get shownEta => etaMin > 0 ? etaMin : prepMinutes;
 
   String get name => _pick(nameEn, nameTa);
   String get cuisine => _pick(cuisineEn ?? '', cuisineTa);
@@ -269,4 +318,126 @@ class FoodBanner {
         linkType: _s(j['linkType']) ?? 'None',
         linkValue: _s(j['linkValue']),
       );
+}
+
+/// A story card at the top of the Food home (admin panel: Food Content).
+class FoodStory {
+  final int id;
+  final String labelEn;
+  final String? labelTa;
+  final String titleEn;
+  final String? titleTa;
+  final String? subEn;
+  final String? subTa;
+  final String image;
+  final int? hotelId;
+  final double? price;
+  final String? hotelNameEn;
+  final String? hotelNameTa;
+
+  FoodStory({required this.id, required this.labelEn, this.labelTa, required this.titleEn, this.titleTa, this.subEn, this.subTa, required this.image, this.hotelId, this.price, this.hotelNameEn, this.hotelNameTa});
+
+  factory FoodStory.fromJson(Map<String, dynamic> j) => FoodStory(
+        id: _i(j['storyId']),
+        labelEn: _s(j['labelEn']) ?? '',
+        labelTa: _s(j['labelTa']),
+        titleEn: _s(j['titleEn']) ?? '',
+        titleTa: _s(j['titleTa']),
+        subEn: _s(j['subtitleEn']),
+        subTa: _s(j['subtitleTa']),
+        image: _s(j['imageFile']) ?? '',
+        hotelId: j['hotelId'] == null ? null : _i(j['hotelId']),
+        price: j['price'] == null ? null : _d(j['price']),
+        hotelNameEn: _s(j['hotelNameEn']),
+        hotelNameTa: _s(j['hotelNameTa']),
+      );
+
+  String get label => _pick(labelEn, labelTa);
+  String get title => _pick(titleEn, titleTa);
+  String get sub => _pick(subEn ?? '', subTa);
+  String get hotelName => _pick(hotelNameEn ?? '', hotelNameTa);
+}
+
+/// A food circle (Biriyani, Tiffin ...) made in the admin panel.
+class HomeCategory {
+  final int id;
+  final String nameEn;
+  final String? nameTa;
+  final String? image;
+
+  HomeCategory({required this.id, required this.nameEn, this.nameTa, this.image});
+
+  factory HomeCategory.fromJson(Map<String, dynamic> j) => HomeCategory(id: _i(j['foodCategoryId']), nameEn: _s(j['nameEn']) ?? '', nameTa: _s(j['nameTa']), image: _s(j['imageFile']));
+
+  String get name => _pick(nameEn, nameTa);
+}
+
+/// A quick deal ("drop"): a dish with a short delivery time and maybe a cut price.
+class FoodDrop {
+  final int itemId;
+  final int hotelId;
+  final String hotelNameEn;
+  final String? hotelNameTa;
+  final String nameEn;
+  final String? nameTa;
+  final double price;
+  final double? oldPrice;
+  final bool veg;
+  final String? picture;
+  final int etaMin;
+  final int? secondsLeft;
+  final bool customizable;
+
+  FoodDrop({required this.itemId, required this.hotelId, required this.hotelNameEn, this.hotelNameTa, required this.nameEn, this.nameTa, required this.price, this.oldPrice, this.veg = true, this.picture, this.etaMin = 15, this.secondsLeft, this.customizable = false});
+
+  factory FoodDrop.fromJson(Map<String, dynamic> j) => FoodDrop(
+        itemId: _i(j['itemId']),
+        hotelId: _i(j['hotelId']),
+        hotelNameEn: _s(j['hotelNameEn']) ?? '',
+        hotelNameTa: _s(j['hotelNameTa']),
+        nameEn: _s(j['nameEn']) ?? '',
+        nameTa: _s(j['nameTa']),
+        price: _d(j['price']),
+        oldPrice: j['oldPrice'] == null ? null : _d(j['oldPrice']),
+        veg: _b(j['isVeg']),
+        picture: _s(j['pictureFile']),
+        etaMin: _i(j['etaMin']) <= 0 ? 15 : _i(j['etaMin']),
+        secondsLeft: j['secondsLeft'] == null ? null : _i(j['secondsLeft']),
+        customizable: _b(j['customizable']),
+      );
+
+  String get name => _pick(nameEn, nameTa);
+  String get hotelName => _pick(hotelNameEn, hotelNameTa);
+  int get offPercent => (oldPrice != null && oldPrice! > price) ? (((oldPrice! - price) / oldPrice!) * 100).round() : 0;
+}
+
+/// A coupon shown in the offers strip.
+class FoodOffer {
+  final String code;
+  final String descEn;
+  final String? descTa;
+  final String type; // Flat / Percent
+  final double value;
+  final double? maxDiscount;
+  final double minOrder;
+  final int? hotelId;
+
+  FoodOffer({required this.code, required this.descEn, this.descTa, this.type = 'Flat', this.value = 0, this.maxDiscount, this.minOrder = 0, this.hotelId});
+
+  factory FoodOffer.fromJson(Map<String, dynamic> j) => FoodOffer(
+        code: _s(j['code']) ?? '',
+        descEn: _s(j['descEn']) ?? '',
+        descTa: _s(j['descTa']),
+        type: _s(j['discountType']) ?? 'Flat',
+        value: _d(j['discountValue']),
+        maxDiscount: j['maxDiscount'] == null ? null : _d(j['maxDiscount']),
+        minOrder: _d(j['minOrder']),
+        hotelId: j['hotelId'] == null ? null : _i(j['hotelId']),
+      );
+
+  String get desc {
+    final d = _pick(descEn, descTa);
+    if (d.isNotEmpty) return d;
+    return type == 'Percent' ? '${value.toStringAsFixed(0)}% OFF' : '${rupee(value)} OFF';
+  }
 }

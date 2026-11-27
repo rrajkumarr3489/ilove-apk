@@ -22,13 +22,51 @@ class FoodRepo extends ChangeNotifier {
   List<FoodBanner> banners = <FoodBanner>[];
   final Map<int, List<String>> _gallery = <int, List<String>>{};
 
+  List<FoodStory> stories = <FoodStory>[];
+  List<HomeCategory> homeCats = <HomeCategory>[];
+  List<FoodDrop> drops = <FoodDrop>[];
+  List<FoodOffer> offers = <FoodOffer>[];
+  Map<String, String> config = <String, String>{};
+
+  /// A Food.* setting from the admin panel (Settings page), e.g. cfg('Food.ShowStories', '1').
+  String cfg(String key, [String def = '']) => config[key] ?? def;
+  bool flag(String key, [bool def = true]) {
+    final v = config[key];
+    if (v == null) return def;
+    final t = v.trim().toLowerCase();
+    return t == '1' || t == 'true' || t == 'yes';
+  }
+
   final Set<int> favs = <int>{};
   List<String> recent = <String>[];
 
   List<FoodHotel> _parse(List<dynamic> r) => [for (final h in r) FoodHotel.fromJson(h as Map<String, dynamic>)];
 
-  /// Shows the hotels saved last time (if any) before the server answers.
+  void _applyHome(Map<String, dynamic> j) {
+    List<dynamic> l(String k) => (j[k] as List<dynamic>?) ?? const <dynamic>[];
+    hotels = _parse(l('hotels'));
+    stories = [for (final x in l('stories')) FoodStory.fromJson(x as Map<String, dynamic>)];
+    homeCats = [for (final x in l('categories')) HomeCategory.fromJson(x as Map<String, dynamic>)];
+    drops = [for (final x in l('drops')) FoodDrop.fromJson(x as Map<String, dynamic>)];
+    offers = [for (final x in l('offers')) FoodOffer.fromJson(x as Map<String, dynamic>)];
+    banners = [for (final x in l('banners')) FoodBanner.fromJson(x as Map<String, dynamic>)];
+  }
+
+  /// Shows what was saved last time (if any) before the server answers.
   void restore() {
+    final hs = app.getString('food.home');
+    if (hotels.isEmpty && hs != null && hs.isNotEmpty) {
+      try {
+        _applyHome(jsonDecode(hs) as Map<String, dynamic>);
+        loadedOnce = hotels.isNotEmpty;
+      } catch (_) {}
+    }
+    final cs = app.getString('food.config');
+    if (config.isEmpty && cs != null && cs.isNotEmpty) {
+      try {
+        config = (jsonDecode(cs) as Map<String, dynamic>).map((k, v) => MapEntry(k, '$v'));
+      } catch (_) {}
+    }
     if (hotels.isEmpty) {
       final s = app.getString('food.hotels');
       if (s != null && s.isNotEmpty) {
@@ -69,11 +107,18 @@ class FoodRepo extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final r = await BusApi.get('/food/hotels') as List<dynamic>;
-      hotels = _parse(r);
+      try {
+        final j = await BusApi.get('/food/home') as Map<String, dynamic>;
+        _applyHome(j);
+        await app.setString('food.home', jsonEncode(j));
+      } catch (_) {
+        // new server procedures not installed yet: the old hotel list still works
+        final r = await BusApi.get('/food/hotels') as List<dynamic>;
+        hotels = _parse(r);
+        await app.setString('food.hotels', jsonEncode(r));
+      }
       loadedOnce = true;
       offline = false;
-      await app.setString('food.hotels', jsonEncode(r));
     } catch (e) {
       if (hotels.isEmpty) {
         error = BusApi.friendly(e);
@@ -83,9 +128,21 @@ class FoodRepo extends ChangeNotifier {
     }
     loading = false;
     notifyListeners();
+    unawaited(loadConfig());
     unawaited(loadAllMenus());
-    unawaited(loadBanners());
+    if (banners.isEmpty) unawaited(loadBanners());
     unawaited(loadPhotos());
+  }
+
+  /// Food.* settings (fees, switches, tip buttons ...) set in the admin panel.
+  Future<void> loadConfig() async {
+    try {
+      final j = await BusApi.get('/food/config') as Map<String, dynamic>;
+      final m = (j['settings'] as Map<String, dynamic>? ?? const <String, dynamic>{});
+      config = m.map((k, v) => MapEntry(k, '$v'));
+      await app.setString('food.config', jsonEncode(config));
+      notifyListeners();
+    } catch (_) {}
   }
 
   void _setGallery(List<dynamic> rows) {
