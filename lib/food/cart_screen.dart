@@ -52,7 +52,7 @@ class _CartScreenState extends State<CartScreen> {
                 cart.fulfil == 'Delivery'
                     ? app.tr('Arrives in ${h.prepMinutes + 10}-${h.prepMinutes + 20} min', '${h.prepMinutes + 10}-${h.prepMinutes + 20} நிமிடத்தில் வரும்')
                     : app.tr('Ready in ${h.prepMinutes}-${h.prepMinutes + 10} min', '${h.prepMinutes}-${h.prepMinutes + 10} நிமிடத்தில் தயார்'),
-                style: ts(15, weight: FontWeight.w700, color: kChipText),
+                style: ts(15, weight: FontWeight.w700, color: kInk),
               ),
               Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, color: kMuted)),
             ]),
@@ -78,7 +78,7 @@ class _CartScreenState extends State<CartScreen> {
                 reached
                     ? app.tr('Yay! You got FREE delivery', 'சூப்பர்! இலவச டெலிவரி கிடைத்தது')
                     : app.tr('Add ${rupee(left)} more for FREE delivery', 'இலவச டெலிவரிக்கு இன்னும் ${rupee(left)} சேர்க்கவும்'),
-                style: ts(12.5, weight: FontWeight.w700, color: reached ? kGreen : kChipText),
+                style: ts(12.5, weight: FontWeight.w700, color: reached ? kGreen : kInk),
               ),
             ),
           ]),
@@ -134,7 +134,7 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(children: [
             Icon(icon, color: on ? kBrand : kMuted, size: 26),
             const SizedBox(height: 6),
-            Text(label, style: ts(13.5, weight: FontWeight.w700, color: on ? kBrandDark : kInk)),
+            Text(label, style: ts(13.5, weight: FontWeight.w700, color: on ? kBrand : kInk)),
             const SizedBox(height: 2),
             Text(sub, style: ts(11.5, color: kMuted)),
           ]),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../app_state.dart';
 import 'food_models.dart';
+import 'food_repo.dart';
 
 class CartLine {
   final int itemId;
@@ -12,6 +13,10 @@ class CartLine {
   final String? variantTa;
   final double price;
   final bool veg;
+  final String? spiceEn;
+  final String? spiceTa;
+  final List<FoodAddOn> addOns;
+  final String itemNote;
   int qty;
 
   CartLine({
@@ -23,11 +28,28 @@ class CartLine {
     this.variantTa,
     required this.price,
     required this.veg,
+    this.spiceEn,
+    this.spiceTa,
+    this.addOns = const <FoodAddOn>[],
+    this.itemNote = '',
     this.qty = 1,
   });
 
+  /// Same dish with the same choices = the same line.
+  String get key => '$itemId|${variantId ?? 0}|${spiceEn ?? ''}|${(addOns.map((a) => a.id).toList()..sort()).join(',')}|$itemNote';
+
   String get name => (app.lang == 'ta' && (nameTa ?? '').isNotEmpty) ? nameTa! : nameEn;
-  String get variant => (app.lang == 'ta' && (variantTa ?? '').isNotEmpty) ? variantTa! : (variantEn ?? '');
+  String get variant {
+    final parts = <String>[];
+    final v = (app.lang == 'ta' && (variantTa ?? '').isNotEmpty) ? variantTa! : (variantEn ?? '');
+    if (v.isNotEmpty) parts.add(v);
+    final sp = (app.lang == 'ta' && (spiceTa ?? '').isNotEmpty) ? spiceTa! : (spiceEn ?? '');
+    if (sp.isNotEmpty) parts.add(sp);
+    for (final a in addOns) {
+      parts.add('+ ${a.name}');
+    }
+    return parts.join(' · ');
+  }
   double get total => price * qty;
 }
 
@@ -57,7 +79,7 @@ class FoodCart extends ChangeNotifier {
   double get grandTotal => itemsTotal + deliveryFee + packing;
 
   /// Adds one. The caller must have cleared the cart first when it holds another hotel's food.
-  void add(FoodHotel h, FoodItem item, FoodVariant? v) {
+  void add(FoodHotel h, FoodItem item, FoodVariant? v, {FoodSpice? spice, List<FoodAddOn> addOns = const <FoodAddOn>[], String note = '', int qty = 1}) {
     if (hotel != null && hotel!.id != h.id) {
       lines.clear();
     }
@@ -65,9 +87,20 @@ class FoodCart extends ChangeNotifier {
       hotel = h;
       fulfil = h.canDeliver ? 'Delivery' : 'Pickup';
     }
+    final extra = addOns.fold<double>(0, (s, a) => s + a.price);
+    final probe = CartLine(
+      itemId: item.id,
+      variantId: v?.id,
+      nameEn: item.nameEn,
+      price: 0,
+      veg: item.veg,
+      spiceEn: spice?.nameEn,
+      addOns: addOns,
+      itemNote: note.trim(),
+    );
     for (final l in lines) {
-      if (l.itemId == item.id && l.variantId == v?.id) {
-        l.qty++;
+      if (l.key == probe.key) {
+        l.qty = (l.qty + qty).clamp(1, maxQty).toInt();
         notifyListeners();
         return;
       }
@@ -79,14 +112,22 @@ class FoodCart extends ChangeNotifier {
       nameTa: item.nameTa,
       variantEn: v?.nameEn,
       variantTa: v?.nameTa,
-      price: v?.price ?? item.price,
+      price: (v?.price ?? item.price) + extra,
       veg: item.veg,
+      spiceEn: spice?.nameEn,
+      spiceTa: spice?.nameTa,
+      addOns: addOns,
+      itemNote: note.trim(),
+      qty: qty.clamp(1, maxQty).toInt(),
     ));
     notifyListeners();
   }
 
+  /// Most pieces of one dish (setting Food.MaxItemQty in the admin panel).
+  int get maxQty => (int.tryParse(food.cfg('Food.MaxItemQty', '10')) ?? 10).clamp(1, 50).toInt();
+
   void inc(CartLine l) {
-    if (l.qty < 20) l.qty++;
+    if (l.qty < maxQty) l.qty++;
     notifyListeners();
   }
 

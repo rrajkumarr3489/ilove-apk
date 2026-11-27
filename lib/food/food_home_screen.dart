@@ -193,7 +193,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               if (v == 'cheap') _f.maxPrice = 100;
             });
       }
-      out.add(_Slide(image: b.image, bg: _hex(b.bgColor, kBrandDark), onTap: tap));
+      out.add(_Slide(image: b.image, bg: _hex(b.bgColor, kBrand), onTap: tap));
     }
     if (out.isNotEmpty) return out;
     // no banner set in the admin panel yet: offers made from the hotels we have
@@ -201,7 +201,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     final free = hs.where((h) => h.canDeliver && h.deliveryFee <= 0).length;
     final open = hs.where((h) => h.openNow && h.acceptsOrders).length;
     if (free > 0) {
-      out.add(_Slide(bg: kBrandDark, title: app.tr('Free delivery', 'இலவச டெலிவரி'), sub: app.tr('$free hotels deliver free to you', '$free ஹோட்டல்கள் இலவசமாக கொண்டு வரும்'), icon: Icons.delivery_dining_rounded, onTap: () => setState(() {
+      out.add(_Slide(bg: kBrand, title: app.tr('Free delivery', 'இலவச டெலிவரி'), sub: app.tr('$free hotels deliver free to you', '$free ஹோட்டல்கள் இலவசமாக கொண்டு வரும்'), icon: Icons.delivery_dining_rounded, onTap: () => setState(() {
             _f.clear();
             _f.free = true;
           })));
@@ -213,7 +213,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           })));
     }
     if (out.isEmpty) {
-      out.add(_Slide(bg: kBrandDark, title: app.tr('Aruppukottai\'s own food app', 'அருப்புக்கோட்டையின் சொந்த உணவு ஆப்'), sub: app.tr('Order from local hotels, home delivered', 'உள்ளூர் ஹோட்டல்களில் ஆர்டர் செய்யுங்கள்'), icon: Icons.restaurant_rounded));
+      out.add(_Slide(bg: kBrand, title: app.tr('Aruppukottai\'s own food app', 'அருப்புக்கோட்டையின் சொந்த உணவு ஆப்'), sub: app.tr('Order from local hotels, home delivered', 'உள்ளூர் ஹோட்டல்களில் ஆர்டர் செய்யுங்கள்'), icon: Icons.restaurant_rounded));
     }
     return out;
   }
@@ -576,7 +576,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                             alignment: Alignment.topLeft,
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: const BoxDecoration(color: Color(0xCC1A2233), borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
+                              decoration: const BoxDecoration(color: Color(0x99000000), borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
                               child: Text(offer, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(9.5, weight: FontWeight.w700, color: Colors.white)),
                             ),
                           ),
@@ -725,7 +725,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               child: Container(
                 width: 158,
                 margin: const EdgeInsets.only(right: 12, bottom: 6),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine), boxShadow: const [BoxShadow(color: Color(0x141B4F9C), blurRadius: 12, offset: Offset(0, 5))]),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine), boxShadow: const [BoxShadow(color: Color(0x141A73E8), blurRadius: 12, offset: Offset(0, 5))]),
                 clipBehavior: Clip.antiAlias,
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   SizedBox(
@@ -738,7 +738,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         top: 8,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(color: const Color(0xCC1A2233), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(8)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFFFC83D)),
                             Text('${d.etaMin} ${app.tr('min', 'நிமி')}', style: ts(11, weight: FontWeight.w700, color: Colors.white)),
@@ -836,7 +836,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(26),
             border: Border.all(color: kLine),
-            boxShadow: const [BoxShadow(color: Color(0x141B4F9C), blurRadius: 18, offset: Offset(0, 8))],
+            boxShadow: const [BoxShadow(color: Color(0x141A73E8), blurRadius: 18, offset: Offset(0, 8))],
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             ClipRRect(
@@ -855,7 +855,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                         alignment: Alignment.centerLeft,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                          decoration: BoxDecoration(color: const Color(0xCC1A2233), borderRadius: BorderRadius.circular(9), border: Border.all(color: Colors.white24)),
+                          decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(9), border: Border.all(color: Colors.white24)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             VegDot(veg: dish.veg, size: 15),
                             const SizedBox(width: 7),
@@ -1235,7 +1235,7 @@ class CartBar extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: kButtonGradient,
               borderRadius: BorderRadius.circular(22),
-              boxShadow: const [BoxShadow(color: Color(0x66123F8C), blurRadius: 20, offset: Offset(0, 8))],
+              boxShadow: const [BoxShadow(color: Color(0x331A73E8), blurRadius: 20, offset: Offset(0, 8))],
             ),
             child: Row(children: [
               Container(
@@ -1268,8 +1268,8 @@ class CartBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(app.tr('View cart', 'கார்ட்'), style: ts(13.5, weight: FontWeight.w700, color: kBrandDark)),
-                  const Icon(Icons.chevron_right_rounded, size: 20, color: kBrandDark),
+                  Text(app.tr('View cart', 'கார்ட்'), style: ts(13.5, weight: FontWeight.w700, color: kBrand)),
+                  const Icon(Icons.chevron_right_rounded, size: 20, color: kBrand),
                 ]),
               ),
             ]),

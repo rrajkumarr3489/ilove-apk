@@ -145,12 +145,12 @@ class _FilterSheetState extends State<_FilterSheet> {
           color: on ? kTint : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: on ? kBrand : Colors.transparent, width: 1.5),
-          boxShadow: const [BoxShadow(color: Color(0x141B4F9C), blurRadius: 10, offset: Offset(0, 3))],
+          boxShadow: const [BoxShadow(color: Color(0x141A73E8), blurRadius: 10, offset: Offset(0, 3))],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 24, color: iconColor ?? (on ? kBrand : kNavy)),
           const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: on ? FontWeight.w700 : FontWeight.w500, color: on ? kBrandDark : kInk)),
+          Text(label, textAlign: TextAlign.center, style: ts(13.5, weight: on ? FontWeight.w700 : FontWeight.w500, color: on ? kBrand : kInk)),
         ]),
       ),
     );
@@ -290,7 +290,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           width: 46,
           height: 46,
           margin: const EdgeInsets.only(bottom: 14),
-          decoration: const BoxDecoration(color: Color(0xFF1A2233), shape: BoxShape.circle),
+          decoration: const BoxDecoration(color: Color(0xFF3C4043), shape: BoxShape.circle),
           child: const Icon(Icons.close_rounded, color: Colors.white),
         ),
       ),

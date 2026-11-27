@@ -190,7 +190,12 @@ class FoodRepo extends ChangeNotifier {
 
   /// Always asks the server (prices and "sold out" change) and keeps the answer.
   Future<HotelMenu> loadMenu(int id) async {
-    final j = await BusApi.get('/food/hotels/$id') as Map<String, dynamic>;
+    Map<String, dynamic> j;
+    try {
+      j = await BusApi.get('/food/hotels/$id/menu') as Map<String, dynamic>;
+    } catch (_) {
+      j = await BusApi.get('/food/hotels/$id') as Map<String, dynamic>; // new server procedures not installed yet
+    }
     final m = HotelMenu.fromJson(j);
     _menus[id] = m;
     return m;

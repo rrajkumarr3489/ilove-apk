@@ -212,6 +212,11 @@ class FoodItem {
   final bool available;
   final bool bestseller;
   final List<FoodVariant> variants;
+  final double? oldPrice;
+  final bool spicy;
+  final bool hasSpice;
+  final double itemRating;
+  final List<FoodAddOn> addOns;
 
   FoodItem({
     required this.id,
@@ -226,9 +231,14 @@ class FoodItem {
     this.available = true,
     this.bestseller = false,
     this.variants = const <FoodVariant>[],
+    this.oldPrice,
+    this.spicy = false,
+    this.hasSpice = false,
+    this.itemRating = 0,
+    this.addOns = const <FoodAddOn>[],
   });
 
-  factory FoodItem.fromJson(Map<String, dynamic> j, List<FoodVariant> variants) => FoodItem(
+  factory FoodItem.fromJson(Map<String, dynamic> j, List<FoodVariant> variants, [List<FoodAddOn> addOns = const <FoodAddOn>[]]) => FoodItem(
         id: _i(j['itemId']),
         categoryId: j['categoryId'] == null ? null : _i(j['categoryId']),
         nameEn: _s(j['nameEn']) ?? '',
@@ -241,7 +251,16 @@ class FoodItem {
         available: _b(j['isAvailable']),
         bestseller: _b(j['isBestseller']),
         variants: variants,
+        oldPrice: j['oldPrice'] == null ? null : _d(j['oldPrice']),
+        spicy: _b(j['isSpicy']),
+        hasSpice: _b(j['hasSpiceLevel']),
+        itemRating: _d(j['itemRating']),
+        addOns: addOns,
       );
+
+  /// true when tapping ADD must open the sheet (options, spice or add-ons).
+  bool get customizable => variants.isNotEmpty || hasSpice || addOns.isNotEmpty;
+  int get offPercent => (oldPrice != null && oldPrice! > fromPrice) ? (((oldPrice! - fromPrice) / oldPrice!) * 100).round() : 0;
 
   String get name => _pick(nameEn, nameTa);
   String get desc => _pick(descEn ?? '', descTa);
@@ -258,12 +277,45 @@ class FoodItem {
   }
 }
 
+/// An extra the customer can tick on a dish (extra raita, cheese ...). itemId null = offered on every dish of the hotel.
+class FoodAddOn {
+  final int id;
+  final int? itemId;
+  final String nameEn;
+  final String? nameTa;
+  final double price;
+
+  FoodAddOn({required this.id, this.itemId, required this.nameEn, this.nameTa, required this.price});
+
+  factory FoodAddOn.fromJson(Map<String, dynamic> j) => FoodAddOn(
+        id: _i(j['addOnId']),
+        itemId: j['itemId'] == null ? null : _i(j['itemId']),
+        nameEn: _s(j['nameEn']) ?? '',
+        nameTa: _s(j['nameTa']),
+        price: _d(j['price']),
+      );
+
+  String get name => _pick(nameEn, nameTa);
+}
+
+/// One spice choice (Mild / Medium / Fiery). The list is a setting in the admin panel.
+class FoodSpice {
+  final String nameEn;
+  final String? nameTa;
+
+  FoodSpice(this.nameEn, this.nameTa);
+
+  String get name => _pick(nameEn, nameTa);
+}
+
 class HotelMenu {
   final FoodHotel hotel;
   final List<FoodCategory> categories;
   final List<FoodItem> items;
+  final List<FoodSpice> spiceLevels;
+  final List<FoodOffer> offers;
 
-  HotelMenu(this.hotel, this.categories, this.items);
+  HotelMenu(this.hotel, this.categories, this.items, {this.spiceLevels = const <FoodSpice>[], this.offers = const <FoodOffer>[]});
 
   factory HotelMenu.fromJson(Map<String, dynamic> j) {
     final vars = <int, List<FoodVariant>>{};
@@ -271,15 +323,27 @@ class HotelMenu {
       final m = v as Map<String, dynamic>;
       vars.putIfAbsent(_i(m['itemId']), () => <FoodVariant>[]).add(FoodVariant.fromJson(m));
     }
+    final adds = <FoodAddOn>[
+      for (final a in (j['addOns'] as List<dynamic>? ?? const <dynamic>[])) FoodAddOn.fromJson(a as Map<String, dynamic>),
+    ];
     final items = <FoodItem>[];
     for (final it in (j['items'] as List<dynamic>? ?? const <dynamic>[])) {
       final m = it as Map<String, dynamic>;
-      items.add(FoodItem.fromJson(m, vars[_i(m['itemId'])] ?? const <FoodVariant>[]));
+      final id = _i(m['itemId']);
+      items.add(FoodItem.fromJson(m, vars[id] ?? const <FoodVariant>[], [for (final a in adds) if (a.itemId == null || a.itemId == id) a]));
     }
     final cats = <FoodCategory>[
       for (final c in (j['categories'] as List<dynamic>? ?? const <dynamic>[])) FoodCategory.fromJson(c as Map<String, dynamic>),
     ];
-    return HotelMenu(FoodHotel.fromJson(j['hotel'] as Map<String, dynamic>), cats, items);
+    return HotelMenu(
+      FoodHotel.fromJson(j['hotel'] as Map<String, dynamic>),
+      cats,
+      items,
+      spiceLevels: [
+        for (final x in (j['spiceLevels'] as List<dynamic>? ?? const <dynamic>[])) FoodSpice(_s((x as Map<String, dynamic>)['nameEn']) ?? '', _s(x['nameTa'])),
+      ],
+      offers: [for (final o in (j['offers'] as List<dynamic>? ?? const <dynamic>[])) FoodOffer.fromJson(o as Map<String, dynamic>)],
+    );
   }
 
   String categoryName(int? id) {
