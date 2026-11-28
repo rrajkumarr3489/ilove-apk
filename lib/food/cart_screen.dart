@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../app_state.dart';
 import '../auth/auth_guard.dart';
@@ -49,15 +49,8 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   // payment
   late String _tab;
-  String _upiApp = 'GPay';
-  bool _upiOk = false;
-  final TextEditingController _upiC = TextEditingController();
-  final TextEditingController _cardNum = TextEditingController();
-  final TextEditingController _cardName = TextEditingController();
-  final TextEditingController _cardExp = TextEditingController();
-  final TextEditingController _cardCvv = TextEditingController();
-  String _bank = 'HDFC Bank';
-  String? _otherBank;
+  Razorpay? _rzp;
+  String? _rzpErr;
 
   // bag options
   int _tip = 0;
@@ -92,9 +85,8 @@ class _CartScreenState extends State<CartScreen> {
     cart.removeListener(_onCart);
     _qTimer?.cancel();
     cart.note = _note.text;
-    for (final c in [_upiC, _cardNum, _cardName, _cardExp, _cardCvv, _note]) {
-      c.dispose();
-    }
+    _rzp?.clear();
+    _note.dispose();
     super.dispose();
   }
 
@@ -227,11 +219,11 @@ class _CartScreenState extends State<CartScreen> {
   String _payMethodLabel() {
     switch (_tab) {
       case 'upi':
-        return 'UPI ($_upiApp)';
+        return 'UPI';
       case 'card':
         return app.tr('Card', 'கார்டு');
       case 'nb':
-        return _otherBank ?? _bank;
+        return app.tr('Net Banking', 'நெட் பேங்கிங்');
       default:
         return app.tr('Cash on Delivery', 'கையில் பணம்');
     }
@@ -795,198 +787,35 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _input(TextEditingController c, String label, String hint, {TextInputType? type, int? max, bool obscure = false, List<TextInputFormatter>? fmt, void Function(String)? onChanged}) => Container(
-        padding: const EdgeInsets.fromLTRB(12, 7, 12, 4),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBrandMid)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label.toUpperCase(), style: ts(8.5, weight: FontWeight.w800, color: kMuted)),
-          TextField(controller: c, keyboardType: type, maxLength: max, obscureText: obscure, inputFormatters: fmt, onChanged: onChanged, style: ts(13, weight: FontWeight.w700), decoration: InputDecoration(isDense: true, counterText: '', border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, filled: false, contentPadding: const EdgeInsets.symmetric(vertical: 6), hintText: hint, hintStyle: ts(12.5, color: kMuted))),
-        ]),
-      );
-
-  Widget _upiPanel() {
-    final apps = food.cfg('Food.UpiApps', 'GPay,PhonePe,Paytm,CRED').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    if (apps.isNotEmpty && !apps.contains(_upiApp)) _upiApp = apps.first;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        for (var i = 0; i < apps.length && i < 4; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _upiApp = apps[i]),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: _upiApp == apps[i] ? kBrand : kBrandMid, width: _upiApp == apps[i] ? 2 : 1)),
-                child: Text(apps[i], maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11, weight: FontWeight.w800, color: _upiApp == apps[i] ? kBrand : kInk)),
-              ),
-            ),
-          ),
-        ],
-      ]),
-      const SizedBox(height: 10),
-      Container(
-        padding: const EdgeInsets.fromLTRB(10, 4, 6, 4),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _upiOk ? kGreen : kBrandMid)),
-        child: Row(children: [
-          const Icon(Icons.alternate_email_rounded, size: 16, color: kBrand),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _upiC,
-              onChanged: (_) => setState(() => _upiOk = false),
-              style: ts(13),
-              decoration: InputDecoration(isDense: true, border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, filled: false, hintText: app.tr('Enter UPI ID (e.g., name@okaxis)', 'UPI ID (எ.கா., name@okaxis)'), hintStyle: ts(12, color: kMuted)),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              final ok = RegExp(r'^[A-Za-z0-9.\-_]{2,}@[A-Za-z]{2,}$').hasMatch(_upiC.text.trim());
-              setState(() => _upiOk = ok);
-              if (!ok) _msg(app.tr('Please enter a valid UPI ID.', 'சரியான UPI ID எழுதவும்.'));
-            },
-            child: Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7), decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBrandMid)), child: Text(app.tr('Verify', 'சரிபார்'), style: ts(10.5, weight: FontWeight.w800, color: kBrand))),
-          ),
-        ]),
-      ),
-      if (_upiOk)
-        Container(
-          margin: const EdgeInsets.only(top: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(color: const Color(0xFFEAF6EE), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB7E1C1))),
-          child: Row(children: [
-            const Icon(Icons.check_circle_rounded, size: 14, color: kGreen),
-            const SizedBox(width: 6),
-            Text(app.tr('Verified UPI ID', 'சரிபார்க்கப்பட்ட UPI ID'), style: ts(10.5, weight: FontWeight.w800, color: kGreen)),
+  Widget _onlinePanel() {
+    final isUpi = _tab == 'upi';
+    final isCard = _tab == 'card';
+    final icon = isUpi ? Icons.bolt_rounded : (isCard ? Icons.credit_card_rounded : Icons.account_balance_rounded);
+    final head = isUpi ? app.tr('Pay with any UPI app', 'எந்த UPI ஆப்பிலும் செலுத்தலாம்') : (isCard ? app.tr('Pay with Debit / Credit card', 'டெபிட் / கிரெடிட் கார்டு') : app.tr('Pay with Net Banking', 'நெட் பேங்கிங்'));
+    final sub = isUpi
+        ? app.tr('GPay, PhonePe, Paytm, BHIM or any UPI app opens on the next screen.', 'அடுத்த திரையில் GPay, PhonePe, Paytm போன்ற UPI ஆப் திறக்கும்.')
+        : (isCard ? app.tr('Enter your card details on the secure Razorpay screen. We never see or store them.', 'அட்டை விவரங்களை பாதுகாப்பான Razorpay திரையில் உள்ளிடவும். நாங்கள் சேமிக்க மாட்டோம்.') : app.tr('Choose your bank on the secure Razorpay screen.', 'பாதுகாப்பான Razorpay திரையில் உங்கள் வங்கியை தேர்வு செய்யவும்.'));
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBrandMid)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(width: 38, height: 38, decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(12)), child: Icon(icon, size: 20, color: kBrand)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(head, style: ts(13.5, weight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(sub, style: ts(12, color: kMuted, height: 1.4)),
+            const SizedBox(height: 6),
+            Row(children: [
+              const Icon(Icons.lock_rounded, size: 12, color: kGreen),
+              const SizedBox(width: 4),
+              Text(app.tr('Secured by Razorpay', 'Razorpay பாதுகாப்பு'), style: ts(10.5, weight: FontWeight.w800, color: kGreen)),
+            ]),
           ]),
         ),
-      const SizedBox(height: 8),
-      SizedBox(
-        height: 26,
-        child: ListView(scrollDirection: Axis.horizontal, children: [
-          Center(child: Padding(padding: const EdgeInsets.only(right: 8), child: Text(app.tr('Quick handle:', 'விரைவு:'), style: ts(10, weight: FontWeight.w600, color: kMuted)))),
-          for (final s in const ['@okaxis', '@ybl', '@paytm', '@okicici'])
-            GestureDetector(
-              onTap: () {
-                final t = _upiC.text.trim();
-                final base = t.contains('@') ? t.substring(0, t.indexOf('@')) : t;
-                _upiC.text = '$base$s';
-                _upiC.selection = TextSelection.collapsed(offset: _upiC.text.length);
-                setState(() => _upiOk = false);
-              },
-              child: Container(margin: const EdgeInsets.only(right: 6), padding: const EdgeInsets.symmetric(horizontal: 9), alignment: Alignment.center, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(9), border: Border.all(color: kBrandMid)), child: Text(s, style: ts(10, weight: FontWeight.w800, color: kBrand))),
-            ),
-        ]),
-      ),
-    ]);
-  }
-
-  String _maskedCard() {
-    final d = _cardNum.text.replaceAll(RegExp(r'\D'), '');
-    final p = d.padRight(16, '•');
-    return '${p.substring(0, 4)} ${p.substring(4, 8)} ${p.substring(8, 12)} ${p.substring(12, 16)}';
-  }
-
-  Widget _cardPanel() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1557B0), Color(0xFF1A73E8), Color(0xFF4C8DF6)]), boxShadow: const [BoxShadow(color: kBrandShadow, blurRadius: 14, offset: Offset(0, 6))]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(7)), child: Text(app.tr('Contactless', 'தொடுதலின்றி'), style: ts(9.5, weight: FontWeight.w800, color: Colors.white))),
-            const Spacer(),
-            Text('CARD', style: ts(12, weight: FontWeight.w800, color: Colors.white)),
-          ]),
-          const SizedBox(height: 16),
-          Text(_maskedCard(), style: ts(15, weight: FontWeight.w800, color: Colors.white)),
-          const SizedBox(height: 14),
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('CARDHOLDER', style: ts(8, color: const Color(0xFFD2E3FC))), Text(_cardName.text.trim().isEmpty ? 'YOUR NAME' : _cardName.text.trim().toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12, weight: FontWeight.w800, color: Colors.white))])),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('EXPIRES', style: ts(8, color: const Color(0xFFD2E3FC))), Text(_cardExp.text.isEmpty ? 'MM/YY' : _cardExp.text, style: ts(12, weight: FontWeight.w800, color: Colors.white))]),
-          ]),
-        ]),
-      ),
-      const SizedBox(height: 10),
-      _input(_cardNum, app.tr('Card Number', 'அட்டை எண்'), '1234 5678 9012 3456', type: TextInputType.number, max: 19, fmt: [FilteringTextInputFormatter.digitsOnly, _GroupFmt()], onChanged: (_) => setState(() {})),
-      const SizedBox(height: 8),
-      _input(_cardName, app.tr('Cardholder Name', 'பெயர்'), app.tr('Name on Card', 'அட்டையில் உள்ள பெயர்'), max: 28, onChanged: (_) => setState(() {})),
-      const SizedBox(height: 8),
-      Row(children: [
-        Expanded(child: _input(_cardExp, app.tr('Expiry (MM/YY)', 'காலாவதி (MM/YY)'), 'MM/YY', type: TextInputType.number, max: 5, fmt: [FilteringTextInputFormatter.allow(RegExp(r'[0-9/]'))], onChanged: (_) => setState(() {}))),
-        const SizedBox(width: 8),
-        Expanded(child: _input(_cardCvv, 'CVV', '•••', type: TextInputType.number, max: 4, obscure: true, fmt: [FilteringTextInputFormatter.digitsOnly])),
       ]),
-      const SizedBox(height: 8),
-      Row(children: [
-        const Icon(Icons.lock_rounded, size: 12, color: kGreen),
-        const SizedBox(width: 5),
-        Expanded(child: Text(app.tr('256-bit Encrypted', '256-bit பாதுகாப்பு'), style: ts(10, color: kMuted))),
-        Text('RuPay • Visa • Mastercard', style: ts(10, weight: FontWeight.w800, color: kBrand)),
-      ]),
-    ]);
-  }
-
-  Widget _nbPanel() {
-    const banks = [
-      ['HDFC Bank', 'HD', 'HDFC Bank'],
-      ['ICICI Bank', 'IC', 'ICICI Bank'],
-      ['State Bank of India', 'SBI', 'SBI'],
-      ['Axis Bank', 'AX', 'Axis Bank'],
-      ['Kotak Mahindra Bank', 'KT', 'Kotak Mahindra'],
-      ['Indian Bank', 'IN', 'Indian Bank'],
-    ];
-    const others = ['Canara Bank', 'Bank of Baroda', 'Federal Bank', 'IndusInd Bank', 'Yes Bank'];
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        for (final b in banks)
-          GestureDetector(
-            onTap: () => setState(() {
-              _bank = b[0];
-              _otherBank = null;
-            }),
-            child: Container(
-              width: (MediaQuery.of(context).size.width - 28 - 24 - 8) / 2,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: (_otherBank == null && _bank == b[0]) ? kBrand : kBrandMid, width: (_otherBank == null && _bank == b[0]) ? 2 : 1)),
-              child: Row(children: [
-                Container(width: 26, height: 26, alignment: Alignment.center, decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(8)), child: Text(b[1], style: ts(9.5, weight: FontWeight.w800, color: kBrand))),
-                const SizedBox(width: 8),
-                Expanded(child: Text(b[2], maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(11.5, weight: FontWeight.w700))),
-              ]),
-            ),
-          ),
-      ]),
-      const SizedBox(height: 10),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBrandMid)),
-        child: Row(children: [
-          Text(app.tr('Other Banks:', 'மற்ற வங்கிகள்:'), style: ts(11, weight: FontWeight.w700, color: kMuted)),
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value: _otherBank,
-                alignment: Alignment.centerRight,
-                hint: Align(alignment: Alignment.centerRight, child: Text(app.tr('Choose another bank...', 'வேறு வங்கி...'), style: ts(11.5, color: kMuted))),
-                items: [for (final o in others) DropdownMenuItem<String>(value: o, child: Align(alignment: Alignment.centerRight, child: Text(o, style: ts(12, weight: FontWeight.w700))))],
-                onChanged: (v) => setState(() => _otherBank = v),
-              ),
-            ),
-          ),
-        ]),
-      ),
-      const SizedBox(height: 10),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: const Color(0xFFEAF6EE), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFB7E1C1))),
-        child: Row(children: [
-          Expanded(child: Text(app.tr('Instant bank gateway redirect', 'வங்கி பக்கத்திற்கு உடனே செல்லும்'), style: ts(10.5, weight: FontWeight.w700, color: kGreen))),
-          Text(app.tr('₹0 Hidden Fee', '₹0 மறைமுக கட்டணம்'), style: ts(10.5, weight: FontWeight.w800, color: kGreen)),
-        ]),
-      ),
-    ]);
+    );
   }
 
   Widget _codPanel() => Row(children: [
@@ -1014,43 +843,24 @@ class _CartScreenState extends State<CartScreen> {
           decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBrandMid)),
           child: Row(children: [
             if (upiOn) _payTab('upi', Icons.bolt_rounded, 'UPI'),
-            _payTab('card', Icons.credit_card_rounded, app.tr('Card', 'கார்டு')),
-            _payTab('nb', Icons.account_balance_rounded, app.tr('Net Banking', 'நெட் பேங்கிங்')),
+            if (food.flag('Food.CardEnabled', true)) _payTab('card', Icons.credit_card_rounded, app.tr('Card', 'கார்டு')),
+            if (food.flag('Food.NetBankingEnabled', true)) _payTab('nb', Icons.account_balance_rounded, app.tr('Net Banking', 'நெட் பேங்கிங்')),
             if (codOn) _payTab('cod', Icons.payments_rounded, app.tr('Cash', 'பணம்')),
           ]),
         ),
         const SizedBox(height: 12),
-        if (_tab == 'upi') _upiPanel(),
-        if (_tab == 'card') _cardPanel(),
-        if (_tab == 'nb') _nbPanel(),
+        if (_tab != 'cod') _onlinePanel(),
         if (_tab == 'cod') _codPanel(),
       ]),
     );
   }
 
   // ---------- pay ----------
-  String? _payCheck() {
-    if (_tab == 'upi') {
-      if (!RegExp(r'^[A-Za-z0-9.\-_]{2,}@[A-Za-z]{2,}$').hasMatch(_upiC.text.trim())) return app.tr('Enter your UPI ID (e.g. name@okaxis).', 'உங்கள் UPI ID-ஐ எழுதவும் (எ.கா. name@okaxis).');
-    } else if (_tab == 'card') {
-      final d = _cardNum.text.replaceAll(RegExp(r'\D'), '');
-      if (d.length < 13) return app.tr('Enter the card number.', 'அட்டை எண்ணை எழுதவும்.');
-      if (!RegExp(r'^(0[1-9]|1[0-2])/\d{2}$').hasMatch(_cardExp.text)) return app.tr('Enter expiry as MM/YY.', 'காலாவதியை MM/YY என எழுதவும்.');
-      if (_cardCvv.text.length < 3) return app.tr('Enter the CVV.', 'CVV எழுதவும்.');
-    }
-    return null;
-  }
-
   Future<void> _pay(List<_HotelBill> bills) async {
     if (_busy || cart.isEmpty) return;
     final bad = bills.where((b) => b.problem != null).toList();
     if (bad.isNotEmpty) {
       _msg(bad.first.problem!);
-      return;
-    }
-    final pc = _payCheck();
-    if (pc != null) {
-      _msg(pc);
       return;
     }
     if (!await requireLogin(context, whyEn: 'Please login to place your order.', whyTa: 'ஆர்டர் செய்ய உள்நுழையவும்.')) return;
@@ -1061,20 +871,25 @@ class _CartScreenState extends State<CartScreen> {
       _addressSheet();
       return;
     }
-    // The gateway is not connected yet: UPI is sent with the typed UPI ID as reference; card and net banking are saved as "pay later" (cash) for now.
-    String method = 'COD';
-    String? ref;
-    if (_tab == 'upi') {
-      method = 'UPI';
-      ref = '$_upiApp ${_upiC.text.trim()}';
-    }
     setState(() => _busy = true);
     try {
-      final body = _bagBody(payMethod: method, payRef: ref);
+      final body = _bagBody(payMethod: _tab == 'cod' ? 'COD' : 'ONLINE', payRef: null);
       body['addressId'] = cart.fulfil == 'Delivery' ? _addrId : null;
       body['pickupSlot'] = cart.fulfil == 'Pickup' ? _slot : null;
       body['note'] = _note.text.trim();
-      final r = await BusApi.post('/food/orders', body);
+      dynamic r;
+      if (_tab == 'cod') {
+        r = await BusApi.post('/food/orders', body);
+      } else {
+        r = await _payOnline(body);
+        if (r == null) {
+          if (mounted) {
+            setState(() => _busy = false);
+            if (_rzpErr != null) _msg(_rzpErr!);
+          }
+          return;
+        }
+      }
       final orders = <Map<String, dynamic>>[];
       Map<String, dynamic> checkout = <String, dynamic>{};
       if (r is Map) {
@@ -1090,7 +905,7 @@ class _CartScreenState extends State<CartScreen> {
         orders: orders,
         pickup: cart.fulfil == 'Pickup',
         total: checkout.isNotEmpty && _n(checkout['grandTotal']) > 0 ? _n(checkout['grandTotal']) : paid,
-        payLine: _tab == 'cod' ? app.tr('Pay ${rupee(paid)} on ${cart.fulfil == 'Delivery' ? 'delivery' : 'pickup'}', '${rupee(paid)} ${cart.fulfil == 'Delivery' ? 'டெலிவரியில்' : 'எடுக்கும் போது'} செலுத்தவும்') : app.tr('Paid ${rupee(paid)} via ${_payMethodLabel()}', '${rupee(paid)} செலுத்தப்பட்டது - ${_payMethodLabel()}'),
+        payLine: _tab != 'cod' ? app.tr('Paid ${rupee(paid)} online (Razorpay)', '${rupee(paid)} ஆன்லைனில் செலுத்தப்பட்டது') : app.tr('Pay ${rupee(paid)} on ${cart.fulfil == 'Delivery' ? 'delivery' : 'pickup'}', '${rupee(paid)} ${cart.fulfil == 'Delivery' ? 'டெலிவரியில்' : 'எடுக்கும் போது'} செலுத்தவும்'),
         area: bills.isNotEmpty ? (bills.first.hotel.area ?? '') : '',
         eta: bills.fold<int>(0, (m, b) => (cart.fulfil == 'Delivery' ? b.hotel.shownEta : b.hotel.prepMinutes) > m ? (cart.fulfil == 'Delivery' ? b.hotel.shownEta : b.hotel.prepMinutes) : m),
         hotels: [for (final b in bills) b.hotel],
@@ -1104,6 +919,67 @@ class _CartScreenState extends State<CartScreen> {
         setState(() => _busy = false);
         _msg(BusApi.friendly(e));
       }
+    }
+  }
+
+  /// Online payment: server makes the Razorpay order, the Razorpay screen takes the money, the server checks it and places the orders.
+  /// Returns the server reply (orders) or null when the customer did not pay.
+  Future<dynamic> _payOnline(Map<String, dynamic> body) async {
+    _rzpErr = null;
+    final c = await BusApi.post('/food/pay/create', body);
+    if (c is! Map) throw 'Could not start the payment.';
+    final done = Completer<PaymentSuccessResponse?>();
+    _rzp?.clear();
+    final rz = Razorpay();
+    _rzp = rz;
+    rz.on(Razorpay.EVENT_PAYMENT_SUCCESS, (PaymentSuccessResponse r) {
+      if (!done.isCompleted) done.complete(r);
+    });
+    rz.on(Razorpay.EVENT_PAYMENT_ERROR, (PaymentFailureResponse r) {
+      final m = (r.message ?? '').toString();
+      _rzpErr = m.isEmpty || m.toLowerCase().contains('cancel') ? null : m;
+      if (!done.isCompleted) done.complete(null);
+    });
+    rz.on(Razorpay.EVENT_EXTERNAL_WALLET, (ExternalWalletResponse r) {});
+    final prefill = <String, dynamic>{'method': _tab == 'upi' ? 'upi' : (_tab == 'card' ? 'card' : 'netbanking')};
+    final ph = auth.mobile.replaceAll(RegExp(r'\D'), '');
+    if (ph.length >= 10) prefill['contact'] = ph.substring(ph.length - 10);
+    final em = auth.email;
+    if (em.contains('@')) prefill['email'] = em;
+    rz.open(<String, dynamic>{
+      'key': c['keyId'],
+      'amount': c['amount'],
+      'currency': 'INR',
+      'order_id': c['rzpOrderId'],
+      'name': 'I Love APK',
+      'description': app.tr('Food order', 'உணவு ஆர்டர்'),
+      'prefill': prefill,
+      'theme': <String, dynamic>{'color': '#1A73E8'},
+      'retry': <String, dynamic>{'enabled': true, 'max_count': 2},
+    });
+    final ok = await done.future;
+    _rzp?.clear();
+    _rzp = null;
+    if (ok == null) return null;
+    try {
+      return await BusApi.post('/food/pay/verify', <String, dynamic>{'rzpOrderId': ok.orderId, 'rzpPaymentId': ok.paymentId, 'signature': ok.signature});
+    } catch (e) {
+      // The money is paid and the webhook will still place the order, so do not let the customer pay twice.
+      final m = BusApi.friendly(e);
+      cart.note = '';
+      cart.clear();
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (dc) => AlertDialog(
+            title: Text(app.tr('Payment received', 'பணம் பெறப்பட்டது')),
+            content: Text(app.tr('$m\nPlease check My Orders in a minute. If no order appears, the amount is refunded automatically.', '$m\nஒரு நிமிடத்தில் My Orders பாருங்கள். ஆர்டர் இல்லையெனில் பணம் தானாக திரும்பும்.')),
+            actions: [TextButton(onPressed: () => Navigator.pop(dc), child: const Text('OK'))],
+          ),
+        );
+        if (mounted) Navigator.of(context).pop();
+      }
+      return null;
     }
   }
 
@@ -1189,21 +1065,6 @@ class _CartScreenState extends State<CartScreen> {
         );
       },
     );
-  }
-}
-
-/// Puts a space after every 4 digits of the card number.
-class _GroupFmt extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue o, TextEditingValue n) {
-    final d = n.text.replaceAll(' ', '');
-    final b = StringBuffer();
-    for (var i = 0; i < d.length && i < 16; i++) {
-      if (i > 0 && i % 4 == 0) b.write(' ');
-      b.write(d[i]);
-    }
-    final t = b.toString();
-    return TextEditingValue(text: t, selection: TextSelection.collapsed(offset: t.length));
   }
 }
 
