@@ -515,7 +515,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           Text(app.tr('Tap to filter', 'தொட்டு தேர்வு'), style: ts(11, weight: FontWeight.w600, color: kMuted)),
         ),
         SizedBox(
-          height: 46,
+          height: 98,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -525,22 +525,34 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               final on = _cat == ct.key;
               return GestureDetector(
                 onTap: () => setState(() => _cat = ct.key),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  padding: const EdgeInsets.fromLTRB(8, 5, 12, 5),
-                  decoration: BoxDecoration(color: on ? kBrand : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: on ? kBrand : kLine), boxShadow: on ? const [BoxShadow(color: kBrandShadow, blurRadius: 10, offset: Offset(0, 4))] : null),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(color: on ? Colors.white.withAlpha(60) : kTint, borderRadius: BorderRadius.circular(10)),
-                      clipBehavior: Clip.antiAlias,
-                      alignment: Alignment.center,
-                      child: (ct.image != null && ct.image!.isNotEmpty) ? NetImg(file: ct.image, cacheWidth: 120) : Text(ct.emoji, style: const TextStyle(fontSize: 16)),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(ct.label, style: ts(12.5, weight: FontWeight.w800, color: on ? Colors.white : kInk)),
-                  ]),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 14),
+                  child: SizedBox(
+                    width: 66,
+                    child: Column(children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: on ? const LinearGradient(colors: [kBrandLight, kBrand, Color(0xFF7C4DFF)], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+                          color: on ? null : kBrandMid,
+                          boxShadow: on ? const [BoxShadow(color: kBrandShadow, blurRadius: 10, offset: Offset(0, 4))] : null,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2), color: kTint),
+                          clipBehavior: Clip.antiAlias,
+                          alignment: Alignment.center,
+                          child: (ct.image != null && ct.image!.isNotEmpty)
+                              ? SizedBox.expand(child: NetImg(file: ct.image, cacheWidth: 200))
+                              : Text(ct.emoji, style: const TextStyle(fontSize: 26)),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(ct.label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(11, weight: on ? FontWeight.w800 : FontWeight.w600, color: on ? kBrand : kInk)),
+                    ]),
+                  ),
                 ),
               );
             },
