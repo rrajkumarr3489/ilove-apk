@@ -814,11 +814,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       _toast(app.tr('This dish is not available now.', 'இந்த உணவு இப்போது இல்லை.'));
       return;
     }
-    final before = cart.count;
     await foodQuickAdd(context, h, item, spices: m?.spiceLevels ?? const <FoodSpice>[]);
-    if (mounted && cart.count > before && !item.hasVariants) {
-      _toast(app.tr('${item.name} added to bag', '${item.name} பையில் சேர்க்கப்பட்டது'));
-    }
   }
 
   // ---------- hotels ----------
@@ -1125,6 +1121,11 @@ class CartBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // listens by itself: a const CartBar is never rebuilt by its parent, so the count would stay at 1
+    return ListenableBuilder(listenable: Listenable.merge([cart, food, app]), builder: (c, _) => _bar(c));
+  }
+
+  Widget _bar(BuildContext context) {
     final h = cart.hotel;
     FoodOffer? best; // best unlocked offer
     FoodOffer? next; // nearest offer still to unlock
