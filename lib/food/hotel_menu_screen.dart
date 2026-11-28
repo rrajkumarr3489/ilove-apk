@@ -12,8 +12,9 @@ import 'food_widgets.dart';
 
 class HotelMenuScreen extends StatefulWidget {
   final FoodHotel hotel;
+  final int? openItemId; // opens this dish's sheet as soon as the menu is ready
 
-  const HotelMenuScreen({super.key, required this.hotel});
+  const HotelMenuScreen({super.key, required this.hotel, this.openItemId});
 
   @override
   State<HotelMenuScreen> createState() => _HotelMenuScreenState();
@@ -40,6 +41,8 @@ class _HotelMenuScreenState extends State<HotelMenuScreen> {
     _load();
   }
 
+  bool _autoOpened = false;
+
   Future<void> _load() async {
     try {
       final m = await food.loadMenu(widget.hotel.id);
@@ -48,6 +51,18 @@ class _HotelMenuScreenState extends State<HotelMenuScreen> {
         _menu = m;
         _error = null;
       });
+      final oid = widget.openItemId;
+      if (oid != null && !_autoOpened) {
+        _autoOpened = true;
+        for (final it in m.items) {
+          if (it.id == oid && it.available) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _showDish(it);
+            });
+            break;
+          }
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = BusApi.friendly(e));

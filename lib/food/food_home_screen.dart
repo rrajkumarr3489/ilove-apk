@@ -461,7 +461,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   GestureDetector(
                     onTap: () {
                       Navigator.pop(c);
-                      _openHotelId(st.hotelId);
+                      _quickAdd(st.hotelId, st.itemId, st.titleEn);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
@@ -772,8 +772,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   }
 
   /// Quick "+ ADD" on a drop. Dishes with options open the hotel menu so the customer can choose.
-  Future<void> _addDrop(FoodDrop d) async {
-    final h = _hotelById(d.hotelId);
+  Future<void> _addDrop(FoodDrop d) => _quickAdd(d.hotelId, d.itemId, null, forceOpen: d.customizable);
+
+  /// Adds a dish straight to the bag (drops and the "Order this dish" button of a story).
+  Future<void> _quickAdd(int? hotelId, int? itemId, String? nameEn, {bool forceOpen = false}) async {
+    final h = _hotelById(hotelId);
     if (h == null) return;
     if (!(h.openNow && h.acceptsOrders)) {
       _toast(h.openNow ? app.tr('This hotel is not taking orders now.', 'இந்த ஹோட்டல் இப்போது ஆர்டர் எடுக்கவில்லை.') : app.tr('This hotel is closed now.', 'இந்த ஹோட்டல் இப்போது மூடப்பட்டுள்ளது.'));
@@ -789,11 +792,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     FoodItem? item;
     if (m != null) {
       for (final it in m.items) {
-        if (it.id == d.itemId) item = it;
+        if (itemId != null ? it.id == itemId : (nameEn != null && it.nameEn == nameEn)) item = it;
       }
     }
-    if (item == null || !item.available || d.customizable || item.customizable) {
-      _openHotel(h);
+    if (item == null || !item.available || forceOpen || item.customizable) {
+      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => HotelMenuScreen(hotel: h, openItemId: item?.id)));
       return;
     }
     if (cart.hotel != null && cart.hotel!.id != h.id && !cart.isEmpty) {
@@ -814,6 +817,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       cart.clear();
     }
     cart.add(h, item, null);
+    _toast(app.tr('${item.name} added to bag', '${item.name} பையில் சேர்க்கப்பட்டது'));
   }
 
   // ---------- hotels ----------
@@ -1121,15 +1125,25 @@ class CartBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = cart.hotel;
-    String? auto;
+    FoodOffer? best; // best unlocked offer
+    FoodOffer? next; // nearest offer still to unlock
     for (final o in food.offers) {
       if (o.minOrder <= cart.itemsTotal) {
-        auto = o.code;
-        break;
+        if (best == null || o.minOrder > best.minOrder) best = o;
+      } else if (next == null || o.minOrder < next.minOrder) {
+        next = o;
       }
     }
+    String desc(FoodOffer o) => (app.lang == 'ta' && (o.descTa ?? '').isNotEmpty) ? o.descTa! : o.descEn;
     final n = cart.count;
-    final sub = auto != null ? app.tr('$auto auto-applies in Cart!', 'கார்ட்டில் $auto தானாக சேரும்!') : (h == null ? '' : h.name);
+    final String sub;
+    if (best != null) {
+      sub = app.tr('🎉 ${desc(best)} (${best.code}) unlocked!', '🎉 ${desc(best)} (${best.code}) கிடைத்தது!');
+    } else if (next != null) {
+      sub = app.tr('Add ₹${(next.minOrder - cart.itemsTotal).ceil()} more for ${desc(next)}', '₹${(next.minOrder - cart.itemsTotal).ceil()} சேர்த்தால் ${desc(next)}');
+    } else {
+      sub = h == null ? '' : h.name;
+    }
     return SafeArea(
       top: false,
       bottom: safe,

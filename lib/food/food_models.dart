@@ -395,11 +395,12 @@ class FoodStory {
   final String? subTa;
   final String image;
   final int? hotelId;
+  final int? itemId;
   final double? price;
   final String? hotelNameEn;
   final String? hotelNameTa;
 
-  FoodStory({required this.id, required this.labelEn, this.labelTa, required this.titleEn, this.titleTa, this.subEn, this.subTa, required this.image, this.hotelId, this.price, this.hotelNameEn, this.hotelNameTa});
+  FoodStory({this.itemId, required this.id, required this.labelEn, this.labelTa, required this.titleEn, this.titleTa, this.subEn, this.subTa, required this.image, this.hotelId, this.price, this.hotelNameEn, this.hotelNameTa});
 
   factory FoodStory.fromJson(Map<String, dynamic> j) => FoodStory(
         id: _i(j['storyId']),
@@ -411,6 +412,7 @@ class FoodStory {
         subTa: _s(j['subtitleTa']),
         image: _s(j['imageFile']) ?? '',
         hotelId: j['hotelId'] == null ? null : _i(j['hotelId']),
+        itemId: j['itemId'] == null ? null : _i(j['itemId']),
         price: j['price'] == null ? null : _d(j['price']),
         hotelNameEn: _s(j['hotelNameEn']),
         hotelNameTa: _s(j['hotelNameTa']),
