@@ -37,6 +37,9 @@ const List<List<String>> _kFallbackCats = [
 ];
 
 /// The Food home: sticky header, stories, categories, offer banner, quick drops, hotels.
+/// Live Kitchen Stories row: hidden for now (feature kept). Set true to bring it back (also needs setting Food.ShowStories = 1).
+const bool _kStoriesOn = false;
+
 class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
 
@@ -73,9 +76,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       if (!mounted || !_promoPc.hasClients || _promoCount < 2) return;
       _promoPc.animateToPage((_promoPage + 1) % _promoCount, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
     });
-    _clock = Timer.periodic(const Duration(seconds: 1), (_) {
-      _dropSecs.value = _dropSecs.value > 0 ? _dropSecs.value - 1 : 899;
-    });
+    // countdown hidden for now; to show it again: start the timer below and restore the clock chip in _drops()
+    // _clock = Timer.periodic(const Duration(seconds: 1), (_) { _dropSecs.value = _dropSecs.value > 0 ? _dropSecs.value - 1 : 899; });
   }
 
   @override
@@ -368,7 +370,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
 
   // ---------- stories ----------
   Widget _stories() {
-    if (!food.flag('Food.ShowStories') || food.stories.isEmpty) return const SizedBox.shrink();
+    if (!_kStoriesOn || !food.flag('Food.ShowStories') || food.stories.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -696,14 +698,7 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
               ]),
             ),
           ]),
-          ValueListenableBuilder<int>(
-            valueListenable: _dropSecs,
-            builder: (c, s, _) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: kTint, borderRadius: BorderRadius.circular(8)),
-              child: Text(_clockText(s), style: const TextStyle(fontFamily: 'monospace', fontSize: 12, fontWeight: FontWeight.w800, color: kBrand)),
-            ),
-          ),
+          const SizedBox.shrink(), // countdown clock hidden (kept in code: _dropSecs / _clockText)
         ),
         SizedBox(
           height: 222,
