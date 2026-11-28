@@ -7,6 +7,7 @@ import '../app_state.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'cart_screen.dart';
+import 'dish_sheet.dart';
 import 'food_cart.dart';
 import 'food_models.dart';
 import 'food_repo.dart';
@@ -418,61 +419,75 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
+  /// Live Kitchen story: full dark screen like the design (progress bar, LIVE KITCHEN badge, tall photo with the dish on a gradient).
   void _openStory(FoodStory st) {
-    showDialog<void>(
+    showGeneralDialog<void>(
       context: context,
-      builder: (c) => foodScale(
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (c, a1, a2) => foodScale(
         c,
-        Dialog(
-          backgroundColor: Colors.white,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 40),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-          clipBehavior: Clip.antiAlias,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Stack(children: [
-              SizedBox(height: 260, width: double.infinity, child: Container(color: kTint, child: NetImg(file: st.image, cacheWidth: 900))),
-              Positioned(
-                left: 14,
-                top: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(20)),
-                  child: Text(st.hotelName.isEmpty ? st.label : st.hotelName, style: ts(12, weight: FontWeight.w700, color: Colors.white)),
-                ),
-              ),
-              Positioned(
-                right: 10,
-                top: 10,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(c),
-                  child: Container(width: 34, height: 34, decoration: const BoxDecoration(color: Color(0x99000000), shape: BoxShape.circle), child: const Icon(Icons.close_rounded, color: Colors.white, size: 19)),
-                ),
-              ),
-            ]),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(st.title, style: ts(19, weight: FontWeight.w800, height: 1.2)),
-                if (st.sub.isNotEmpty) ...[const SizedBox(height: 4), Text(st.sub, style: ts(13, color: kMuted, height: 1.35))],
-                const SizedBox(height: 12),
+        Material(
+          color: const Color(0xF2020617),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(children: [
+                ClipRRect(borderRadius: BorderRadius.circular(4), child: Container(height: 4, width: double.infinity, color: Colors.white24, alignment: Alignment.centerLeft, child: FractionallySizedBox(widthFactor: 0.75, child: Container(color: const Color(0xFF8AB4F8))))),
+                const SizedBox(height: 14),
                 Row(children: [
-                  if (st.price != null && st.price! > 0) Text(rupee(st.price!), style: ts(19, weight: FontWeight.w800)),
-                  const Spacer(),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: const Color(0xFFF43F5E), borderRadius: BorderRadius.circular(5)), child: Text(app.tr('LIVE KITCHEN', 'நேரடி சமையலறை'), style: ts(10, weight: FontWeight.w800, color: Colors.white))),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(st.hotelName.isEmpty ? st.label : st.hotelName, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(12.5, weight: FontWeight.w700, color: const Color(0xFFD2E3FC)))),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pop(c);
-                      _quickAdd(st.hotelId, st.itemId, st.titleEn);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                      decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(14)),
-                      child: Text(app.tr('Order this dish', 'இதை ஆர்டர் செய்'), style: ts(13.5, weight: FontWeight.w800, color: Colors.white)),
-                    ),
+                    onTap: () => Navigator.pop(c),
+                    child: Container(width: 34, height: 34, decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, color: Colors.white, size: 18)),
                   ),
                 ]),
+                const Spacer(),
+                AspectRatio(
+                  aspectRatio: 4 / 5,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(26),
+                    child: Stack(fit: StackFit.expand, children: [
+                      Container(color: const Color(0xFF0F172A), child: NetImg(file: st.image, cacheWidth: 900)),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                          decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Color(0xFF020617), Color(0xCC0F172A), Color(0x000F172A)])),
+                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(st.title, style: ts(19, weight: FontWeight.w800, color: Colors.white, height: 1.2)),
+                            if (st.sub.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 3), child: Text(st.sub, style: ts(12.5, color: const Color(0xFFD2E3FC)))),
+                            const SizedBox(height: 14),
+                            Row(children: [
+                              if (st.price != null && st.price! > 0) Text(rupee(st.price!), style: ts(19, weight: FontWeight.w800, color: Colors.white)),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(c);
+                                  _quickAdd(st.hotelId, st.itemId, st.titleEn);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                                  decoration: BoxDecoration(color: kBrand, borderRadius: BorderRadius.circular(13), boxShadow: const [BoxShadow(color: Color(0x551A73E8), blurRadius: 14, offset: Offset(0, 5))]),
+                                  child: Text(app.tr('Order This Dish', 'இதை ஆர்டர் செய்'), style: ts(13, weight: FontWeight.w800, color: Colors.white)),
+                                ),
+                              ),
+                            ]),
+                          ]),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+                const Spacer(),
               ]),
             ),
-          ]),
+          ),
         ),
       ),
     );
@@ -771,11 +786,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
     );
   }
 
-  /// Quick "+ ADD" on a drop. Dishes with options open the hotel menu so the customer can choose.
-  Future<void> _addDrop(FoodDrop d) => _quickAdd(d.hotelId, d.itemId, null, forceOpen: d.customizable);
+  /// Adds a dish on THIS page (drops "+ADD", story "Order this dish"). Nothing to choose = straight into the bag.
+  /// Portion options = the customize sheet opens over Home. Never opens the hotel page.
+  Future<void> _addDrop(FoodDrop d) => _quickAdd(d.hotelId, d.itemId, null);
 
-  /// Adds a dish straight to the bag (drops and the "Order this dish" button of a story).
-  Future<void> _quickAdd(int? hotelId, int? itemId, String? nameEn, {bool forceOpen = false}) async {
+  Future<void> _quickAdd(int? hotelId, int? itemId, String? nameEn) async {
     final h = _hotelById(hotelId);
     if (h == null) return;
     if (!(h.openNow && h.acceptsOrders)) {
@@ -795,29 +810,15 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         if (itemId != null ? it.id == itemId : (nameEn != null && it.nameEn == nameEn)) item = it;
       }
     }
-    if (item == null || !item.available || forceOpen || item.customizable) {
-      Navigator.push(context, MaterialPageRoute<void>(builder: (_) => HotelMenuScreen(hotel: h, openItemId: item?.id)));
+    if (item == null || !item.available) {
+      _toast(app.tr('This dish is not available now.', 'இந்த உணவு இப்போது இல்லை.'));
       return;
     }
-    if (cart.hotel != null && cart.hotel!.id != h.id && !cart.isEmpty) {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (c) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(app.tr('Start a new cart?', 'புதிய கார்ட் தொடங்கவா?'), style: ts(17, weight: FontWeight.w700)),
-          content: Text(app.tr('Your cart has food from ${cart.hotel!.name}. Adding from ${h.name} will clear it.', 'உங்கள் கார்ட்டில் ${cart.hotel!.name} உணவு உள்ளது. ${h.name} உணவை சேர்த்தால் அது நீக்கப்படும்.'), style: ts(14, color: kMuted, height: 1.4)),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(app.tr('No', 'வேண்டாம்'))),
-            TextButton(onPressed: () => Navigator.pop(c, true), child: Text(app.tr('Yes, start new', 'ஆம், புதியது'))),
-          ],
-        ),
-      );
-      if (ok != true) return;
-      cart.clear();
+    final before = cart.count;
+    await foodQuickAdd(context, h, item, spices: m?.spiceLevels ?? const <FoodSpice>[]);
+    if (mounted && cart.count > before && !item.hasVariants) {
+      _toast(app.tr('${item.name} added to bag', '${item.name} பையில் சேர்க்கப்பட்டது'));
     }
-    cart.add(h, item, null);
-    _toast(app.tr('${item.name} added to bag', '${item.name} பையில் சேர்க்கப்பட்டது'));
   }
 
   // ---------- hotels ----------
