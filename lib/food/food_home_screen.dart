@@ -40,11 +40,20 @@ const List<List<String>> _kFallbackCats = [
 class FoodHomeScreen extends StatefulWidget {
   const FoodHomeScreen({super.key});
 
+  /// The route of the open Food home, so "Back to Home" after an order lands here.
+  static Route<dynamic>? homeRoute;
+
   @override
   State<FoodHomeScreen> createState() => _FoodHomeScreenState();
 }
 
 class _FoodHomeScreenState extends State<FoodHomeScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    FoodHomeScreen.homeRoute = ModalRoute.of(context);
+  }
+
   final TextEditingController _q = TextEditingController();
   final PageController _promoPc = PageController();
   final ValueNotifier<int> _dropSecs = ValueNotifier<int>(14 * 60 + 59);
