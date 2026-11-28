@@ -5,6 +5,7 @@ import 'food_models.dart';
 import 'food_repo.dart';
 
 class CartLine {
+  final FoodHotel hotel;
   final int itemId;
   final int? variantId;
   final String nameEn;
@@ -20,6 +21,7 @@ class CartLine {
   int qty;
 
   CartLine({
+    required this.hotel,
     required this.itemId,
     this.variantId,
     required this.nameEn,
@@ -53,9 +55,8 @@ class CartLine {
   double get total => price * qty;
 }
 
-/// The food cart. One hotel at a time (like every food app).
+/// The food bag. It can hold dishes from SEVERAL hotels; checkout splits it into one order per hotel.
 class FoodCart extends ChangeNotifier {
-  FoodHotel? hotel;
   final List<CartLine> lines = <CartLine>[];
   String fulfil = 'Delivery'; // Delivery / Pickup
   String note = '';
@@ -66,29 +67,42 @@ class FoodCart extends ChangeNotifier {
 
   int qtyOfItem(int itemId) => lines.where((l) => l.itemId == itemId).fold<int>(0, (s, l) => s + l.qty);
 
-  /// Delivery fee for the chosen way (free above the hotel's limit, nothing for pickup).
-  double get deliveryFee {
-    final h = hotel;
-    if (h == null || fulfil != 'Delivery') return 0;
+  /// The hotels in the bag, in the order they were first added.
+  List<FoodHotel> get hotels {
+    final out = <FoodHotel>[];
+    for (final l in lines) {
+      if (!out.any((h) => h.id == l.hotel.id)) out.add(l.hotel);
+    }
+    return out;
+  }
+
+  /// The hotel added last (what the single-hotel screens show).
+  FoodHotel? get hotel => lines.isEmpty ? null : lines.last.hotel;
+
+  List<CartLine> linesOf(int hotelId) => lines.where((l) => l.hotel.id == hotelId).toList();
+  int countOf(int hotelId) => linesOf(hotelId).fold<int>(0, (s, l) => s + l.qty);
+  double totalOf(int hotelId) => linesOf(hotelId).fold<double>(0, (s, l) => s + l.total);
+
+  /// Delivery fee of one hotel's order (free above the hotel's limit, nothing for pickup).
+  double deliveryFeeOf(FoodHotel h) {
+    if (fulfil != 'Delivery') return 0;
     final free = h.freeAbove;
-    if (free != null && free > 0 && itemsTotal >= free) return 0;
+    if (free != null && free > 0 && totalOf(h.id) >= free) return 0;
     return h.deliveryFee;
   }
 
-  double get packing => hotel == null ? 0 : hotel!.packing;
+  double get deliveryFee => hotels.fold<double>(0, (s, h) => s + deliveryFeeOf(h));
+  double get packing => hotels.fold<double>(0, (s, h) => s + h.packing);
   double get grandTotal => itemsTotal + deliveryFee + packing;
 
-  /// Adds one. The caller must have cleared the cart first when it holds another hotel's food.
+  /// Adds one. Dishes of other hotels stay in the bag (one order per hotel at checkout).
   void add(FoodHotel h, FoodItem item, FoodVariant? v, {FoodSpice? spice, List<FoodAddOn> addOns = const <FoodAddOn>[], String note = '', int qty = 1}) {
-    if (hotel != null && hotel!.id != h.id) {
-      lines.clear();
-    }
     if (lines.isEmpty) {
-      hotel = h;
       fulfil = h.canDeliver ? 'Delivery' : 'Pickup';
     }
     final extra = addOns.fold<double>(0, (s, a) => s + a.price);
     final probe = CartLine(
+      hotel: h,
       itemId: item.id,
       variantId: v?.id,
       nameEn: item.nameEn,
@@ -106,6 +120,7 @@ class FoodCart extends ChangeNotifier {
       }
     }
     lines.add(CartLine(
+      hotel: h,
       itemId: item.id,
       variantId: v?.id,
       nameEn: item.nameEn,
@@ -134,7 +149,6 @@ class FoodCart extends ChangeNotifier {
   void dec(CartLine l) {
     l.qty--;
     if (l.qty <= 0) lines.remove(l);
-    if (lines.isEmpty) hotel = null;
     notifyListeners();
   }
 
@@ -155,7 +169,6 @@ class FoodCart extends ChangeNotifier {
 
   void clear() {
     lines.clear();
-    hotel = null;
     note = '';
     notifyListeners();
   }

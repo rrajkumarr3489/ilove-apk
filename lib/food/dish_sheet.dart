@@ -7,7 +7,7 @@ import 'food_models.dart';
 import 'food_repo.dart';
 import 'food_widgets.dart';
 
-/// Shared by Home and the hotel menu: checks the hotel is open and asks before dropping another hotel's bag. true = go ahead.
+/// Shared by Home and the hotel menu: checks the hotel is open. Dishes of other hotels stay in the bag. true = go ahead.
 Future<bool> foodPrepareAdd(BuildContext context, FoodHotel h) async {
   void msg(String t) => ScaffoldMessenger.of(context)
     ..clearSnackBars()
@@ -15,26 +15,6 @@ Future<bool> foodPrepareAdd(BuildContext context, FoodHotel h) async {
   if (!(h.openNow && h.acceptsOrders)) {
     msg(h.openNow ? app.tr('This hotel is not taking orders now.', 'இந்த ஹோட்டல் இப்போது ஆர்டர் எடுக்கவில்லை.') : app.tr('This hotel is closed now.', 'இந்த ஹோட்டல் இப்போது மூடப்பட்டுள்ளது.'));
     return false;
-  }
-  if (cart.hotel != null && cart.hotel!.id != h.id && !cart.isEmpty) {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(app.tr('Start a new cart?', 'புதிய கார்ட் தொடங்கவா?'), style: ts(17, weight: FontWeight.w700)),
-        content: Text(
-          app.tr('Your cart has food from ${cart.hotel!.name}. Adding from ${h.name} will clear it.', 'உங்கள் கார்ட்டில் ${cart.hotel!.name} உணவு உள்ளது. ${h.name} உணவை சேர்த்தால் அது நீக்கப்படும்.'),
-          style: ts(14, color: kMuted, height: 1.4),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(app.tr('No', 'வேண்டாம்'))),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(app.tr('Yes, start new', 'ஆம், புதியது'))),
-        ],
-      ),
-    );
-    if (ok != true) return false;
-    cart.clear();
   }
   return true;
 }

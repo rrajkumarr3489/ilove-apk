@@ -254,7 +254,20 @@ class _HotelMenuScreenState extends State<HotelMenuScreen> {
                   border: Border.all(color: x.id == _h.id ? kBrand : kBrandMid),
                   boxShadow: x.id == _h.id ? const [BoxShadow(color: kBrandShadow, blurRadius: 8, offset: Offset(0, 3))] : null,
                 ),
-                child: Text(_short(x), style: ts(11.5, weight: FontWeight.w700, color: x.id == _h.id ? Colors.white : kInk)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(_short(x), style: ts(11.5, weight: FontWeight.w700, color: x.id == _h.id ? Colors.white : kInk)),
+                  if (cart.countOf(x.id) > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 17),
+                      height: 17,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(color: x.id == _h.id ? Colors.white : kBrand, borderRadius: BorderRadius.circular(9)),
+                      child: Text('${cart.countOf(x.id)}', style: ts(10, weight: FontWeight.w800, color: x.id == _h.id ? kBrand : Colors.white)),
+                    ),
+                  ],
+                ]),
               ),
             ),
         ],

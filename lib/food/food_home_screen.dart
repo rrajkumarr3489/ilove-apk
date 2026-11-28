@@ -1139,7 +1139,10 @@ class CartBar extends StatelessWidget {
     String desc(FoodOffer o) => (app.lang == 'ta' && (o.descTa ?? '').isNotEmpty) ? o.descTa! : o.descEn;
     final n = cart.count;
     final String sub;
-    if (best != null) {
+    final hn = cart.hotels.length;
+    if (hn > 1) {
+      sub = app.tr('$hn hotels • $hn separate orders', '$hn ஹோட்டல்கள் • $hn தனி ஆர்டர்கள்');
+    } else if (best != null) {
       sub = app.tr('🎉 ${desc(best)} (${best.code}) unlocked!', '🎉 ${desc(best)} (${best.code}) கிடைத்தது!');
     } else if (next != null) {
       sub = app.tr('Add ₹${(next.minOrder - cart.itemsTotal).ceil()} more for ${desc(next)}', '₹${(next.minOrder - cart.itemsTotal).ceil()} சேர்த்தால் ${desc(next)}');
@@ -1174,7 +1177,7 @@ class CartBar extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('$n ${n == 1 ? app.tr('Item', 'பொருள்') : app.tr('Items', 'பொருட்கள்')} • ${rupee(cart.itemsTotal)}', style: ts(13, weight: FontWeight.w800, color: Colors.white)),
                 if (sub.isNotEmpty) Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(10.5, color: kOnBrandSoft)),
               ]),
